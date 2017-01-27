@@ -43,6 +43,7 @@ include "include/resume_session.php";
 Definition_ressource_domaine_site();
 get_planning_area_values($area);
 include "include/language.inc.php";
+
 $affiche_pview = '1';
 if (!isset($_GET['pview']))
 	$_GET['pview'] = 0;
@@ -376,7 +377,8 @@ for ($ir = 0; ($row = grr_sql_row($res, $ir)); $ir++)
 										{
 											$currentPage = 'month_all2';
 											$id =   $d[$cday]["id"][$i];
-											echo "<a title=\"".htmlspecialchars($d[$cday]["who1"][$i])."\" data-width=\"675\" onclick=\"request($id,$cday,$month,$year,'$currentPage',readData);\" data-rel=\"popup_name\" class=\"poplight\">" .$d[$cday]["who1"][$i]."</a>";
+											echo '<a title="'.htmlspecialchars($d[$cday]["who1"][$i]).'" class="lienModal" onclick="requestModal('.$id.','.$cday.','.$month.','.$year,',\''.$currentPage.'\',readDataModal);" data-toggle="modal" data-target="#myModal">'.$d[$cday]["who1"][$i].'</a>';
+											//echo "<a title=\"".htmlspecialchars($d[$cday]["who1"][$i])."\" data-width=\"675\" onclick=\"request($id,$cday,$month,$year,'$currentPage',readData);\" data-rel=\"popup_name\" class=\"poplight\">" .$d[$cday]["who1"][$i]."</a>";
 										}
 										else
 										{
@@ -400,7 +402,7 @@ for ($ir = 0; ($row = grr_sql_row($res, $ir)); $ir++)
 	}
 }
 echo "</table>";
-echo  "<div id=\"popup_name\" class=\"popup_block\" ></div>";
+
 if ($_GET['pview'] != 1)
 	echo "<div id=\"toTop\"> ^ Haut de la page";
 bouton_retour_haut ();
@@ -408,5 +410,24 @@ echo " </div>";
 echo " </div>";
 echo " </div>";
 affiche_pop_up(get_vocab("message_records"),"user");
+
+echo  "<div id=\"popup_name\" class=\"popup_block\" ></div>";
+
+//modal bootstrap
+echo '
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+	<div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content">
+			<div id="modalBody" class="modal-body">
+				<!-- insertion de la page view-entry.php via la fonction requestModal du fichier js/popup.js -->
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Fermer</button>
+			</div>
+		</div>
+	</div>
+</div>
+';
+
 include "footer.php";
 ?>

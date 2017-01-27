@@ -128,6 +128,7 @@ $this_area_name = grr_sql_query1("SELECT area_name FROM ".TABLE_PREFIX."_area WH
 $this_room_name = grr_sql_query1("SELECT room_name FROM ".TABLE_PREFIX."_room WHERE id=$room");
 $this_room_name_des = grr_sql_query1("SELECT description FROM ".TABLE_PREFIX."_room WHERE id=$room");
 $this_statut_room = grr_sql_query1("SELECT statut_room FROM ".TABLE_PREFIX."_room WHERE id=$room");
+$this_room_warning = grr_sql_query1("select room_warning from ".TABLE_PREFIX."_room where id=$room");
 $this_moderate_room = grr_sql_query1("SELECT moderate FROM ".TABLE_PREFIX."_room WHERE id=$room");
 $this_delais_option_reservation = grr_sql_query1("SELECT delais_option_reservation FROM ".TABLE_PREFIX."_room WHERE id=$room");
 $this_area_comment = grr_sql_query1("SELECT comment_room FROM ".TABLE_PREFIX."_room WHERE id=$room");
@@ -152,7 +153,7 @@ echo '<div class="row">'.PHP_EOL;
 include("menu_gauche.php");
 include "chargement.php";
 if ($_GET['pview'] != 1){
-	echo '<div class="col-lg-9 col-md-12 col-xs-12">'.PHP_EOL;
+	echo '<div class="col-md-10 col-md-12 col-xs-12">'.PHP_EOL;
 	echo '<div id="planning">'.PHP_EOL;}
 else{
 	echo '<div id="print_planning">'.PHP_EOL;}
@@ -181,11 +182,19 @@ if (verif_display_fiche_ressource(getUserName(), $room) && $_GET['pview'] != 1)
 
 if (authGetUserLevel(getUserName(),$room) > 2 && $_GET['pview'] != 1)
 	echo "<a href='./admin/admin_edit_room.php?room=$room'><span class=\"glyphcolor glyphicon glyphicon-cog\"></span></a>";
+
+// La ressource est-elle empruntée ?
 affiche_ressource_empruntee($room);
+
 if ($this_statut_room == "0")
 	echo '<br><span class="texte_ress_tempo_indispo">',get_vocab("ressource_temporairement_indisponible"),'</span>';
+
 if ($this_moderate_room == "1")
 	echo '<br><span class="texte_ress_moderee">',get_vocab("reservations_moderees"),'</span>';
+
+if (isset($this_room_warning) && $this_room_warning!='' && $this_room_warning!='-1')
+    echo "<br /><span class='avertissement'>".htmlspecialchars($this_room_warning)."</span>";
+
 echo '</div>',PHP_EOL;
 
 if (isset($_GET['precedent']))
@@ -393,7 +402,8 @@ else
 							{
 								$currentPage = 'month_all2';
 								$id = $d[$cday]["id"][$i];
-								echo '<a title="',htmlspecialchars($d[$cday]["who"][$i]),'" data-width="675" onclick="request(',$id,',',$cday,',',$month,',',$year,',\'',$currentPage,'\',readData);" data-rel="popup_name" class="poplight">';
+								echo '<a title="'.htmlspecialchars($d[$cday]["who"][$i]).'" class="lienModal" onclick="requestModal('.$id.','.$cday.','.$month.','.$year,',\''.$currentPage.'\',readDataModal);" data-toggle="modal" data-target="#myModal">';
+								//echo '<a title="',htmlspecialchars($d[$cday]["who"][$i]),'" data-width="675" onclick="request(',$id,',',$cday,',',$month,',',$year,',\'',$currentPage,'\',readData);" data-rel="popup_name" class="poplight">';
 							}
 							else
 							{
@@ -416,6 +426,7 @@ else
 				$date_now = time();
 				$hour = date("H",$date_now);
 				$date_booking = mktime(24, 0, 0, $month, $cday, $year);
+				
 				if ((($authGetUserLevel > 1) || ($auth_visiteur == 1))
 					&& ($UserRoomMaxBooking != 0)
 					&& verif_booking_date(getUserName(), -1, $room, $date_booking, $date_now, $enable_periods)
@@ -424,8 +435,9 @@ else
 					&& plages_libre_semaine_ressource($room, $month, $cday, $year)
 					&& (($this_statut_room == "1") ||
 						(($this_statut_room == "0") && (authGetUserLevel(getUserName(),$room) > 2)))
-					&& $_GET['pview'] != 1)
-				{
+					&& ($_GET['pview'] != 1)
+					&& auth_user_reserv_room_etab($room)) {
+
 					echo '<div class="empty_cell">',PHP_EOL;
 					if ($enable_periods == 'y')
 						echo '<a href="edit_entry.php?room=',$room,'&amp;period=&amp;year=',$year,'&amp;month=',$month,'&amp;day=',$cday,'&amp;page=month" title="',get_vocab("cliquez_pour_effectuer_une_reservation"),'"><span class="glyphicon glyphicon-plus"></span></a>',PHP_EOL;
@@ -478,6 +490,23 @@ affiche_pop_up(get_vocab("message_records"),"user");
 echo '</div>'.PHP_EOL;
 echo '</div>'.PHP_EOL;
 echo  "<div id=\"popup_name\" class=\"popup_block\" ></div>";
+
+//modal bootstrap
+echo '
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+	<div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content">
+			<div id="modalBody" class="modal-body">
+				<!-- insertion de la page view-entry.php via la fonction requestModal du fichier js/popup.js -->
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Fermer</button>
+			</div>
+		</div>
+	</div>
+</div>
+';
+	
 include "footer.php";
 
 ?>

@@ -36,6 +36,50 @@ if (isset($_GET['jours_cycles']))
 	if (!Settings::set("jours_cycles_actif", $_GET['jours_cycles']))
 		echo "Erreur lors de l'enregistrement de jours_cycles_actif ! <br />";
 }
+
+// Met à jour dans la BD du champ qui détermine si la fonctionnalité "multietablissement" est activée ou non
+if (isset($_GET['module_multietablissement'])) {
+	if (!Settings::set("module_multietablissement", $_GET['module_multietablissement'])) {
+		echo "Erreur lors de l'enregistrement de module_multietablissement ! <br />";
+	} else {
+		if ($_GET['module_multietablissement'] == 'Oui') {
+			// On crée un établissement par défaut s'il n'en existe pas
+			$id_etab = grr_sql_query1("select min(id) from ".TABLE_PREFIX."_etablissement");
+			if ($id_etab == -1) {
+				$sql="INSERT INTO ".TABLE_PREFIX."_etablissement
+			       		    SET code='1', shortname='établissement par défaut', name='établissement par défaut'";
+				if (grr_sql_command($sql) < 0)
+					fatal_error(0,'<p>'.grr_sql_error().'</p>');
+				$id_etab = grr_sql_insert_id();
+			}
+			// On recherche tous les sites non affectés à un établissement
+			$sql = "select S.id from ".TABLE_PREFIX."_site AS S LEFT JOIN ".TABLE_PREFIX."_j_etablissement_site AS J ON J.id_site = S.id WHERE J.id_etablissement IS NULL";
+			$res = grr_sql_query($sql);
+			if ($res) for ($i = 0; ($row = grr_sql_row($res, $i)); $i++)
+			{
+				$sql="INSERT INTO ".TABLE_PREFIX."_j_etablissement_site SET id_etablissement='".$id_etab."', id_site='".$row[0]."'";
+				if (grr_sql_command($sql) < 0)
+					fatal_error(0,'<p>'.grr_sql_error().'</p>');
+			}
+			// On recherche tous les établissements sans site
+			$sql = "select E.id,E.code,E.shortname from ".TABLE_PREFIX."_etablissement AS E LEFT JOIN ".TABLE_PREFIX."_j_etablissement_site AS J ON J.id_etablissement = E.id WHERE J.id_site IS NULL";
+			$res = grr_sql_query($sql);
+			if ($res) for ($i = 0; ($row = grr_sql_row($res, $i)); $i++)
+			{
+                $sitename = mysqli_real_escape_string($GLOBALS['db_c'], $row[2]);
+                $sql="INSERT INTO ".TABLE_PREFIX."_site SET sitecode='".$row[1]."', sitename='site par défaut pour ".$sitename."'";
+				//$sql="INSERT INTO ".TABLE_PREFIX."_site SET sitecode='".$row[1]."', sitename='site par défaut pour ".$row[2]."'";
+				if (grr_sql_command($sql) < 0)
+					fatal_error(0,'<p>'.grr_sql_error().'</p>');
+				$id_site = grr_sql_insert_id();
+				$sql="INSERT INTO ".TABLE_PREFIX."_j_etablissement_site SET id_etablissement='".$row[0]."', id_site='".$id_site."'";
+				if (grr_sql_command($sql) < 0)
+					fatal_error(0,'<p>'.grr_sql_error().'</p>');
+			}
+		}
+	}
+}
+
 // Met à jour dans la BD du champ qui détermine si la fonctionnalité "multisite" est activée ou non
 if (isset($_GET['module_multisite']))
 {
@@ -53,7 +97,7 @@ if (isset($_GET['module_multisite']))
 				SET sitecode='1', sitename='site par defaut'";
 				if (grr_sql_command($sql) < 0)
 					fatal_error(0,'<p>'.grr_sql_error().'</p>');
-				$id_site = mysqli_insert_id($GLOBALS['db_c']);
+				$id_site = grr_sql_insert_id($GLOBALS['db_c']);
 			}
 						// On affecte tous les domaines à un site.
 			$sql = "SELECT id FROM ".TABLE_PREFIX."_area";
@@ -122,6 +166,22 @@ else
 	echo "<option value=\"Non\" selected=\"selected\">".get_vocab('NO')."</option>\n";
 }
 echo "</select>\n</td>\n</tr>\n</table><hr />\n";
+
+
+// Multietablissement
+echo "<h3>".get_vocab("Activer_module_multietablissement")."</h3>\n";
+echo "<table border='0'>\n<tr>\n<td>\n";
+echo get_vocab("Activer_module_multietablissement").get_vocab("deux_points");
+echo "<select name='module_multietablissement'>\n";
+if (Settings::get("module_multietablissement",true) == "Oui") {
+	echo "<option value=\"Oui\" selected=\"selected\">".get_vocab('YES')."</option>\n";
+	echo "<option value=\"Non\">".get_vocab('NO')."</option>\n";
+} else {
+	echo "<option value=\"Oui\">".get_vocab('YES')."</option>\n";
+	echo "<option value=\"Non\" selected=\"selected\">".get_vocab('NO')."</option>\n";
+}
+echo "</select>\n</td>\n</tr>\n</table>\n";
+
 
 // Multisite
 echo "<h3>".get_vocab("Activer_module_multisite")."</h3>\n";

@@ -31,41 +31,45 @@
  */
 include "../include/admin.inc.php";
 $grr_script_name = "admin_room.php";
+
 $id_area = isset($_POST["id_area"]) ? $_POST["id_area"] : (isset($_GET["id_area"]) ? $_GET["id_area"] : NULL);
-if (isset($id_area))
-{
+
+if (isset($id_area)){
 	settype($id_area,"integer");
 	$id_site = mrbsGetAreaSite($id_area);
 }
+
 if (!isset($id_site))
 	$id_site = isset($_POST['id_site']) ? $_POST['id_site'] : (isset($_GET['id_site']) ? $_GET['id_site'] : -1);
+
 settype($id_site,"integer");
 $back = '';
+
 if (isset($_SERVER['HTTP_REFERER']))
 	$back = htmlspecialchars($_SERVER['HTTP_REFERER']);
 $day   = date("d");
 $month = date("m");
 $year  = date("Y");
 check_access(4, $back);
+
 //print the page header
 print_header("", "", "", $type="with_session");
 // Affichage de la colonne de gauche
 include "admin_col_gauche.php";
+
 // If area is set but area name is not known, get the name.
-if (isset($_GET['msg']))
-{
+if (isset($_GET['msg'])){
 	$msg = $_GET['msg'];
 	affiche_pop_up($msg,"admin");
 }
-if (isset($id_area))
-{
-	if (empty($area_name))
-	{
+
+if (isset($id_area)){
+	
+	if (empty($area_name)){
 		$res = grr_sql_query("SELECT area_name, access FROM ".TABLE_PREFIX."_area WHERE id=$id_area");
 		if (!$res)
 			fatal_error(0, grr_sql_error());
-		if (grr_sql_count($res) == 1)
-		{
+		if (grr_sql_count($res) == 1){
 			$row = grr_sql_row($res, 0);
 			$area_name = $row[0];
 		}
@@ -79,9 +83,11 @@ if (isset($id_area))
 else
 	$area_name='';
 ?>
+
 <h2><?php echo get_vocab("admin_room.php"); ?></h2>
+
 <?php
-if (Settings::get("module_multisite") == "Oui")
+/*if (Settings::get("module_multisite") == "Oui")
 {
 	if (authGetUserLevel(getUserName(),-1,'area') >= 6)
 		$sql = "SELECT id,sitecode,sitename FROM ".TABLE_PREFIX."_site ORDER BY sitename ASC";
@@ -105,67 +111,117 @@ if (Settings::get("module_multisite") == "Oui")
 			if ($test2 > 0)
 				$sql .= "(j.id_site=s.id AND j.id_area=a.id_area AND a.login='".getUserName()."')";
 			$sql .= ") ORDER BY s.sitename ASC";
-}
-$res = grr_sql_query($sql);
-$nb_site = grr_sql_count($res);
-if ($nb_site > 1)
-{
-	echo '<table border="1" width="100%" cellpadding="8" cellspacing="1">
-	<tr>
-		<th style="text-align:center;">
-			<b>'.get_vocab('sites').'</b>
-		</th>
-	</tr>
-	<tr>
-		<td>
-			<form id="liste_site" action="'.$_SERVER['PHP_SELF'].'">
-				<div><select name="id_site" onchange="site_go()">
-					<option value="-1">'.get_vocab('choose_a_site').'</option>'."\n";
-					for ($enr = 0; ($row = grr_sql_row($res, $enr)); $enr++)
-					{
-						echo '            <option value="'.$row[0].'"';
-						if ($id_site == $row[0])
-							echo ' selected="selected"';
-						echo '>'.htmlspecialchars($row[2]);
-						echo '            </option>'."\n";
-					}
-					grr_sql_free($res);
-					echo '          </select></div>
-					<script type="text/javascript">
-						<!--
-						function site_go()
+}*/
+if (Settings::get("module_multisite") == "Oui" || Settings::get("module_multietablissement") == "Oui") {
+	
+	// Affiche un comboBox avec la liste des sites;
+	if(authGetUserLevel(getUserName(),-1,'area') >= 6) {
+		
+		// Administrateur général
+		if (Settings::get("module_multietablissement") == "Oui"){
+			$id_etablissement = getIdEtablissementCourant();
+			$sql = "SELECT S.id,S.sitecode,S.sitename,S.cp,S.ville
+					FROM ".TABLE_PREFIX."_site AS S JOIN ".TABLE_PREFIX."_j_etablissement_site AS J ON J.id_site = S.id
+					WHERE J.id_etablissement = $id_etablissement  
+					ORDER BY S.sitename,S.ville,S.id";
+		} else {
+			$sql = "SELECT id,sitecode,sitename
+					FROM ".TABLE_PREFIX."_site
+					ORDER BY sitename ASC";
+		}
+		
+	}
+	else  {// Administrateur de sites ou de domaines
+
+		// l'utilisateur est-il administrateur d'un site ?
+		$isAdministrateurSite = grr_sql_query1("select count(login) from ".TABLE_PREFIX."_j_useradmin_site where login='".getUserName()."'");
+		// l'utilisateur est-il administrateur d'un domaine ?
+		$isAdministrateurDomaine = grr_sql_query1("select count(login) from ".TABLE_PREFIX."_j_useradmin_area where login='".getUserName()."'");
+
+		$sql = "SELECT DISTINCT id,sitecode,sitename FROM ".TABLE_PREFIX."_site S ";
+
+		if (Settings::get("module_multietablissement") == "Oui")
+		$sql .= " JOIN ".TABLE_PREFIX."_j_etablissement_site AS ES ON ES.id_site = S.id ";
+		if ($isAdministrateurSite > 0)
+		$sql .=", ".TABLE_PREFIX."_j_useradmin_site US";
+		if ($isAdministrateurDomaine > 0)
+		$sql .=", ".TABLE_PREFIX."_j_useradmin_area UA, ".TABLE_PREFIX."_j_site_area SA";
+
+		$sql .=" WHERE ( ";
+		if (Settings::get("module_multietablissement") == "Oui"){
+			$id_etablissement = getIdEtablissementCourant();
+			$sql .=" ES.id_etablissement = $id_etablissement ) AND ";
+		}
+		if ($isAdministrateurSite > 0)
+		$sql .= "(S.id=US.id_site and US.login='".getUserName()."') ";
+		if (($isAdministrateurSite > 0) and ($isAdministrateurDomaine > 0))
+		$sql .= " OR ";
+		if ($isAdministrateurDomaine > 0)
+		$sql .= "(SA.id_site=S.id and SA.id_area=UA.id_area and UA.login='".getUserName()."')";
+
+		$sql .= ") ORDER BY S.sitename ASC";
+	}
+	
+	$res = grr_sql_query($sql);
+	$nb_site = grr_sql_count($res);
+	if ($nb_site > 1){
+		
+		echo '<table border="1" width="100%" cellpadding="8" cellspacing="1">
+		<tr>
+			<th style="text-align:center;">
+				<b>'.get_vocab('sites').'</b>
+			</th>
+		</tr>
+		<tr>
+			<td>
+				<form id="liste_site" action="'.$_SERVER['PHP_SELF'].'">
+					<div><select name="id_site" onchange="site_go()">
+						<option value="-1">'.get_vocab('choose_a_site').'</option>'."\n";
+						for ($enr = 0; ($row = grr_sql_row($res, $enr)); $enr++)
 						{
-							box = document.getElementById("liste_site").id_site;
-							destination = "'.$_SERVER['PHP_SELF'].'"+"?id_site="+box.options[box.selectedIndex].value;
-							location.href = destination;
+							echo '            <option value="'.$row[0].'"';
+							if ($id_site == $row[0])
+								echo ' selected="selected"';
+							echo '>'.htmlspecialchars($row[2]);
+							echo '            </option>'."\n";
 						}
-					// -->
-					</script>
-					<noscript>
-						<div><input type="submit" value="change" /></div>
-					</noscript>
-				</form>
-			</td>
+						grr_sql_free($res);
+						echo '          </select></div>
+						<script type="text/javascript">
+							<!--
+							function site_go()
+							{
+								box = document.getElementById("liste_site").id_site;
+								destination = "'.$_SERVER['PHP_SELF'].'"+"?id_site="+box.options[box.selectedIndex].value;
+								location.href = destination;
+							}
+						// -->
+						</script>
+						<noscript>
+							<div><input type="submit" value="change" /></div>
+						</noscript>
+					</form>
+				</td>
+			</tr>
+		</table>
+		<br />';
+	}
+	else{
+		// un seul site
+		$row = grr_sql_row($res, 0);
+		echo '<table class="table">
+		<tr>
+			<th style="text-align:center;">
+				<b>'.get_vocab('site').get_vocab('deux_points').$row[2].'</b>
+			</th>
 		</tr>
 	</table>
 	<br />';
-}
-else
-{
-	// un seul site
-	$row = grr_sql_row($res, 0);
-	echo '<table class="table">
-	<tr>
-		<th style="text-align:center;">
-			<b>'.get_vocab('site').get_vocab('deux_points').$row[2].'</b>
-		</th>
-	</tr>
-</table>
-<br />';
-$id_site = $row[0];
-}
+	$id_site = $row[0];
+	}
 }
 ?>
+
 <table class="table table-bordered">
 	<tr>
 		<th  style="text-align:center; width:50%;"><b class="titre"><?php echo get_vocab('areas') ?></b></th>
@@ -174,44 +230,51 @@ $id_site = $row[0];
 		</tr>
 		<?php
 		// Seul l'administrateur a le droit d'ajouter des domaines
-		if (authGetUserLevel(getUserName(),-1,'area') >= 5)
-		{
-			if ((Settings::get("module_multisite") == "Oui") && ($id_site <= 0))
+		if (authGetUserLevel(getUserName(),-1,'area') >= 5){
+			
+			if ((Settings::get("module_multisite") == "Oui" || Settings::get("module_multietablissement") == "Oui") && ($id_site <= 0))
 				echo "<tr><td>".get_vocab('choose_a_site')."</td>"."\n";
 			else
 				echo "<tr><td><a href=\"admin_edit_room.php?id_site=".$id_site."&amp;add_area='yes'\">".get_vocab('addarea')."</a></td>";
 		}
-		else
-		{
-			if ((Settings::get("module_multisite") == "Oui") && ($id_site <= 0))
+		else{
+			
+			if ((Settings::get("module_multisite") == "Oui" || Settings::get("module_multietablissement") == "Oui") && ($id_site <= 0))
 				echo "<tr><td>".get_vocab('choose_a_site')."</td>"."\n";
 			else
 				echo "<tr><td> </td>";
 		}
+		
 		if (isset($id_area))
 			echo "<td><a href=\"admin_edit_room.php?id_site=".$id_site."&amp;area_id=$id_area\">".get_vocab('addroom')."</a></td></tr>";
 		else
 			echo "<td> </td></tr>";
+		
 		// Pas de site selectionn? donc pas de domaine, et encore moins de ressources.
-		if ((Settings::get("module_multisite") == "Oui") && ($id_site <= 0))
-		{
+		if ((Settings::get("module_multisite") == "Oui" || Settings::get("module_multietablissement") == "Oui") && ($id_site <= 0)){
+			
 			echo "</table>\n";
-		// fin de l'affichage de la colonne de droite et fin de la page
+			// fin de l'affichage de la colonne de droite et fin de la page
 			echo "</td>\n</tr>\n</table>\n</body>\n</html>";
 			die();
 		}
+		
 		// A partir de ce niveau, on sait qu'il existe un site
-		if ((Settings::get("module_multisite") == "Oui") && ($id_site > 0))
+		if ((Settings::get("module_multisite") == "Oui" || Settings::get("module_multietablissement") == "Oui") and ($id_site > 0)){
 			$sql="SELECT ".TABLE_PREFIX."_area.id,".TABLE_PREFIX."_area.area_name,".TABLE_PREFIX."_area.access
-		FROM ".TABLE_PREFIX."_j_site_area,".TABLE_PREFIX."_area
-		WHERE ".TABLE_PREFIX."_j_site_area.id_site='".$id_site."'
-		AND ".TABLE_PREFIX."_area.id=".TABLE_PREFIX."_j_site_area.id_area
-		ORDER BY order_display";
-		else
-			$sql="select id, area_name, access from ".TABLE_PREFIX."_area order by order_display";
+					FROM ".TABLE_PREFIX."_j_site_area,".TABLE_PREFIX."_area
+					WHERE ".TABLE_PREFIX."_j_site_area.id_site='".$id_site."'
+					AND ".TABLE_PREFIX."_area.id=".TABLE_PREFIX."_j_site_area.id_area
+					ORDER BY order_display";
+		}else{
+
+				$sql="select id, area_name, access from ".TABLE_PREFIX."_area order by order_display";	
+		}
+		
 		$res = grr_sql_query($sql);
 		if (!$res)
 			fatal_error(0, grr_sql_error());
+		
 		if (grr_sql_count($res) != 0)
 		{
 			echo "<tr><td>\n";

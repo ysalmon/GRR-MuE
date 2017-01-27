@@ -64,10 +64,13 @@ if (authUserAccesArea(getUserName(), $areas) == 0)
 }
 header("Content-Type: text/html;charset=utf-8");
 header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+
+
 // Type de réservation
-$qui_peut_reserver_pour = grr_sql_query1("SELECT qui_peut_reserver_pour FROM grr_room WHERE id='".$room."'");
+$qui_peut_reserver_pour = grr_sql_query1("SELECT qui_peut_reserver_pour FROM ".TABLE_PREFIX."_room WHERE id='".$room."'");
 $aff_default = ((authGetUserLevel(getUserName(),-1,"room") >= $qui_peut_reserver_pour) || (authGetUserLevel(getUserName(),$areas,"area") >= $qui_peut_reserver_pour));
 $aff_type = max(authGetUserLevel(getUserName(),-1,"room"),authGetUserLevel(getUserName(),$areas,"area"));
+
 // Avant d'afficher la liste déroulante des types, on stocke dans $display_type et on teste le nombre de types à afficher
 // Si ne nombre est égal à 1, on ne laisse pas le choix
 $nb_type = 0;
@@ -76,27 +79,41 @@ $type_id_unique = "??";
 $display_type = '<table width="100%"><tr><td class="E"><b>'.get_vocab("type").get_vocab("deux_points").'</b></td></tr>'.PHP_EOL;
 $affiche_mess_asterisque = true;
 $display_type .= '<tr><td class="CL">'.PHP_EOL;
-$display_type .= '<div class="col-xs-3">'.PHP_EOL;
+$display_type .= '<div class="col-xs-6">'.PHP_EOL;
 $display_type .= '<select id="type" class="form-control" name="type" size="1" onclick="setdefault(\'type_default\',\'\')">'.PHP_EOL;
 $display_type .= '<option value="0">'.get_vocab("choose").PHP_EOL;
-$sql = "SELECT DISTINCT t.type_name, t.type_letter, t.id, t.order_display FROM ".TABLE_PREFIX."_type_area t
-LEFT JOIN ".TABLE_PREFIX."_j_type_area j on j.id_type=t.id
-WHERE (j.id_area  IS NULL or j.id_area != '".$areas."') AND (t.disponible<='".$aff_type."')
-ORDER BY t.order_display";
+
+if (Settings::get("module_multietablissement") == "Oui"){
+	$idEtablissement = getIdEtablissementCourant();
+	$sql = "SELECT DISTINCT t.type_name, t.type_letter, t.id FROM ".TABLE_PREFIX."_type_area t
+		    LEFT JOIN ".TABLE_PREFIX."_j_type_area j on j.id_type=t.id
+			LEFT JOIN ".TABLE_PREFIX."_j_etablissement_type_area je on je.id_type_area=t.id
+		    WHERE (j.id_area  IS NULL or j.id_area != '".$areas."') and (t.disponible<='".$aff_type."') AND (je.id_etablissement = $idEtablissement OR je.id_etablissement IS NULL)
+		    ORDER BY t.order_display";
+} else {
+	$sql = "SELECT DISTINCT t.type_name, t.type_letter, t.id FROM ".TABLE_PREFIX."_type_area t
+    		    LEFT JOIN ".TABLE_PREFIX."_j_type_area j on j.id_type=t.id
+    		    WHERE (j.id_area  IS NULL or j.id_area != '".$areas."') and (t.disponible<='".$aff_type."')
+    		    ORDER BY t.order_display";
+}
+
+
 $res = grr_sql_query($sql);
 if ($res)
 {
 	$row = grr_sql_row($res, 0);
 	// La requête sql précédente laisse passer les cas où un type est non valide
 	// dans le domaine concerné ET au moins dans un autre domaine, d'où le test suivant
-	$test = grr_sql_query1("SELECT id_type FROM ".TABLE_PREFIX."_j_type_area WHERE id_type = '".$row[1]."' AND id_area='".$areas."'");
-}
+	
+	}
 
-for ($i = 0; ($row = grr_sql_row($res, $i)); $i++)
-{
+for ($i = 0; ($row = grr_sql_row($res, $i)); $i++){
+
+	// La requête sql précédente laisse passer les cas où un type est non valide
+    // dans le domaine concerné ET au moins dans un autre domaine, d'où le test suivant
 	$test = grr_sql_query1("SELECT id_type FROM ".TABLE_PREFIX."_j_type_area WHERE id_type = '".$row[2]."' AND id_area='".$areas."'");
-	if ($test == -1)
-	{
+	if ($test == -1){
+		
 		$nb_type ++;
 		$type_nom_unique = $row[0];
 		$type_id_unique = $row[1];
@@ -126,7 +143,7 @@ for ($i = 0; ($row = grr_sql_row($res, $i)); $i++)
 }
 $display_type .=  '</select>'.PHP_EOL.'</div>'.PHP_EOL;
 if ($aff_default)
-	$display_type .= ' <input type="button" class="btn btn-primary" value="'.get_vocab("definir par defaut").'" onclick="setdefault(\'type_default\',document.getElementById(\'main\').type.options[document.getElementById(\'main\').type.options.selectedIndex].text)" />'.PHP_EOL;
+	$display_type .= '&nbsp;<input type="button" class="btn btn-primary" value="'.get_vocab("definir par defaut").'" onclick="setdefault(\'type_default\',document.getElementById(\'main\').type.options[document.getElementById(\'main\').type.options.selectedIndex].text)" />'.PHP_EOL;
 $display_type .= '</td></tr></table>'.PHP_EOL;
 if ($nb_type > 1)
 	echo $display_type;

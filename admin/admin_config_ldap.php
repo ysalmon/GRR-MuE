@@ -60,12 +60,6 @@ else
 $base_ldap = isset($_POST["base_ldap"]) ? $_POST["base_ldap"] : NULL;
 $base_ldap_autre = isset($_POST["base_ldap_autre"]) ? $_POST["base_ldap_autre"] : NULL;
 $ldap_filter = isset($_POST["ldap_filter"]) ? $_POST["ldap_filter"] : NULL;
-
-$ldap_group_member_attr = isset($_POST["ldap_group_member_attr"]) ? $_POST["ldap_group_member_attr"] : NULL;
-$ldap_group_base = isset($_POST["ldap_group_base"]) ? $_POST["ldap_group_base"] : NULL;
-$ldap_group_filter = isset($_POST["ldap_group_filter"]) ? $_POST["ldap_group_filter"] : NULL;
-$ldap_group_user_field = isset($_POST["ldap_group_user_field"]) ? $_POST["ldap_group_user_field"] : NULL;
-
 $titre_ldap = "Configuration de l'authentification LDAP";
 if (isset($_POST['reg_ldap_statut']))
 {
@@ -165,7 +159,7 @@ if ((!grr_resumeSession()) && $valid != 'yes')
 								<td style="text-align: center; width: 60%;"><input type="password" name="password" size="16" /></td>
 							</tr>
 						</table>
-						<input type="submit" name="submit" value="<?php echo get_vocab("OK"); ?>" style="font-variant: small-caps;" />
+						<input class="btn btn-primary btn-default" type="submit" name="submit" value="<?php echo get_vocab("OK"); ?>" style="font-variant: small-caps;" />
 					</fieldset>
 				</form>
 			</body>
@@ -275,11 +269,6 @@ if ((!grr_resumeSession()) && $valid != 'yes')
 							$conn .= "# Attention : si vous configurez manuellement ce fichier (sans passer par la configuration en ligne)\n";
 							$conn .= "# vous devez tout de même activer LDAP en choisissant le \"statut par défaut des utilisateurs importés\".\n";
 							$conn .= "# Pour cela, rendez-vous sur la page : configuration -> Configuration LDAP.\n";
-							$conn .= "\n#SE3 variables\n";
-							$conn .= "\$ldap_group_member_attr=\"{$ldap_group_member_attr}\";\n";
-							$conn .= "\$ldap_group_base=\"{$ldap_group_base}\";\n";
-							$conn .= "\$ldap_group_filter=\"{$ldap_group_filter}\";\n";
-							$conn .= "\$ldap_group_user_field=\"{$ldap_group_user_field}\";\n";
 							$conn .= "?".">";
 							@fputs($f, $conn);
 							if (!@fclose($f))
@@ -294,7 +283,7 @@ if ((!grr_resumeSession()) && $valid != 'yes')
 							echo "<form action=\"admin_config_ldap.php\" method=\"post\">\n";
 							echo "<div><input type=\"hidden\" name=\"etape\" value=\"0\" />\n";
 							echo "<input type=\"hidden\" name=\"valid\" value=\"$valid\" />\n";
-							echo "<div style=\"text-align:center;\"><input type=\"submit\" name=\"Valider\" value=\"Terminer\" /></div>\n";
+							echo "<div style=\"text-align:center;\"><input class='btn btn-primary btn-default' type=\"submit\" name=\"Valider\" value=\"Terminer\" /></div>\n";
 							echo "</div></form>";
 						}
 					}
@@ -378,7 +367,7 @@ if ((!grr_resumeSession()) && $valid != 'yes')
 							echo "<input type=\"hidden\" name=\"valid\" value=\"$valid\" />\n";
 							if ($use_tls)
 								echo "<input type=\"hidden\" name=\"use_tls\" value=\"y\" />\n";
-							echo "<div style=\"text-align:center;\"><input type=\"submit\" name=\"Valider\" value=\"Enregistrer les informations\" /></div>\n";
+							echo "<div style=\"text-align:center;\"><input class='btn btn-primary btn-default' type=\"submit\" name=\"Valider\" value=\"Enregistrer les informations\" /></div>\n";
 							echo "</div></form>";
 						}
 						else
@@ -392,7 +381,7 @@ if ((!grr_resumeSession()) && $valid != 'yes')
 							echo "<input type=\"hidden\" name=\"ldap_login\" value=\"$login_ldap\" />\n";
 							if ($use_tls)
 								echo "<input type=\"hidden\" name=\"use_tls\" value=\"y\" />\n";
-							echo "<input type=\"submit\" name=\"valider\" value=\"".encode_message_utf8("Page précédente")."\" />\n";
+							echo "<input class='btn btn-primary btn-default' type=\"submit\" name=\"valider\" value=\"".encode_message_utf8("Page précédente")."\" />\n";
 							echo "</div></form>\n";
 						}
 					}
@@ -441,12 +430,11 @@ if ((!grr_resumeSession()) && $valid != 'yes')
 							echo "<input type=\"hidden\" name=\"ldap_filter\" value=\"$ldap_filter\" />";
 						if (isset($ldap_base))
 							echo "<input type=\"hidden\" name=\"ldap_base\" value=\"$ldap_base\" />";
-						//TODO: Ajouter les informations pour les groupes
 						echo encode_message_utf8("<br /><br /><b>Remarque : pour le moment, aucune modification n'a été apportée au fichier de configuration \"config_ldap.inc.php\".</b><br />
 							Les informations ne seront enregistrées qu'à la fin de la procédure de configuration.</div>");
 
 
-						echo "<div style=\"text-align:center;\"><input type=\"submit\" value=\"Suivant\" /></div>";
+						echo "<div style=\"text-align:center;\"><input class='btn btn-primary btn-default' type=\"submit\" value=\"Suivant\" /></div>";
 						echo "</form>";
 
 					}
@@ -532,7 +520,7 @@ if ((!grr_resumeSession()) && $valid != 'yes')
 							echo "<input type=\"radio\" name=\"ldap_statut\" value=\"visiteur\" />Visiteur<br />\n";
 							echo "<input type=\"radio\" name=\"ldap_statut\" value=\"utilisateur\" />Usager<br />\n";
 							echo "<input type=\"radio\" name=\"ldap_statut\" value=\"no_ldap\" checked=\"checked\" />Ne pas activer<br /></div>\n";
-							echo "<div style=\"text-align:center;\"><input type=\"submit\" name=\"Valider2\" value=\"Valider\"  /></div>\n";
+							echo "<div style=\"text-align:center;\"><input class='btn btn-primary btn-default' type=\"submit\" name=\"Valider2\" value=\"Valider\"  /></div>\n";
 							// fin de l'affichage de la colonne de droite
 							if ($valid == 'no')
 								echo "</td></tr></table>";

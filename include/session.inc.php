@@ -29,11 +29,38 @@
  * along with GRR; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+ /**
+ * $Log: session.inc.php,v $
+ * Revision 1.18  2012-03-21 19:30:21  grr
+ * Empecher un utilisateur connecte par sso de se connecter a GRR si l'option est positionnee dans le reglage sso : sso_IsNotAllowedAddUser
+ * Prise en compte d'une variable $base_path pour corriger un bug quand appelé depuis index.php
+ * Suppression de la variable de session en bdd : global logout
+ * Correction de la fonction setEtablissementInSession qui ne sélectionnait pas le bon établissement à la connexion
+ *
+ */
 
 require_once("settings.class.php");
 $settings = new Settings();
 if (!$settings)
 	die("Erreur chargement settings");
+
+
+//On définit l'utilisation des sessions en personnel
+ini_set('session.save_handler', 'user');
+
+// On déclare la classe
+$session = new Session();
+
+// On précise les méthodes à employer pour les sessions 
+session_set_save_handler(
+	array($session, 'open'),
+	array($session, 'close'),
+	array($session, 'read'),
+	array($session, 'write'),
+	array($session, 'destroy'),
+	array($session, 'gc')
+);
+
 /**
  * Open a new session
  *
@@ -47,16 +74,18 @@ if (!$settings)
  * @param string _password
  * @return string
  */
-function grr_opensession($_login, $_password, $_user_ext_authentifie = '', $tab_login = array(), $tab_groups = array())
-{
+ 
+function grr_opensession($_login, $_password, $_user_ext_authentifie = '', $tab_login = array(), $tab_groups = array()){
+
 	// Initialisation de $auth_ldap
 	$auth_ldap = 'no';
 	// Initialisation de $auth_imap
 	$auth_imap = 'no';
 	// Initialisation de $est_authentifie_sso
 	$est_authentifie_sso = FALSE;
-	if ($_user_ext_authentifie != '')
-	{
+	
+	if ($_user_ext_authentifie != ''){
+		
 		$est_authentifie_sso = TRUE;
 		// Statut par défaut
 		$_statut = "";
@@ -79,8 +108,8 @@ function grr_opensession($_login, $_password, $_user_ext_authentifie = '', $tab_
 			$_statut = "visiteur";
 		else if ($sso == "lasso_utilisateur")
 			$_statut = "utilisateur";
-		else if ($sso == "lcs")
-		{
+		else if ($sso == "lcs"){
+			
 			if ($_user_ext_authentifie == "lcs_eleve")
 				$_statut = Settings::get("lcs_statut_eleve");
 			if ($_user_ext_authentifie == "lcs_non_eleve")
@@ -88,8 +117,8 @@ function grr_opensession($_login, $_password, $_user_ext_authentifie = '', $tab_
 			$temoin_grp_ok = "non";
 			if (trim(Settings::get("lcs_liste_groupes_autorises")) == "")
 				$temoin_grp_ok = "oui";
-			else
-			{
+			else{
+				
 				$tab_grp_autorise = explode(";",Settings::get("lcs_liste_groupes_autorises"));
 				$tot =  count($tab_grp_autorise);
 				for ($i = 0; $i < $tot; $i++)
@@ -102,65 +131,73 @@ function grr_opensession($_login, $_password, $_user_ext_authentifie = '', $tab_
 			if ($temoin_grp_ok != 'oui')
 				return "5";
 		}
+		
 		$sql = "SELECT upper(login) login, password, prenom, nom, statut, now() start, default_area, default_room, default_style, default_list_type, default_language, source, etat, default_site
-		from ".TABLE_PREFIX."_utilisateurs
-		where login = '" . protect_data_sql($_login) . "' and ";
+					from ".TABLE_PREFIX."_utilisateurs
+					where login = '" . protect_data_sql($_login) . "' and ";
+		
 		if ($_user_ext_authentifie != 'lasso')
 			$sql .= " password = '' and ";
+		
 		$sql .= " etat != 'inactif'";
 		$res_user = grr_sql_query($sql);
 		$num_row = grr_sql_count($res_user);
-		if ($num_row == 1)
-		{
+		
+		if ($num_row == 1){
+			
 			// L'utilisateur est présent dans la base locale
-			if ($sso == "lcs")
-			{
+			if ($sso == "lcs"){
+				
 				// Mise à jour des données
 				$nom_user = $tab_login["nom"];
 				$email_user = $tab_login["email"];
 				$prenom_user = $tab_login["fullname"];
+				
 				// On met à jour
 				$sql = "UPDATE ".TABLE_PREFIX."_utilisateurs SET
-				nom='".protect_data_sql($nom_user)."',
-				prenom='".protect_data_sql($prenom_user)."',
-				email='".protect_data_sql($email_user)."'
-				where login='".protect_data_sql($_login)."'";
+						nom='".protect_data_sql($nom_user)."',
+						prenom='".protect_data_sql($prenom_user)."',
+						email='".protect_data_sql($email_user)."'
+						where login='".protect_data_sql($_login)."'";
 			}
-			else if ($_user_ext_authentifie == "cas")
-			{
-				if ((Settings::get("ldap_statut") != '') && (@function_exists("ldap_connect")) && (@file_exists("include/config_ldap.inc.php"))) {
-					$auth_ldap = 'yes';
-				}
+			else if ($_user_ext_authentifie == "cas"){
+				
 				$nom_user = $tab_login["user_nom"];
 				$email_user = $tab_login["user_email"];
 				$prenom_user = $tab_login["user_prenom"];
-				if ($nom_user != '')
-				{
-					//  On détecte si Nom, Prénom ou Email ont changé,
+				
+				// MULTI-ETAB : On garde l'etablissement recupere lors de l'authentification CAS
+				$code_etablissement_cas = $tab_login["user_code_etablissement"];
+				
+				if ($nom_user != ''){
+					
+					// On détecte si Nom, Prénom ou Email ont changé,
 					// Si c'est le cas, on met à jour les champs
 					$req = grr_sql_query("SELECT nom, prenom, email from ".TABLE_PREFIX."_utilisateurs where login ='".protect_data_sql($_login)."'");
 					$res = mysqli_fetch_array($req);
 					$nom_en_base = $res[0];
 					$prenom_en_base = $res[1];
 					$email_en_base = $res[2];
-					if ((strcmp($nom_en_base, $nom_user) != 0) || (strcmp($prenom_en_base, $prenom_user) != 0) || (strcmp($email_en_base, $email_user) != 0))
-					{
+					if ((strcmp($nom_en_base, $nom_user) != 0) || (strcmp($prenom_en_base, $prenom_user) != 0) || (strcmp($email_en_base, $email_user) != 0)){
+						
 						// Si l'un des champs est différent, on met à jour les champs
 						$sql = "UPDATE ".TABLE_PREFIX."_utilisateurs SET
-						nom='".protect_data_sql($nom_user)."',
-						prenom='".protect_data_sql($prenom_user)."',
-						email='".protect_data_sql($email_user)."'
-						where login='".protect_data_sql($_login)."'";
+								nom='".protect_data_sql($nom_user)."',
+								prenom='".protect_data_sql($prenom_user)."',
+								email='".protect_data_sql($email_user)."'
+								where login='".protect_data_sql($_login)."'";
+						
 						if (grr_sql_command($sql) < 0)
 							fatal_error(0, get_vocab("msg_login_created_error") . grr_sql_error());
+						
 						//Comme les données de la base on été changés, on doit remettre à jour la variable $row,
 						//Pour que les données mises en sessions soient les bonnes
 						//on récupère les données de l'utilisateur
 						$sql = "SELECT upper(login) login, password, prenom, nom, statut, now() start, default_area, default_room, default_style, default_list_type, default_language, source, etat, default_site
-						FROM ".TABLE_PREFIX."_utilisateurs
-						WHERE login = '" . protect_data_sql($_login) . "' and
-						source = 'ext' and
-						etat != 'inactif'";
+								FROM ".TABLE_PREFIX."_utilisateurs
+								WHERE login = '" . protect_data_sql($_login) . "' and
+									source = 'ext' and
+									etat != 'inactif'";
 						$res_user = grr_sql_query($sql);
 						$num_row = grr_sql_count($res_user);
 						if ($num_row != 1)
@@ -170,70 +207,92 @@ function grr_opensession($_login, $_password, $_user_ext_authentifie = '', $tab_
 			}
 			if (grr_sql_command($sql) < 0)
 				fatal_error(0, get_vocab("msg_login_created_error") . grr_sql_error());
-		// on récupère les données de l'utilisateur dans $row
+			
+			// on récupère les données de l'utilisateur dans $row
 			$row = grr_sql_row($res_user,0);
 		}
-		else
-		{
-		// L'utilisateur n'est pas présent dans la base locale ou est inactif
-		//  ou possède un mot de passe (utilisateur local GRR)
-		// On teste si un utilisateur porte déjà le même login
+		else{
+			
+			// Ne pas accepter un utilisateur non déjà connu dans la base GRR, si l'option esi activée dans sso - GIP RECIA
+            include_once "$base_path/include/functions.inc.php";
+            if (!(sso_IsAllowedAddUser())) 
+				return "5";
+			
+			// L'utilisateur n'est pas présent dans la base locale ou est inactif
+			//  ou possède un mot de passe (utilisateur local GRR)
+			// On teste si un utilisateur porte déjà le même login
 			$test = grr_sql_query1("SELECT login FROM ".TABLE_PREFIX."_utilisateurs WHERE login = '".protect_data_sql($_login)."'");
 			if ($test != '-1')
 				return "3";
-			else
-			{
-			//Aucun utilisateur dans la base locale ne porte le même login. On peut continuer la procédure d'importation
-			//1er cas : LCS.
-				if ($sso == "lcs")
-				{
+			else{
+				
+				//Aucun utilisateur dans la base locale ne porte le même login. On peut continuer la procédure d'importation
+				
+				//1er cas : LCS.
+				if ($sso == "lcs"){
+					
 					if ($_statut == 'aucun')
 						return "5";
-					else
-					{
+					else{
 						$nom_user = $tab_login["nom"];
 						$email_user = $tab_login["email"];
 						$prenom_user = $tab_login["fullname"];
 					}
+				} 
 				//2ème cas : SSO lasso.
-				}
-				else if ($sso == "lasso_visiteur" or $sso == "lasso_utilisateur")
-				{
-					if (!empty($tab_login))
-					{
+				else if ($sso == "lasso_visiteur" or $sso == "lasso_utilisateur"){
+					
+					if (!empty($tab_login)){
+						
 						$nom_user = $tab_login["nom"];
 						$email_user = $tab_login["email"];
 						$prenom_user = $tab_login["fullname"];
 					}
+				}
+				//3ème cas : SSO CAS.
+				else if ($_user_ext_authentifie == "cas" && !empty($tab_login)){
+					
+					// Cas d'une authentification CAS
+					$nom_user = $tab_login["user_nom"];
+					$email_user = $tab_login["user_email"];
+					$prenom_user = $tab_login["user_prenom"];
+					$code_fonction_user = $tab_login["user_code_fonction"];
+					$libelle_fonction_user = $tab_login["user_libelle_fonction"];
+					$language_user = $tab_login["user_language"];
+					$default_style_user = $tab_login["user_default_style"];
+					$code_etablissement_cas = $tab_login["user_code_etablissement"];
+					if (Settings::get("sso_ac_corr_profil_statut")=='y'){
+						$_statut = effectuer_correspondance_profil_statut($code_fonction_user, $libelle_fonction_user);
+					}	
+				}
 				//CAS d'un LDAP avec SSO CAS ou avec SSO Lemonldap
 				//on tente de récupérer des infos dans l'annuaire avant d'importer le profil dans GRR
-				}
-				else if ((Settings::get("ldap_statut") != '') && (@function_exists("ldap_connect")) && (@file_exists("include/config_ldap.inc.php")) && ($_user_ext_authentifie == 'cas'))
-				{
-				// On initialise au cas où on ne réussisse pas à récupérer les infos dans l'annuaire.
+				else if ((Settings::get("ldap_statut") != '') && (@function_exists("ldap_connect")) && (@file_exists("include/config_ldap.inc.php")) && ($_user_ext_authentifie == 'cas')){
+					
+					// On initialise au cas où on ne réussisse pas à récupérer les infos dans l'annuaire.
 					$l_nom = $_login;
 					$l_email = '';
 					$l_prenom = '';
 					include "config_ldap.inc.php";
-				// Connexion à l'annuaire
+					
+					// Connexion à l'annuaire
 					$ds = grr_connect_ldap($ldap_adresse,$ldap_port,$ldap_login,$ldap_pwd,$use_tls);
 					$user_dn = grr_ldap_search_user($ds, $ldap_base,Settings::get("ldap_champ_recherche"), $_login, $ldap_filter, "no");
-				// Test with login and password of the user
+					
+					// Test with login and password of the user
 					if (!$ds)
 						$ds = grr_connect_ldap($ldap_adresse,$ldap_port,$_login,$_password,$use_tls);
 					if ($ds)
 						$result = @ldap_read($ds, $user_dn, "objectClass=*", array(Settings::get("ldap_champ_nom"),Settings::get("ldap_champ_prenom"),Settings::get("ldap_champ_email")));
-					if ($result)
-					{
-					// Recuperer les donnees de l'utilisateur
+					if ($result){
+						// Recuperer les donnees de l'utilisateur
 						$info = @ldap_get_entries($ds, $result);
-						if (is_array($info))
-						{
-							for ($i = 0; $i < $info["count"]; $i++)
-							{
+						if (is_array($info)){
+							
+							for ($i = 0; $i < $info["count"]; $i++){
 								$val = $info[$i];
-								if (is_array($val))
-								{
+								
+								if (is_array($val)){
 									if (isset($val[Settings::get("ldap_champ_nom")][0]))
 										$l_nom = ucfirst($val[Settings::get("ldap_champ_nom")][0]);
 									else
@@ -249,9 +308,9 @@ function grr_opensession($_login, $_password, $_user_ext_authentifie = '', $tab_
 								}
 							}
 						}
-					// Convertir depuis UTF-8 (jeu de caracteres par defaut)
-						if ((function_exists("utf8_decode")) && (Settings::get("ConvertLdapUtf8toIso") == "y"))
-						{
+						// Convertir depuis UTF-8 (jeu de caracteres par defaut)
+						if ((function_exists("utf8_decode")) && (Settings::get("ConvertLdapUtf8toIso") == "y")){
+							
 							$l_email = utf8_decode($l_email);
 							$l_nom = utf8_decode($l_nom);
 							$l_prenom = utf8_decode($l_prenom);
@@ -260,20 +319,6 @@ function grr_opensession($_login, $_password, $_user_ext_authentifie = '', $tab_
 					$nom_user = $l_nom;
 					$email_user = $l_email;
 					$prenom_user = $l_prenom;
-				//4ème cas : SSO CAS.
-				}
-				else if ($_user_ext_authentifie == "cas" && !empty($tab_login))
-				{
-					// Cas d'une authentification CAS
-					$nom_user = $tab_login["user_nom"];
-					$email_user = $tab_login["user_email"];
-					$prenom_user = $tab_login["user_prenom"];
-					$code_fonction_user = $tab_login["user_code_fonction"];
-					$libelle_fonction_user = $tab_login["user_libelle_fonction"];
-					$language_user = $tab_login["user_language"];
-					$default_style_user = $tab_login["user_default_style"];
-					if (Settings::get("sso_ac_corr_profil_statut")=='y')
-						$_statut = effectuer_correspondance_profil_statut($code_fonction_user, $libelle_fonction_user);
 				//CAS ou :
 				//LDAP n'est pas configuré,
 				//il peut s'agit d'une authentification "SSO CAS",  "SSO Lemonldap" mais ce n'est alors pas normal
@@ -343,461 +388,541 @@ function grr_opensession($_login, $_password, $_user_ext_authentifie = '', $tab_
 					{fatal_error(0, get_vocab("msg_login_created_error") . grr_sql_error());
 				return "2";
 			}
-		// on récupère les données de l'utilisateur
-			$sql = "SELECT upper(login) login, password, prenom, nom, statut, now() start, default_area, default_room, default_style, default_list_type, default_language, source, etat, default_site
-			from ".TABLE_PREFIX."_utilisateurs
-			where login = '" . protect_data_sql($_login) . "' and
-			source = 'ext' and
-			etat != 'inactif'";
-			$res_user = grr_sql_query($sql);
-			$num_row = grr_sql_count($res_user);
-			if ($num_row == 1)
-				$row = grr_sql_row($res_user,0);
+				// on récupère les données de l'utilisateur
+				$sql = "SELECT upper(login) login, password, prenom, nom, statut, now() start, default_area, default_room, default_style, default_list_type, default_language, source, etat, default_site
+				from ".TABLE_PREFIX."_utilisateurs
+				where login = '" . protect_data_sql($_login) . "' and
+				source = 'ext' and
+				etat != 'inactif'";
+				$res_user = grr_sql_query($sql);
+				$num_row = grr_sql_count($res_user);
+				if ($num_row == 1)
+					$row = grr_sql_row($res_user,0);
+				else
+					return "2";
+			}
+		}
+	//On traite le cas NON SSO
+	//-> LDAP sans SSO
+	// -> Imap
+	}
+	else
+	{
+		$passwd_md5 = md5($_password);
+		$sql = "SELECT upper(login) login, password, prenom, nom, statut, now() start, default_area, default_room, default_style, default_list_type, default_language, source, etat, default_site
+		from ".TABLE_PREFIX."_utilisateurs
+		where login = '" . protect_data_sql($_login) . "' and
+		password = '".$passwd_md5."'";
+		$res_user = grr_sql_query($sql);
+		$num_row = grr_sql_count($res_user);
+		//On est toujours dans le cas NON SSO - L'utilisateur n'est pas présent dans la base locale
+		if ($num_row != 1){
+			
+			if ((Settings::get("ldap_statut") != '') && (@function_exists("ldap_connect")) && (@file_exists("include/config_ldap.inc.php"))){
+				
+				//$login_search = ereg_replace("[^-@._[:space:][:alnum:]]", "", $_login);
+				$login_search = preg_replace("/[^\-@._[:space:]a-zA-Z0-9]/", "", $_login);
+				if ($login_search != $_login)
+					return "6";
+				$user_dn = grr_verif_ldap($_login, $_password);
+				if ($user_dn=="error_1")
+					return "7";
+				else if ($user_dn == "error_2")
+					return "8";
+				else if ($user_dn == "error_3")
+					return "9";
+				else if ($user_dn)
+					$auth_ldap = 'yes';
+				else
+					return "4";
+			}
+			elseif ((Settings::get("imap_statut") != '') and (@function_exists("imap_open")) and (@file_exists("include/config_imap.inc.php"))){
+				
+				//  $login_search = ereg_replace("[^-@._[:space:][:alnum:]]", "", $_login);
+				$login_search = preg_replace("/[^\-@._[:space:]a-zA-Z0-9]/", "", $_login);
+				if ($login_search != $_login)
+					return "6";
+				$user_imap = grr_verif_imap($_login, $_password);
+				if ($user_imap){
+					$auth_imap = 'yes';
+					imap_close($user_imap);
+				}
+				else
+					return "10";
+			}
 			else
 				return "2";
 		}
-	}
-//On traite le cas NON SSO
-//-> LDAP sans SSO
-// -> Imap
-}
-else
-{
-	$passwd_md5 = md5($_password);
-	$sql = "SELECT upper(login) login, password, prenom, nom, statut, now() start, default_area, default_room, default_style, default_list_type, default_language, source, etat, default_site
-	from ".TABLE_PREFIX."_utilisateurs
-	where login = '" . protect_data_sql($_login) . "' and
-	password = '".$passwd_md5."'";
-	$res_user = grr_sql_query($sql);
-	$num_row = grr_sql_count($res_user);
-	//On est toujours dans le cas NON SSO - L'utilisateur n'est pas présent dans la base locale
-	if ($num_row != 1)
-	{
-		if ((Settings::get("ldap_statut") != '') && (@function_exists("ldap_connect")) && (@file_exists("include/config_ldap.inc.php")))
-		{
-			//$login_search = ereg_replace("[^-@._[:space:][:alnum:]]", "", $_login);
-			$login_search = preg_replace("/[^\-@._[:space:]a-zA-Z0-9]/", "", $_login);
-			if ($login_search != $_login)
-				return "6";
-			$user_dn = grr_verif_ldap($_login, $_password);
-			if ($user_dn=="error_1")
-				return "7";
-			else if ($user_dn == "error_2")
-				return "8";
-			else if ($user_dn == "error_3")
-				return "9";
-			else if ($user_dn)
-				$auth_ldap = 'yes';
-			else
-				return "4";
-		}
-		elseif ((Settings::get("imap_statut") != '') and (@function_exists("imap_open")) and (@file_exists("include/config_imap.inc.php")))
-		{
-			//  $login_search = ereg_replace("[^-@._[:space:][:alnum:]]", "", $_login);
-			$login_search = preg_replace("/[^\-@._[:space:]a-zA-Z0-9]/", "", $_login);
-			if ($login_search != $_login)
-				return "6";
-			$user_imap = grr_verif_imap($_login, $_password);
-			if ($user_imap)
-			{
-				$auth_imap = 'yes';
-				imap_close($user_imap);
-			}
-			else
-				return "10";
-		}
 		else
-			return "2";
-	}
-	else
-	{
-		$row = grr_sql_row($res_user, 0);
-		// S'il s'agit d'un utilisateur inactif, on s'arrête là
-		if ($row[12] == 'inactif')
-			return "5";
-	}
-	// Fin du cas NON SSO
-}
-// Cette partie ne concerne que les utilisateurs pour lesquels l'authentification ldap ci-dessus a réussi
-// On tente d'interroger la base ldap pour obtenir des infos sur l'utilisateur
-if ($auth_ldap == 'yes')
-{
-	// Cas particulier des serveur SE3
-	// se3_liste_groupes_autorises est vide -> pas de restriction
-	if (trim(Settings::get("se3_liste_groupes_autorises")) == "")
-	{
-		$temoin_grp_ok = "oui";
-	}
-	else
-	{
-		// se3_liste_groupes_autorises n'est pas vide -> on teste si le $_login appartient à un des groupes
-		$temoin_grp_ok = "non";
-
-		//S'assurer que le fichier est inclus (il existe dans tous les cas où $auth_ldap==yes)
-		if(!isset($ldap_group_user_field)) {
-			include "config_ldap.inc.php";
+		{
+			$row = grr_sql_row($res_user, 0);
+			// S'il s'agit d'un utilisateur inactif, on s'arrête là
+			if ($row[12] == 'inactif')
+				return "5";
 		}
+		// Fin du cas NON SSO
+	}
 
-		//Aller chercher l'info pour faire la comparaison
-		$member_search = $_login;
-		if($ldap_group_user_field != 'uid') {
-			$ds = grr_connect_ldap($ldap_adresse,$ldap_port,$ldap_login,$ldap_pwd,$use_tls);
-			$user_dn = grr_ldap_search_user($ds, $ldap_base,Settings::get("ldap_champ_recherche"), $_login, $ldap_filter, "no");
-			// Test with login and password of the user
-			if (!$ds)
-				$ds = grr_connect_ldap($ldap_adresse,$ldap_port,$_login,$_password,$use_tls);
-			if ($ds)
-				$result = @ldap_read($ds, $user_dn, "objectClass=*", array(Settings::get("ldap_champ_nom"),Settings::get("ldap_champ_prenom"),Settings::get("ldap_champ_email")));
-			if ($result) {
-				// Recuperer les donnees de l'utilisateur
-				$info = @ldap_get_entries($ds, $result);
-				if(is_array($info) && isset($info[0][$ldap_group_user_field])) {
-					$member_search = $info[0][$ldap_group_user_field];
+	// Cette partie ne concerne que les utilisateurs pour lesquels l'authentification ldap ci-dessus a réussi
+	// On tente d'interroger la base ldap pour obtenir des infos sur l'utilisateur
+	if ($auth_ldap == 'yes'){
+		// Cas particulier des serveur SE3
+		// se3_liste_groupes_autorises est vide -> pas de restriction
+		if (trim(Settings::get("se3_liste_groupes_autorises")) == ""){
+			$temoin_grp_ok = "oui";
+		}
+		else{
+			// se3_liste_groupes_autorises n'est pas vide -> on teste si le $_login appartient à un des groupes
+			$temoin_grp_ok = "non";
+			$tab_grp_autorise = explode(";", Settings::get("se3_liste_groupes_autorises"));
+			$total =  count($tab_grp_autorise);
+			for ($i = 0; $i < $total; $i++){
+				if (se3_grp_members($tab_grp_autorise[$i],$_login) == "oui"){
+					$temoin_grp_ok = "oui";
 				}
 			}
 		}
-		$tab_grp_autorise = explode(";", Settings::get("se3_liste_groupes_autorises"));
-		$total =  count($tab_grp_autorise);
-		for ($i = 0; $i < $total; $i++)
-		{
-			if (se3_grp_members($tab_grp_autorise[$i],$member_search) == "oui")
-			{
-				$temoin_grp_ok = "oui";
-			}
-		}
-	}
-	if ($temoin_grp_ok != "oui")
-		return "5";
-	// Fin cas particulier des serveur SE3
-	// on regarde si un utilisateur ldap ayant le même login existe déjà
-	$sql = "SELECT upper(login) login, password, prenom, nom, statut, now() start, default_area, default_room, default_style, default_list_type, default_language, source, etat, default_site
-	FROM ".TABLE_PREFIX."_utilisateurs
-	WHERE login = '" . protect_data_sql($_login) . "' and
-	source = 'ext' and
-	etat != 'inactif'";
-	$res_user = grr_sql_query($sql);
-	$num_row = grr_sql_count($res_user);
-	if ($num_row == 1)
-	{
-		// un utilisateur ldap ayant le même login existe déjà
-		// Lire les infos sur l'utilisateur depuis LDAP
-		$user_info = grr_getinfo_ldap($user_dn,$_login,$_password);
-		// Update GRR database
-		$user_info[0] = utf8_encode($user_info[0]);
-		$user_info[1] = utf8_encode($user_info[1]);
-		$user_info[2] = utf8_encode($user_info[2]);
-		$sql2 = "UPDATE ".TABLE_PREFIX."_utilisateurs SET
-		nom='".protect_data_sql($user_info[0])."',
-		prenom='".protect_data_sql($user_info[1])."',
-		email='".protect_data_sql($user_info[2])."'
-		WHERE login='".protect_data_sql($_login)."'";
-		if (grr_sql_command($sql2) < 0)
-			fatal_error(0, get_vocab("msg_login_created_error") . grr_sql_error());
-		// on récupère les données de l'utilisateur dans $row
+		if ($temoin_grp_ok != "oui")
+			return "5";
+		// Fin cas particulier des serveur SE3
+		// on regarde si un utilisateur ldap ayant le même login existe déjà
+		$sql = "SELECT upper(login) login, password, prenom, nom, statut, now() start, default_area, default_room, default_style, default_list_type, default_language, source, etat, default_site
+		FROM ".TABLE_PREFIX."_utilisateurs
+		WHERE login = '" . protect_data_sql($_login) . "' and
+		source = 'ext' and
+		etat != 'inactif'";
 		$res_user = grr_sql_query($sql);
-		$row = grr_sql_row($res_user,0);
-	}
-	else
-	{
-		// pas d'utilisateur ldap ayant le même login dans la base GRR
-		// Lire les infos sur l'utilisateur depuis LDAP
-		$user_info = grr_getinfo_ldap($user_dn,$_login,$_password);
-		// On teste si un utilisateur porte déjà le même login
-		$test = grr_sql_query1("SELECT login FROM ".TABLE_PREFIX."_utilisateurs WHERE login = '".protect_data_sql($_login)."'");
-		if ($test != '-1')
-			return "3";
-		else
-		{
+		$num_row = grr_sql_count($res_user);
+		if ($num_row == 1){
+			
+			// un utilisateur ldap ayant le même login existe déjà
+			// Lire les infos sur l'utilisateur depuis LDAP
+			$user_info = grr_getinfo_ldap($user_dn,$_login,$_password);
+			// Update GRR database
 			$user_info[0] = utf8_encode($user_info[0]);
 			$user_info[1] = utf8_encode($user_info[1]);
 			$user_info[2] = utf8_encode($user_info[2]);
-			// On insère le nouvel utilisateur
-			$sql = "INSERT INTO ".TABLE_PREFIX."_utilisateurs SET
+			$sql2 = "UPDATE ".TABLE_PREFIX."_utilisateurs SET
 			nom='".protect_data_sql($user_info[0])."',
 			prenom='".protect_data_sql($user_info[1])."',
-			login='".protect_data_sql($_login)."',
-			password='',
-			statut='".Settings::get("ldap_statut")."',
-			email='".protect_data_sql($user_info[2])."',
-			etat='actif',
-			source='ext'";
-			if (grr_sql_command($sql) < 0)
+			email='".protect_data_sql($user_info[2])."'
+			WHERE login='".protect_data_sql($_login)."'";
+			if (grr_sql_command($sql2) < 0)
 				fatal_error(0, get_vocab("msg_login_created_error") . grr_sql_error());
-			$sql = "SELECT upper(login) login, password, prenom, nom, statut, now() start, default_area, default_room, default_style, default_list_type, default_language, source, etat, default_site
-			FROM ".TABLE_PREFIX."_utilisateurs
-			WHERE login = '" . protect_data_sql($_login) . "' and
-			source = 'ext' and
-			etat != 'inactif'";
-			$res_user = grr_sql_query($sql);
-			$num_row = grr_sql_count($res_user);
-			if ($num_row == 1)
-			{
 			// on récupère les données de l'utilisateur dans $row
-				$row = grr_sql_row($res_user,0);
-			}
+			$res_user = grr_sql_query($sql);
+			$row = grr_sql_row($res_user,0);
+		}
+		else{
+			
+			// pas d'utilisateur ldap ayant le même login dans la base GRR
+			// Lire les infos sur l'utilisateur depuis LDAP
+			$user_info = grr_getinfo_ldap($user_dn,$_login,$_password);
+			// On teste si un utilisateur porte déjà le même login
+			$test = grr_sql_query1("SELECT login FROM ".TABLE_PREFIX."_utilisateurs WHERE login = '".protect_data_sql($_login)."'");
+			if ($test != '-1')
+				return "3";
 			else
-				return "2";
+			{
+				$user_info[0] = utf8_encode($user_info[0]);
+				$user_info[1] = utf8_encode($user_info[1]);
+				$user_info[2] = utf8_encode($user_info[2]);
+				
+				// On insère le nouvel utilisateur
+				$sql = "INSERT INTO ".TABLE_PREFIX."_utilisateurs SET
+						nom='".protect_data_sql($user_info[0])."',
+						prenom='".protect_data_sql($user_info[1])."',
+						login='".protect_data_sql($_login)."',
+						password='',
+						statut='".Settings::get("ldap_statut")."',
+						email='".protect_data_sql($user_info[2])."',
+						etat='actif',
+						source='ext'";
+						
+				if (grr_sql_command($sql) < 0)
+					fatal_error(0, get_vocab("msg_login_created_error") . grr_sql_error());
+				
+				$sql = "SELECT upper(login) login, password, prenom, nom, statut, now() start, default_area, default_room, default_style, default_list_type, default_language, source, etat, default_site
+						FROM ".TABLE_PREFIX."_utilisateurs
+						WHERE login = '" . protect_data_sql($_login) . "' and
+							source = 'ext' and
+							etat != 'inactif'";
+							
+				$res_user = grr_sql_query($sql);
+				$num_row = grr_sql_count($res_user);
+				if ($num_row == 1)
+				{
+				// on récupère les données de l'utilisateur dans $row
+					$row = grr_sql_row($res_user,0);
+				}
+				else
+					return "2";
+			}
 		}
 	}
-}
-if ($auth_imap == 'yes')
-{
+	if ($auth_imap == 'yes'){
+		
 		// on regarde si un utilisateur imap ayant le meme login existe deja
-	$sql = "SELECT upper(login) login, password, prenom, nom, statut, now() start, default_area, default_room, default_style, default_list_type, default_language, source, etat, default_site
-	FROM ".TABLE_PREFIX."_utilisateurs
-	WHERE login = '" . protect_data_sql($_login) . "' and
-	source = 'ext' and
-	etat != 'inactif'";
-	$res_user = grr_sql_query($sql);
-	$num_row = grr_sql_count($res_user);
-	if ($num_row == 1)
+		$sql = "SELECT upper(login) login, password, prenom, nom, statut, now() start, default_area, default_room, default_style, default_list_type, default_language, source, etat, default_site
+				FROM ".TABLE_PREFIX."_utilisateurs
+				WHERE login = '" . protect_data_sql($_login) . "' and
+					source = 'ext' and
+					etat != 'inactif'";
+					
+		$res_user = grr_sql_query($sql);
+		$num_row = grr_sql_count($res_user);
+		
+		if ($num_row == 1){
+			// un utilisateur imap ayant le meme login existe deja
+			// on recupere les donnees de l'utilisateur dans $row
+			$row = grr_sql_row($res_user,0);
+		}
+		else{
+			// pas d'utilisateur imap ayant le m?me login dans la base GRR
+			// Lire les infos sur l'utilisateur depuis imap
+			include "config_imap.inc.php";
+					// Connexion ? l'annuaire
+			$conn_imap = grr_connect_imap($imap_adresse,$imap_port,$_login,$_password,$imap_type,$imap_ssl,$imap_cert,$imap_tls);
+			if ($conn_imap){
+				// Test with login and password of the user
+				$l_nom = "";
+				$l_prenom = "";
+				$l_email = $_login."@".$imap_domaine;
+				imap_close($conn_imap);
+			}
+			// On teste si un utilisateur porte déjà le même login
+			$test = grr_sql_query1("SELECT login from ".TABLE_PREFIX."_utilisateurs where login = '".protect_data_sql($_login)."'");
+			if ($test != '-1')
+				return "3";
+			else{
+				// On insère le nouvel utilisateur
+				$sql = "INSERT INTO ".TABLE_PREFIX."_utilisateurs SET
+						nom='".protect_data_sql($l_nom)."',
+						prenom='".protect_data_sql($l_prenom)."',
+						login='".protect_data_sql($_login)."',
+						password='',
+						statut='".Settings::get("imap_statut")."',
+						email='".protect_data_sql($l_email)."',
+						etat='actif',
+						source='ext'";
+						
+				if (grr_sql_command($sql) < 0)
+					fatal_error(0, get_vocab("msg_login_created_error") . grr_sql_error());
+				
+				$sql = "SELECT upper(login) login, password, prenom, nom, statut, now() start, default_area, default_room, default_style, default_list_type, default_language, source, etat, default_site
+						FROM ".TABLE_PREFIX."_utilisateurs
+						WHERE login = '" . protect_data_sql($_login) . "' and
+							source = 'ext' and
+							etat != 'inactif'";
+				$res_user = grr_sql_query($sql);
+				$num_row = grr_sql_count($res_user);
+				if ($num_row == 1)
+				{
+					// on r?cup?re les donn?es de l'utilisateur dans $row
+					$row = grr_sql_row($res_user,0);
+				}
+				else
+					return "2";
+			}
+		}
+	}
+	
+	// On teste si la connexion est active ou non
+	if ((Settings::get("disable_login")=='yes') and ($row[4] != "administrateur"))
+		return "2";
+	
+	//
+	// A ce stade, on dispose dans tous les cas d'un tableau $row contenant les informations nécessaires à l'établissment d'une session
+	//
+	// Session starts now
+	session_name(SESSION_NAME);
+	@session_start();
+			// Is this user already connected ?
+	$sql = "SELECT SESSION_ID from ".TABLE_PREFIX."_log where SESSION_ID = '" . session_id() . "' and LOGIN = '" . protect_data_sql($_login) . "' and now() between START and END";
+	$res = grr_sql_query($sql);
+	$num_row = grr_sql_count($res);
+	if (($num_row > 0) and isset($_SESSION['start']))
 	{
-		// un utilisateur imap ayant le meme login existe deja
-		// on recupere les donnees de l'utilisateur dans $row
-		$row = grr_sql_row($res_user,0);
+		$sql = "UPDATE ".TABLE_PREFIX."_log set END = now() + interval " . Settings::get("sessionMaxLength") . " minute where SESSION_ID = '" . session_id() . "' and START = '" . $_SESSION['start'] . "'";
+			//  $sql = "update ".TABLE_PREFIX."_log set END = now() + interval " . Settings::get("sessionMaxLength") . " minute where SESSION_ID = '" . session_id() . "'";
+		$res = grr_sql_query($sql);
+		if (!$res)
+			fatal_error(0, 'erreur mysql' . grr_sql_error());
+		return "1";
 	}
 	else
 	{
-		// pas d'utilisateur imap ayant le m?me login dans la base GRR
-		// Lire les infos sur l'utilisateur depuis imap
-		include "config_imap.inc.php";
-				// Connexion ? l'annuaire
-		$conn_imap = grr_connect_imap($imap_adresse,$imap_port,$_login,$_password,$imap_type,$imap_ssl,$imap_cert,$imap_tls);
-		if ($conn_imap)
-		{
-			// Test with login and password of the user
-			$l_nom = "";
-			$l_prenom = "";
-			$l_email = $_login."@".$imap_domaine;
-			imap_close($conn_imap);
-		}
-		// On teste si un utilisateur porte déjà le même login
-		$test = grr_sql_query1("SELECT login from ".TABLE_PREFIX."_utilisateurs where login = '".protect_data_sql($_login)."'");
-		if ($test != '-1')
-			return "3";
-		else
-		{
-			// On insère le nouvel utilisateur
-			$sql = "INSERT INTO ".TABLE_PREFIX."_utilisateurs SET
-			nom='".protect_data_sql($l_nom)."',
-			prenom='".protect_data_sql($l_prenom)."',
-			login='".protect_data_sql($_login)."',
-			password='',
-			statut='".Settings::get("imap_statut")."',
-			email='".protect_data_sql($l_email)."',
-			etat='actif',
-			source='ext'";
-			if (grr_sql_command($sql) < 0)
-				fatal_error(0, get_vocab("msg_login_created_error") . grr_sql_error());
-			$sql = "SELECT upper(login) login, password, prenom, nom, statut, now() start, default_area, default_room, default_style, default_list_type, default_language, source, etat, default_site
-			from ".TABLE_PREFIX."_utilisateurs
-			where login = '" . protect_data_sql($_login) . "' and
-			source = 'ext' and
-			etat != 'inactif'";
-			$res_user = grr_sql_query($sql);
-			$num_row = grr_sql_count($res_user);
-			if ($num_row == 1)
-			{
-				// on r?cup?re les donn?es de l'utilisateur dans $row
-				$row = grr_sql_row($res_user,0);
-			}
-			else
-				return "2";
+		session_unset();
+	//      session_destroy();
+	}
+	
+	// reset $_SESSION
+	$_SESSION = array();
+	$_SESSION['login'] = $row[0];
+	$_SESSION['password'] = $row[1];
+	$_SESSION['prenom'] = $row[2];
+	$_SESSION['nom'] = $row[3];
+	$_SESSION['statut'] = $row[4];
+	$_SESSION['start'] = $row[5];
+	$_SESSION['maxLength'] = Settings::get("sessionMaxLength");
+	if ($row[6] > 0)
+		$_SESSION['default_area'] = $row[6];
+	else
+		$_SESSION['default_area'] = Settings::get("default_area");
+	if ($row[7] > 0)
+		$_SESSION['default_room'] = $row[7];
+	else
+		$_SESSION['default_room'] = Settings::get("default_room");
+	if ($row[8] !='')
+		$_SESSION['default_style'] = $row[8];
+	else
+		$_SESSION['default_style'] = Settings::get("default_css");
+	if ($row[9] !='')
+		$_SESSION['default_list_type'] = $row[9];
+	else
+		$_SESSION['default_list_type'] = Settings::get("area_list_format");
+	if ($row[10] !='')
+		$_SESSION['default_language'] = $row[10];
+	else
+		$_SESSION['default_language'] = Settings::get("default_language");
+	if ($row[13] > 0)
+		$_SESSION['default_site'] = $row[13];
+	else
+		$_SESSION['default_site'] = Settings::get("default_site");
+
+	$_SESSION['source_login'] = $row[11];
+
+	if ($est_authentifie_sso){
+		
+		// Variable de session qui permet de savoir qu'un utilisateur est authentifié à un SSO
+		$_SESSION['est_authentifie_sso'] = "y";
+	}
+
+	//On a imperativement besoin d'un établissement en session.
+	if (Settings::get("module_multietablissement") == "Oui"){
+
+		if (isset($code_etablissement_cas) && $code_etablissement_cas != ''){
+			forceEtablissementInSession($code_etablissement_cas);
+		} else {
+			setEtablissementInSession();
 		}
 	}
-}
-		// On teste si la connexion est active ou non
-if ((Settings::get("disable_login")=='yes') and ($row[4] != "administrateur"))
-	return "2";
-		//
-		// A ce stade, on dispose dans tous les cas d'un tableau $row contenant les informations nécessaires à l'établissment d'une session
-		//
-		// Session starts now
-session_name(SESSION_NAME);
-@session_start();
-		// Is this user already connected ?
-$sql = "SELECT SESSION_ID from ".TABLE_PREFIX."_log where SESSION_ID = '" . session_id() . "' and LOGIN = '" . protect_data_sql($_login) . "' and now() between START and END";
-$res = grr_sql_query($sql);
-$num_row = grr_sql_count($res);
-if (($num_row > 0) and isset($_SESSION['start']))
-{
-	$sql = "UPDATE ".TABLE_PREFIX."_log set END = now() + interval " . Settings::get("sessionMaxLength") . " minute where SESSION_ID = '" . session_id() . "' and START = '" . $_SESSION['start'] . "'";
-		//  $sql = "update ".TABLE_PREFIX."_log set END = now() + interval " . Settings::get("sessionMaxLength") . " minute where SESSION_ID = '" . session_id() . "'";
-	$res = grr_sql_query($sql);
-	if (!$res)
-		fatal_error(0, 'erreur mysql' . grr_sql_error());
+
+	// GIP RECIA | DEBUT | 2012-12-05
+	if ($row[8] !='') 
+		$_SESSION['default_style'] = $row[8]; 
+	else 
+		$_SESSION['default_style'] = Settings::get("default_css");
+
+	if ($row[9] !='') 
+		$_SESSION['default_list_type'] = $row[9]; 
+	else 
+		$_SESSION['default_list_type'] = Settings::get("area_list_format");
+	// GIP RECIA | FIN
+
+	// It's a new connection, insert into log
+	if (isset($_SERVER["HTTP_REFERER"]))
+		$httpreferer = substr($_SERVER["HTTP_REFERER"],0,254);
+	else
+		$httpreferer = '';
+
+	$ua = $_SERVER['HTTP_USER_AGENT'];
+	$ua = explode(' ', $ua);
+	$count = count($ua);
+	for ($i = 0; $i < $count; $i++)
+	{
+		if (strncmp($ua[$i], '(Windows', 8) == 0)
+		{
+			$os = "Windows ";
+			$i += 2;
+			switch ($ua[$i])
+			{
+				case '6.1;':
+					$os .= "7";
+					break;
+				case '6.2;':
+					$os .= "8";
+					break;
+				case '6.3;':
+					$os .= "8.1";
+					break;
+				default:
+					$os .= "";
+					break;
+			}
+		}
+		if (strncmp($ua[$i], 'Trident', 7) == 0)
+		{
+			$brow = "Internet Explorer ";
+			$i += 1;
+			$b = explode(':', $ua[$i]);
+			$brow .= trim($b[1], ")");
+		}
+		if (strncmp($ua[$i], 'Firefox', 7) == 0)
+		{
+			$b = explode('/', $ua[$i]);
+			$brow = $b[0].' '.$b[1];
+		}
+		if (strncmp($ua[$i], 'Chrome', 6) == 0)
+		{
+			$b = explode('/', $ua[$i]);
+			$brow = $b[0].' '.$b[1];
+		}
+	}
+
+	if (isset($os) && isset($brow))
+		$useragent = $os.' '.$brow;
+	else
+		$useragent = substr($_SERVER['HTTP_USER_AGENT'],0,254);
+
+	$sql = "INSERT INTO ".TABLE_PREFIX."_log (LOGIN, START, SESSION_ID, REMOTE_ADDR, USER_AGENT, REFERER, AUTOCLOSE, END) values (
+		'" . protect_data_sql($_SESSION['login']) . "',
+		'" . $_SESSION['start'] . "',
+		'" . session_id() . "',
+		'" . $_SERVER['REMOTE_ADDR'] . "',
+		'" . $useragent . "',
+		'" . $httpreferer . "',
+		'1',
+		'" . $_SESSION['start'] . "' + interval " . Settings::get("sessionMaxLength") . " minute
+		)
+	;";
+	grr_sql_query($sql);
+	/* Fonctionnalité SE3 (Palissy - Saintes - philippe.duval@ac-poitiers.fr) :
+	Utilisation du LDAP pour inscrire automatiquement les utilisateurs dans les groupes administration, accès et gestion
+	Ce code est associé à une nouvelle table :
+	CREATE TABLE ".TABLE_PREFIX."_j_groupe_se3 (groupe varchar(40) NOT NULL default '',id_area_room int(11) NOT NULL default '0', statut varchar(20) NOT NULL default '',  PRIMARY KEY  (`groupe`,`id_area_room`));
+	Par ailleurs, pour que cette fonctionnalité soit complète et dans l'esprit de GRR, il faudra développer une "petite" interface dans GRR pour gérer les entrées dans cette table.
+	*/
+		// Début de la fonctionnalité SE3
+	$grp = @grr_sql_query("SELECT groupe, id_area_room, statut FROM ".TABLE_PREFIX."_j_groupe_se3");
+	if ($grp)
+	{
+		// si la table ".TABLE_PREFIX."_j_groupe_se3 est implantée et non vide
+		//A modifier recalcul a chaque boucle
+		while ($resgrp = @mysqli_fetch_array($grp))
+		{
+			// balaye tous les groupes présents dans la table ".TABLE_PREFIX."_j_groupadmin_area
+			$statut_se3 = $resgrp['statut'];
+			$area_se3 = $resgrp['id_area_room'];
+			if ($statut_se3 == 'administrateur')
+			{
+				$table_user_se3 = "".TABLE_PREFIX."_j_useradmin_area"; $type_res = 'id_area';
+			}
+			if ($statut_se3 == 'acces_restreint')
+			{
+				$table_user_se3 = "".TABLE_PREFIX."_j_user_area"; $type_res = 'id_area';
+			}
+			if ($statut_se3 == 'gestionnaire')
+			{
+				$table_user_se3 = "".TABLE_PREFIX."_j_user_room"; $type_res = 'id_room';
+			}
+			if (se3_grp_members($resgrp['groupe'],$_login)=="oui")
+				@grr_sql_query("INSERT INTO `".$table_user_se3."` (login, ".$type_res.") values('".$_login."',".$area_se3.")");
+			else
+				@grr_sql_query("DELETE FROM `".$table_user_se3."` WHERE `login`='".$_login."' AND `".$type_res."`=".$area_se3);
+		}
+	}
+		// Note : Il reste à gérer finement l'interface graphique et à déduire l'incompatibilité éventuelle entre le domaine par défaut et les domaines autorisés pour chaque utilisateur
+		// Fin de la fonctionnalité SE3
+	/* Application du patch en production depuis la rentrée à Palissy : Zéro problème (ci-dessous, l'extraction de la table via phpmyadmin)
+	CREATE TABLE `".TABLE_PREFIX."_j_groupe_se3` (
+		`groupe` varchar(40) NOT NULL default '',
+		`id_area_room` int(11) NOT NULL default '0',
+		`statut` varchar(20) NOT NULL default '',
+		PRIMARY KEY  (`groupe`,`id_area_room`)
+	) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+	INSERT INTO `".TABLE_PREFIX."_j_groupe_se3` (`groupe`, `id_area_room`, `statut`) VALUES
+	('GRR_ADMIN_SALLES_REUNIONS', 1, 'administrateur'),
+	('GRR_ADMIN_SALLES_PEDAGOGIQUES', 2, 'administrateur'),
+	('GRR_ADMIN_LABOS_LANGUES', 3, 'administrateur'),
+	('GRR_SALLES_REUNIONS', 1, 'acces_restreint'),
+	('GRR_SALLES_PEDAGOGIQUES', 2, 'acces_restreint'),
+	('GRR_LABOS_LANGUES', 3, 'acces_restreint'),
+	('GRR_GESTION_SALLE_A01', 1, 'gestionnaire'),
+	('GRR_GESTION_SALLE_A03', 2, 'gestionnaire'),
+	('GRR_GESTION_SALLE_A314', 3, 'gestionnaire'),
+	('GRR_GESTION_SALLE_A409', 4, 'gestionnaire'),
+	('GRR_GESTION_SALLE_D05', 5, 'gestionnaire'),
+	('GRR_GESTION_SALLE_A301E', 6, 'gestionnaire');
+	*/
 	return "1";
 }
-else
-{
-	session_unset();
-//      session_destroy();
-}
-		// reset $_SESSION
-$_SESSION = array();
-$_SESSION['login'] = $row[0];
-$_SESSION['password'] = $row[1];
-$_SESSION['prenom'] = $row[2];
-$_SESSION['nom'] = $row[3];
-$_SESSION['statut'] = $row[4];
-$_SESSION['start'] = $row[5];
-$_SESSION['maxLength'] = Settings::get("sessionMaxLength");
-if ($row[6] > 0)
-	$_SESSION['default_area'] = $row[6];
-else
-	$_SESSION['default_area'] = Settings::get("default_area");
-if ($row[7] > 0)
-	$_SESSION['default_room'] = $row[7];
-else
-	$_SESSION['default_room'] = Settings::get("default_room");
-if ($row[8] !='')
-	$_SESSION['default_style'] = $row[8];
-else
-	$_SESSION['default_style'] = Settings::get("default_css");
-if ($row[9] !='')
-	$_SESSION['default_list_type'] = $row[9];
-else
-	$_SESSION['default_list_type'] = Settings::get("area_list_format");
-if ($row[10] !='')
-	$_SESSION['default_language'] = $row[10];
-else
-	$_SESSION['default_language'] = Settings::get("default_language");
-if ($row[13] > 0)
-	$_SESSION['default_site'] = $row[13];
-else
-	$_SESSION['default_site'] = Settings::get("default_site");
-$_SESSION['source_login'] = $row[11];
-if ($est_authentifie_sso)
-{
-				// Variable de session qui permet de savoir qu'un utilisateur est authentifié à un SSO
-	$_SESSION['est_authentifie_sso'] = "y";
-}
-		// It's a new connection, insert into log
-if (isset($_SERVER["HTTP_REFERER"]))
-	$httpreferer = substr($_SERVER["HTTP_REFERER"],0,254);
-else
-	$httpreferer = '';
-$ua = $_SERVER['HTTP_USER_AGENT'];
-$ua = explode(' ', $ua);
-$count = count($ua);
-for ($i = 0; $i < $count; $i++)
-{
-	if (strncmp($ua[$i], '(Windows', 8) == 0)
-	{
-		$os = "Windows ";
-		$i += 2;
-		switch ($ua[$i])
-		{
-			case '6.1;':
-				$os .= "7";
-				break;
-			case '6.2;':
-				$os .= "8";
-				break;
-			case '6.3;':
-				$os .= "8.1";
-				break;
-			default:
-				$os .= "";
-				break;
-		}
-	}
-	if (strncmp($ua[$i], 'Trident', 7) == 0)
-	{
-		$brow = "Internet Explorer ";
-		$i += 1;
-		$b = explode(':', $ua[$i]);
-		$brow .= trim($b[1], ")");
-	}
-	if (strncmp($ua[$i], 'Firefox', 7) == 0)
-	{
-		$b = explode('/', $ua[$i]);
-		$brow = $b[0].' '.$b[1];
-	}
-	if (strncmp($ua[$i], 'Chrome', 6) == 0)
-	{
-		$b = explode('/', $ua[$i]);
-		$brow = $b[0].' '.$b[1];
+
+/**
+ * Force l'établissement passé en parametre en session (mais vérifie tout de même que l'établissement existe).
+ * @param $codeEtablissement le code de l'établissement à mettre en session.
+ */
+function forceEtablissementInSession($codeEtablissement){
+	//Verifier à minima la présence de l'établissement cibler 
+	$sql = "select 1 from ".TABLE_PREFIX."_etablissement WHERE code = '$codeEtablissement'";
+	$res = grr_sql_query($sql);
+
+	if($res && grr_sql_count($res)> 0 ){
+		$_SESSION['current_etablisement'] = $codeEtablissement;
+	} else {
+		setEtablissementInSession();
 	}
 }
 
-if (isset($os) && isset($brow))
-	$useragent = $os.' '.$brow;
-else
-	$useragent = substr($_SERVER['HTTP_USER_AGENT'],0,254);
-
-$sql = "INSERT INTO ".TABLE_PREFIX."_log (LOGIN, START, SESSION_ID, REMOTE_ADDR, USER_AGENT, REFERER, AUTOCLOSE, END) values (
-	'" . protect_data_sql($_SESSION['login']) . "',
-	'" . $_SESSION['start'] . "',
-	'" . session_id() . "',
-	'" . $_SERVER['REMOTE_ADDR'] . "',
-	'" . $useragent . "',
-	'" . $httpreferer . "',
-	'1',
-	'" . $_SESSION['start'] . "' + interval " . Settings::get("sessionMaxLength") . " minute
-	)
-;";
-grr_sql_query($sql);
-/* Fonctionnalité SE3 (Palissy - Saintes - philippe.duval@ac-poitiers.fr) :
-Utilisation du LDAP pour inscrire automatiquement les utilisateurs dans les groupes administration, accès et gestion
-Ce code est associé à une nouvelle table :
-CREATE TABLE ".TABLE_PREFIX."_j_groupe_se3 (groupe varchar(40) NOT NULL default '',id_area_room int(11) NOT NULL default '0', statut varchar(20) NOT NULL default '',  PRIMARY KEY  (`groupe`,`id_area_room`));
-Par ailleurs, pour que cette fonctionnalité soit complète et dans l'esprit de GRR, il faudra développer une "petite" interface dans GRR pour gérer les entrées dans cette table.
-*/
-	// Début de la fonctionnalité SE3
-$grp = @grr_sql_query("SELECT groupe, id_area_room, statut FROM ".TABLE_PREFIX."_j_groupe_se3");
-if ($grp)
-{
-	// si la table ".TABLE_PREFIX."_j_groupe_se3 est implantée et non vide
-	//A modifier recalcul a chaque boucle
-	while ($resgrp = @mysqli_fetch_array($grp))
-	{
-		// balaye tous les groupes présents dans la table ".TABLE_PREFIX."_j_groupadmin_area
-		$statut_se3 = $resgrp['statut'];
-		$area_se3 = $resgrp['id_area_room'];
-		if ($statut_se3 == 'administrateur')
-		{
-			$table_user_se3 = "".TABLE_PREFIX."_j_useradmin_area"; $type_res = 'id_area';
+function setEtablissementInSession(){
+	
+	$idDefaultEtablissement = -1;
+	
+	if (isset($_SESSION['login']) && $_SESSION['login'] != '' ){
+		
+		$sql = "select default_etablissement
+	    				        from ".TABLE_PREFIX."_utilisateurs where login = '" . protect_data_sql($_SESSION['login']) . "'";
+		$res = grr_sql_query($sql);
+		$row = grr_sql_row($res, 0);
+	
+		if ($row[0] != 0 && $row[0] != -1){
+			$idDefaultEtablissement = $row[0];
+		} else {
+	
+			$sql = "select id_etablissement from ".TABLE_PREFIX."_j_useradmin_etablissement where login = '" . protect_data_sql($_SESSION['login']) . "'";
+			$res = grr_sql_query($sql);
+			if($res && grr_sql_count($res)> 0 ){
+				$row = grr_sql_row($res, 0);
+				$idDefaultEtablissement = $row[0];
+			} else {
+				$sql = "select id_etablissement from ".TABLE_PREFIX."_j_user_etablissement where login = '" . protect_data_sql($_SESSION['login']) . "'";
+				$res = grr_sql_query($sql);
+				if($res && grr_sql_count($res)> 0 ){
+					$row = grr_sql_row($res, 0);
+					$idDefaultEtablissement = $row[0];
+				} else {
+					$sql = "select id from ".TABLE_PREFIX."_etablissement ORDER BY shortname";
+					$res = grr_sql_query($sql);
+					if($res && grr_sql_count($res)> 0 ){
+						$row = grr_sql_row($res, 0);
+						$idDefaultEtablissement = $row[0];
+					}
+				}
+			}
 		}
-		if ($statut_se3 == 'acces_restreint')
-		{
-			$table_user_se3 = "".TABLE_PREFIX."_j_user_area"; $type_res = 'id_area';
+	} 
+	
+	if ($idDefaultEtablissement < 1){
+		$sql = "select id from ".TABLE_PREFIX."_etablissement ORDER BY shortname";
+		$res = grr_sql_query($sql);
+		if($res && grr_sql_count($res)> 0 ){
+			$row = grr_sql_row($res, 0);
+			$idDefaultEtablissement = $row[0];
 		}
-		if ($statut_se3 == 'gestionnaire')
-		{
-			$table_user_se3 = "".TABLE_PREFIX."_j_user_room"; $type_res = 'id_room';
-		}
-		if (se3_grp_members($resgrp['groupe'],$_login)=="oui")
-			@grr_sql_query("INSERT INTO `".$table_user_se3."` (login, ".$type_res.") values('".$_login."',".$area_se3.")");
-		else
-			@grr_sql_query("DELETE FROM `".$table_user_se3."` WHERE `login`='".$_login."' AND `".$type_res."`=".$area_se3);
 	}
+	
+	$sql = "select code from ".TABLE_PREFIX."_etablissement WHERE id = $idDefaultEtablissement";
+	
+	$res = grr_sql_query($sql);
+	$row = grr_sql_row($res, 0);
+	$codeEtablissement  = $row[0];
+
+	$_SESSION['current_etablisement'] = $codeEtablissement;
+	
+	
+	
 }
-	// Note : Il reste à gérer finement l'interface graphique et à déduire l'incompatibilité éventuelle entre le domaine par défaut et les domaines autorisés pour chaque utilisateur
-	// Fin de la fonctionnalité SE3
-/* Application du patch en production depuis la rentrée à Palissy : Zéro problème (ci-dessous, l'extraction de la table via phpmyadmin)
-CREATE TABLE `".TABLE_PREFIX."_j_groupe_se3` (
-	`groupe` varchar(40) NOT NULL default '',
-	`id_area_room` int(11) NOT NULL default '0',
-	`statut` varchar(20) NOT NULL default '',
-	PRIMARY KEY  (`groupe`,`id_area_room`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-INSERT INTO `".TABLE_PREFIX."_j_groupe_se3` (`groupe`, `id_area_room`, `statut`) VALUES
-('GRR_ADMIN_SALLES_REUNIONS', 1, 'administrateur'),
-('GRR_ADMIN_SALLES_PEDAGOGIQUES', 2, 'administrateur'),
-('GRR_ADMIN_LABOS_LANGUES', 3, 'administrateur'),
-('GRR_SALLES_REUNIONS', 1, 'acces_restreint'),
-('GRR_SALLES_PEDAGOGIQUES', 2, 'acces_restreint'),
-('GRR_LABOS_LANGUES', 3, 'acces_restreint'),
-('GRR_GESTION_SALLE_A01', 1, 'gestionnaire'),
-('GRR_GESTION_SALLE_A03', 2, 'gestionnaire'),
-('GRR_GESTION_SALLE_A314', 3, 'gestionnaire'),
-('GRR_GESTION_SALLE_A409', 4, 'gestionnaire'),
-('GRR_GESTION_SALLE_D05', 5, 'gestionnaire'),
-('GRR_GESTION_SALLE_A301E', 6, 'gestionnaire');
-*/
-return "1";
-}
+
 /**
  * Resume a session
  *
@@ -810,57 +935,77 @@ return "1";
  *
  * @return boolean
  */
-function grr_resumeSession()
-{
+function grr_resumeSession(){
+	
 		// Resuming session
 	session_name(SESSION_NAME);
 	@session_start();
+
 	if ((Settings::get('sso_statut') == 'lcs') and (!isset($_SESSION['est_authentifie_sso'])) and ($_SESSION['source_login'] == "ext"))
 		return (false);
+
+	// multi établissemernt
+	if (Settings::get("module_multietablissement") == "Oui"){
+    	//On a imperativement besoin d'un établissement en session.
+    	if (!isset($_SESSION['current_etablisement'])){
+    		setEtablissementInSession();
+    	}
+	 }
+
 		// La session est-elle expirée
-	if (isset($_SESSION['login']))
-	{
+	if (isset($_SESSION['login'])){
 		$test_session = grr_sql_query1("SELECT count(LOGIN) from ".TABLE_PREFIX."_log where END > now() and LOGIN = '".protect_data_sql($_SESSION['login'])."'");
-		if ($test_session == 0)
+		if ($test_session == 0){
 			$_SESSION = array();
+		}
 	}
-	if ((!isset($_SESSION)) or (!isset($_SESSION['login'])))
+	
+	if ((!isset($_SESSION)) or (!isset($_SESSION['login']))){
 		return (false);
-	if ((Settings::get("disable_login")=='yes') and ($_SESSION['statut'] != "administrateur"))
+	}
+	if ((Settings::get("disable_login")=='yes') and ($_SESSION['statut'] != "administrateur")){
 		return (false);
+	}
 		// To be removed
 		// Validating session data
 	$sql = "SELECT password = '" . $_SESSION['password'] . "' PASSWORD, login = '" . protect_data_sql($_SESSION['login']) . "' LOGIN, statut = '" . $_SESSION['statut'] . "' STATUT
 	from ".TABLE_PREFIX."_utilisateurs where login = '" . protect_data_sql($_SESSION['login']) . "'";
+
 	$res = grr_sql_query($sql);
 	$row = grr_sql_row($res, 0);
-		// Checking for a timeout
+	
+	// Checking for a timeout
 	$sql2 = "SELECT now() > END TIMEOUT from ".TABLE_PREFIX."_log where SESSION_ID = '" . session_id() . "' and START = '" . $_SESSION['start'] . "'";
-	if ($row[0] != "1" || $row[1] != "1" || $row[2] != "1")
+
+	if ($row[0] != "1" || $row[1] != "1" || $row[2] != "1"){
 		return (false);
+	}
 	else if (grr_sql_query1($sql2))
 	{
+
 		// Le temps d'inactivité est supérieur à la limite fixée.
 				// cas d'une authentification LCS
-		if (Settings::get('sso_statut') == 'lcs')
-		{
-		// l'utilisateur est authentifié par LCS, on renouvelle la session
-			if ($is_authentified_lcs == 'yes')
-			{
+		if (Settings::get('sso_statut') == 'lcs'){
+			
+			// l'utilisateur est authentifié par LCS, on renouvelle la session
+			if ($is_authentified_lcs == 'yes'){
+				
 				$sql = "UPDATE ".TABLE_PREFIX."_log set END = now() + interval " . $_SESSION['maxLength'] . " minute where SESSION_ID = '" . session_id() . "' and START = '" . $_SESSION['start'] . "'";
 				$res = grr_sql_query($sql);
 				if (!$res)
 					fatal_error(0, 'erreur mysql' . grr_sql_error());
 				return (true);
 			}
-			else
+			else{
 				return (false);
+			}
 		}
-		else
+		else{
 			return (false);
+		}
 	}
-	else
-	{
+	else{
+
 		$sql = "UPDATE ".TABLE_PREFIX."_log set END = now() + interval " . $_SESSION['maxLength'] . " minute where SESSION_ID = '" . session_id() . "' and START = '" . $_SESSION['start'] . "'";
 		$res = grr_sql_query($sql);
 		if (!$res)
@@ -876,8 +1021,8 @@ function grr_resumeSession()
  * @_auto               string                  Session auto-close flag
  * @return              nothing
  */
-function grr_closeSession(&$_auto)
-{
+function grr_closeSession(&$_auto){
+	
 	settype($_auto,"integer");
 	session_name(SESSION_NAME);
 	@session_start();
@@ -893,11 +1038,44 @@ function grr_closeSession(&$_auto)
 		// Détruit le cookie sur le navigateur
 	$CookieInfo = session_get_cookie_params();
 	@setcookie(session_name(), '', time()-3600, $CookieInfo['path']);
-		// On détruit la session
+		
+	// On détruit la session
 	session_destroy();
+	
+	 //Pour la supression de la session en base de données
+    $sql = "DELETE FROM ".TABLE_PREFIX."_session WHERE sess_id = '$_auto' ";
+	$res = grr_sql_query($sql);
+	
 }
-function grr_verif_ldap($_login, $_password)
-{
+
+function unserializesession( $serialized_string ) {
+	
+	$variables = array( );
+	$a = preg_split( "/(\w+)\|/", $serialized_string, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE );
+	for( $i = 0; $i < count( $a ); $i = $i+2 ) {
+		$variables[$a[$i]] = unserialize( $a[$i+1] );
+	}
+	return( $variables );
+}
+
+function deleteCASSession($postLogout){
+	
+	preg_match("/<samlp:SessionIndex>(ST-[0-9]+-[^<]+)<\/samlp:SessionIndex>/" ,$postLogout , $regs);
+	$id_ticket_cas_deconnecte = $regs[1];
+	$res = grr_sql_query("SELECT sess_id, sess_datas FROM ".TABLE_PREFIX."_session WHERE sess_expire > UNIX_TIMESTAMP() ");
+	if ($res){
+		for ($i = 0; ($row=grr_sql_row($res,$i));$i++) {
+			$datas = unserializesession($row[1]);
+			$sessId = $row[0];
+			if ($datas["ticketCAS"] == $id_ticket_cas_deconnecte) {
+				grr_closeSession($sessId);
+			}
+		}
+	}
+}
+
+function grr_verif_ldap($_login, $_password){
+	
 	global $ldap_filter;
 	if ($_password == '')
 		return false;
@@ -951,8 +1129,9 @@ function grr_verif_ldap($_login, $_password)
 	else
 		return false;
 }
-function grr_connect_ldap($l_adresse,$l_port,$l_login,$l_pwd, $use_tls, $msg_error = "no")
-{
+
+function grr_connect_ldap($l_adresse,$l_port,$l_login,$l_pwd, $use_tls, $msg_error = "no"){
+	
 	$ds = @ldap_connect($l_adresse, $l_port);
 	if ($ds)
 	{
@@ -1017,8 +1196,8 @@ $diagnostic="yes" :
 $diagnostic="no" :
 -> mode "normal" utilisé lors des connexions à l'annuaire pour se connecter à GRR.
 */
-function grr_ldap_search_user($ds, $basedn, $login_attr, $login, $filtre_sup = "", $diagnostic = "no")
-{
+function grr_ldap_search_user($ds, $basedn, $login_attr, $login, $filtre_sup = "", $diagnostic = "no"){
+	
 	if (Settings::get("ActiveModeDiagnostic") == "y")
 		$diagnostic = "yes";
 	// Construction du filtre
@@ -1063,8 +1242,8 @@ function grr_ldap_search_user($ds, $basedn, $login_attr, $login, $filtre_sup = "
 /**
  * @return resource|boolean
  */
-function grr_verif_imap($_login, $_password)
-{
+function grr_verif_imap($_login, $_password){
+	
 	if ($_password == '')
 		return false;
 	include "config_imap.inc.php";
@@ -1077,8 +1256,8 @@ function grr_verif_imap($_login, $_password)
 /**
  * @return resource|boolean
  */
-function grr_connect_imap($i_adresse,$i_port,$i_login,$i_pwd,$use_type,$use_ssl,$use_cert,$use_tls,$mode = "normal")
-{
+function grr_connect_imap($i_adresse,$i_port,$i_login,$i_pwd,$use_type,$use_ssl,$use_cert,$use_tls,$mode = "normal"){
+	
 	$string1="";
 	if (isset($i_adresse) && !empty($i_adresse))
 		$string1.="{".$i_adresse;
@@ -1145,8 +1324,9 @@ function grr_connect_imap($i_adresse,$i_port,$i_login,$i_pwd,$use_type,$use_ssl,
 	}
 	return false;
 }
-function grr_getinfo_ldap($_dn, $_login, $_password)
-{
+
+function grr_getinfo_ldap($_dn, $_login, $_password){
+	
 	// Lire les infos sur l'utilisateur depuis LDAP
 	include "config_ldap.inc.php";
 	// Connexion à l'annuaire
@@ -1195,6 +1375,119 @@ function grr_getinfo_ldap($_dn, $_login, $_password)
 	// Return infos
 	return array($l_nom, $l_prenom, $l_email);
 }
+
+
+/**
+ * La classe Session permet de gérer les sessions en base de données
+ *
+ * @author Aurore
+ */
+class Session{
+	
+	public $session_time = 7200;//2 heures
+	public $session = array();
+	private $db;
+
+	public function __construct(){
+		
+	}
+
+	//pour l'ouverture
+	public function open(){
+		
+		$this->gc();//on appelle la fonction gc
+		return true;
+	}
+
+	//lecture
+	public function read ($sid){
+
+	    $sid = session_id();
+
+		$sql = "SELECT sess_datas FROM ".TABLE_PREFIX."_session
+				WHERE sess_id = '$sid' ";
+
+		$query = grr_sql_query($sql) or exit(grr_sql_error());
+		$data = mysqli_fetch_array($query);
+
+		if(empty($data)) return FALSE;
+		else return $data['sess_datas'];//on retourne la valeur de sess_datas
+	}
+
+	//écriture
+	public function write ($sid, $data){
+
+		// si $GLOBALS['db_c] n'est pas défini, on le redéfinit
+		if(!isset($GLOBALS['db_c'])){
+			$GLOBALS['db_c'] = @mysqli_connect('p:'.$GLOBALS['dbHost'], $GLOBALS['dbUser'], $GLOBALS['dbPass'], $GLOBALS['dbPort']);
+			if(!$GLOBALS['db_c'] || !mysqli_select_db ($GLOBALS['db_c'], $GLOBALS['dbDb'])){
+				echo "\n<p>Database connection failure</p>\n";
+				exit;
+			}
+		}
+		
+		//calcul de l'expiration de la session
+		$expire = intval(time() + $this->session_time);
+		
+		$sid = session_id();
+		 
+		$sql = "SELECT COUNT(sess_id) AS total
+				FROM ".TABLE_PREFIX."_session
+				WHERE sess_id = '$sid' ";
+		
+		$query = grr_sql_query($sql) or exit(grr_sql_error());
+		$return = mysqli_fetch_array($query);
+		
+		//si la session n'existe pas encore
+		if($return['total'] == 0){
+			$sql = "INSERT INTO ".TABLE_PREFIX."_session
+				VALUES('$sid','$data','$expire')";//alors on la crée
+				
+		}
+		else{//sinon
+		
+			$sql = "UPDATE ".TABLE_PREFIX."_session
+					SET sess_datas = '$data',
+						sess_expire = '$expire'
+					WHERE sess_id = '$sid' ";//on la modifie
+		}
+		$query = grr_sql_query($sql) or exit(grr_sql_error());
+
+		return $query;
+	}
+
+	//fermeture
+	public function close(){
+
+		//if ($this->connect){
+		//	mysql_close($this->connect);//on ferme la bdd
+		//}
+	}
+
+	//destruction
+	public function destroy ($sid){
+
+	 $sid = session_id();
+		$sql = "DELETE FROM ".TABLE_PREFIX."_session
+				WHERE sess_id = '$sid' ";//on supprime la session de la bdd
+		$query = grr_sql_query($sql) or exit(grr_sql_error());
+		return $query;
+	}
+
+	//nettoyage
+	public function gc (){
+
+		$sql = "DELETE FROM ".TABLE_PREFIX."_session
+				WHERE sess_expire < ".time(); //on supprime les vieilles sessions 
+
+		$query = grr_sql_query($sql) or exit(grr_sql_error());
+
+		return $query;
+	}
+
+}//fin de la classe
+
+
 // On fabrique l'url
 $url = rawurlencode(str_replace('&amp;','&',get_request_uri()));
 ?>

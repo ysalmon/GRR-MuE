@@ -27,8 +27,8 @@
  * along with GRR; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-function minicals($year, $month, $day, $area, $room, $dmy)
-{
+function minicals($year, $month, $day, $area, $room, $dmy){
+	
 	global $display_day, $vocab;
 	get_planning_area_values($area);
 	class Calendar
@@ -116,16 +116,21 @@ function minicals($year, $month, $day, $area, $room, $dmy)
 				if ($display_day[$j] == "1")
 				{
 					if (($this->dmy == 'day') && ($d == $this->day) && ($this->h))
-						$s .= "<td class=\"week\">";
-					else
-						$s .= "<td class=\"cellcalendar\">";
+						$s .= "<td class=\"week cal_current_day\">";
+					else{
+						if (($d == $this->day) && ($this->h))
+							$s .= "<td class=\"cellcalendar cellcalendar_current_day\">";
+						else
+							$s .= "<td class=\"cellcalendar\">";
+					}
+					
 					if ($d > 0 && $d <= $daysInMonth)
 					{
 						$link = $this->getDateLink($d, $this->month, $this->year);
 						if ($link == "")
 							$s .= $d;
 						elseif (($d == $this->day) && ($this->h))
-							$s .= $link."><span class=\"cal_current_day\">$d</span></a>";
+							$s .= $link."><span class=\"cal_current_day\" title=\"".$d."--".$this->day."--".$this->h."\">$d</span></a>";
 						else
 							$s .= $link.">$d</a>";
 					}
@@ -200,9 +205,10 @@ function minicals($year, $month, $day, $area, $room, $dmy)
 				$j = ($i + 7 + $weekstarts) % 7;
 				$show = $basetime + ($i * 24 * 60 * 60);
 				$fl = ucfirst(utf8_strftime('%a',$show));
-				if ($display_day[$j] == 1)
+				if ($display_day[$j] == 1){
+					$fl = substr($fl, 0, 1);
 					$s .= "<td class=\"calendarcol1\">$fl</td>\n";
-				else
+				}else
 					$s .= "";
 			}
 			return $s;
@@ -216,12 +222,15 @@ function minicals($year, $month, $day, $area, $room, $dmy)
 		public function getHTML()
 		{
 			global $weekstarts, $vocab, $type_month_all, $display_day, $nb_display_day;
+			// Calcul de la date courante
 			$date_today = mktime(12, 0, 0, $this->month, $this->day, $this->year);
+			// Calcul du numéro de semaine courante
 			$week_today = $this->getWeekNumber($date_today);
 			if (!isset($weekstarts))
 				$weekstarts = 0;
 			$s = "";
 			$daysInMonth = $this->getDaysInMonth($this->month, $this->year);
+			// Calcul de la date au 1er du mois de la date courante
 			$date = mktime(12, 0, 0, $this->month, 1, $this->year);
 			$first = (strftime("%w",$date) + 7 - $weekstarts) % 7;
 			$monthName = ucfirst(utf8_strftime("%B", $date));
@@ -256,30 +265,42 @@ function minicals($year, $month, $day, $area, $room, $dmy)
 	}
 
 	$nb_calendar = Settings::get("nb_calendar");
-	if ($nb_calendar >= 1)
-	{
+	
+	if ($nb_calendar >= 1){
+		
 		$month_ = array();
 		$milieu = ($nb_calendar % 2 == 1) ? ($nb_calendar + 1) / 2 : $nb_calendar / 2;
+		
+		// Les mois avant le mois courant
 		for ($k = 1; $k < $milieu; $k++)
 			$month_[] = mktime(0, 0, 0, $month + $k - $milieu, 1, $year);
+		
+		 // Le mois courant
 		$month_[] = mktime(0, 0, 0, $month, $day, $year);
-		for ($k = $milieu; $k < $nb_calendar; $k++)
+
+		 // Les mois après le mois courant
+		for ($k = $milieu; $k < $nb_calendar; $k++){
 			$month_[] = mktime(0, 0, 0, $month + $k - $milieu + 1, 1, $year);
+		}
+		
 		$ind = 1;
-		foreach ($month_ as $key)
-		{
+		foreach ($month_ as $key){
+			
 			if ($ind == 1)
 				$mois_precedent = 1;
 			else
 				$mois_precedent = 0;
+			
 			if ($ind == $nb_calendar)
 				$mois_suivant = 1;
 			else
 				$mois_suivant = 0;
+			
 			if ($ind == $milieu)
 				$flag_surlignage = 1;
 			else
 				$flag_surlignage = 0;
+			
 			$cal = new Calendar(date("d",$key), date("m",$key), date("Y",$key), $flag_surlignage, $area, $room, $dmy, $mois_precedent, $mois_suivant);
 			echo $cal->getHTML();
 			$ind++;

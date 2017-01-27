@@ -29,8 +29,10 @@
  */
 include "../include/admin.inc.php";
 $grr_script_name = "admin_type_area.php";
+
 // Initialisation
 $id_area = isset($_GET["id_area"]) ? $_GET["id_area"] : NULL;
+
 $back = '';
 if (isset($_SERVER['HTTP_REFERER']))
 	$back = htmlspecialchars($_SERVER['HTTP_REFERER']);
@@ -38,23 +40,38 @@ $day   = date("d");
 $month = date("m");
 $year  = date("Y");
 check_access(4, $back);
+
 $back = "";
 if (isset($_SERVER['HTTP_REFERER']))
 	$back = htmlspecialchars($_SERVER['HTTP_REFERER']);
+
 // Gestion du retour à la page précédente sans enregistrement
-if (isset($_GET['change_done']))
-{
+if (isset($_GET['change_done'])){
+	
 	Header("Location: "."admin_room.php?id_area=".$_GET['id_area']);
 	exit();
 }
+
 if ((isset($_GET['msg'])) && isset($_SESSION['displ_msg']) && ($_SESSION['displ_msg'] == 'yes') )
 	$msg = $_GET['msg'];
 else
 	$msg = '';
+
 print_header("", "", "", $type="with_session");
 include "admin_col_gauche.php";
-$sql = "SELECT id, type_name, order_display, couleur, type_letter FROM ".TABLE_PREFIX."_type_area
-ORDER BY order_display, type_letter";
+
+if (Settings::get("module_multietablissement") == "Oui") {
+	$idEtablissement = getIdEtablissementCourant();
+	//On recherche les type non associés à un établissement + ceux associés à l'établissement ocurant.
+	$sql = "SELECT id, type_name, order_display, couleur, type_letter 
+			FROM ".TABLE_PREFIX."_type_area  LEFT JOIN ".TABLE_PREFIX."_j_etablissement_type_area ON id_type_area = id
+			WHERE id_etablissement = $idEtablissement OR id_etablissement is NULL
+			ORDER BY order_display, type_letter";
+} else {
+	$sql = "SELECT id, type_name, order_display, couleur, type_letter FROM ".TABLE_PREFIX."_type_area
+		ORDER BY order_display, type_letter";
+}
+
 //
 // Enregistrement
 //
@@ -75,36 +92,33 @@ if (isset($_GET['valider']))
 			{
 				$type_si_aucun = $row[0];
 				$test = grr_sql_query1("SELECT count(id_type) FROM ".TABLE_PREFIX."_j_type_area WHERE id_area = '".$id_area."' AND id_type = '".$row[0]."'");
-				if ($test == 0)
-				{
-					//faire le test si il existe une réservation en cours avec ce type de réservation
-					//$type_id = grr_sql_query1("select type_letter from ".TABLE_PREFIX."_type_area where id = '".$row[0]."'");
-					//$test1 = grr_sql_query1("select count(id) from ".TABLE_PREFIX."_entry where type= '".$type_id."'");
-					//$test2 = grr_sql_query1("select count(id) from ".TABLE_PREFIX."_repeat where type= '".$type_id."'");
-					//if (($test1 != 0) or ($test2 != 0)) {
-					//$msg =  "Suppression impossible : des réservations ont été enregistrées avec ce type.";
-					//} else {
+				if ($test == 0){
+
 					$sql1 = "INSERT INTO ".TABLE_PREFIX."_j_type_area SET id_area='".$id_area."', id_type = '".$row[0]."'";
-					if (grr_sql_command($sql1) < 0)
+					if (grr_sql_command($sql1) < 0){
 						fatal_error(1, "<p>" . grr_sql_error());
-					//}
+					}
 				}
 			}
 		}
 	}
-	if ($nb_types_valides == 0)
-	{
+	
+	if ($nb_types_valides == 0){
+		
 		// Aucun type n'a été sélectionné. Dans ce cas, on impose au moins un type :
 		$del = grr_sql_query("DELETE FROM ".TABLE_PREFIX."_j_type_area WHERE id_area='".$id_area."' AND id_type = '".$type_si_aucun."'");
 		$msg = "Vous devez au définir au moins un type valide !";
 	}
+	
 	// Type par défaut :
 	// On enregistre le nouveau type par défaut :
 	$reg_type_par_defaut = grr_sql_query("UPDATE ".TABLE_PREFIX."_area SET id_type_par_defaut='".$_GET['id_type_par_defaut']."' WHERE id='".$id_area."'");
 }
+
 affiche_pop_up($msg,"admin");
+
 $area_name = grr_sql_query1("SELECT area_name FROM ".TABLE_PREFIX."_area WHERE id='".$id_area."'");
-echo "<div class=\"page_sans_col_gauche\">";
+echo "<div>";
 echo "<h2>".get_vocab('admin_type.php')."</h2>";
 echo "<h2>".get_vocab("match_area").get_vocab('deux_points')." ".$area_name."</h2>";
 $res = grr_sql_query($sql);
@@ -121,15 +135,16 @@ if (authGetUserLevel(getUserName(),-1) >= 6)
 echo "<tr><td>".get_vocab("explications_active_type")."</td></tr>";
 echo "<tr><td>\n";
 // Affichage du tableau
-echo "<table border=\"1\" cellpadding=\"3\"><tr>\n";
-// echo "<tr><td><b>".get_vocab("type_num")."</a></b></td>\n";
-echo "<td><b>".get_vocab("type_num")."</b></td>\n";
-echo "<td><b>".get_vocab("type_name")."</b></td>\n";
-echo "<td><b>".get_vocab("type_color")."</b></td>\n";
-echo "<td><b>".get_vocab("type_order")."</b></td>\n";
-echo "<td><b>".get_vocab("type_valide_domaine")."</b></td>";
-echo "<td><b>".get_vocab("type_par_defaut")."</b></td>";
-echo "</tr>";
+echo "<table class=\"table table-hover table-bordered\">
+		<thead>
+			<tr>\n";
+echo "<th><b>".get_vocab("type_num")."</b></th>\n";
+echo "<th><b>".get_vocab("type_name")."</b></th>\n";
+echo "<th><b>".get_vocab("type_color")."</b></th>\n";
+echo "<th><b>".get_vocab("type_order")."</b></th>\n";
+echo "<th><b>".get_vocab("type_valide_domaine")."</b></th>";
+echo "<th><b>".get_vocab("type_par_defaut")."</b></th>";
+echo "</tr></thead><tbody>";
 if ($res)
 {
 	for ($i = 0; ($row = grr_sql_row($res, $i)); $i++)
@@ -176,11 +191,11 @@ if ($res)
 	echo " />".$vocab["nobody"]."    </td>";
 	echo "</tr>";
 }
-echo "</table>";
+echo "</tbody></table>";
 echo "</td></tr></table>";
 echo "<div style=\"text-align:center;\"><input type=\"hidden\" name=\"id_area\" value=\"".$id_area."\" />";
-echo "<input type=\"submit\" name=\"valider\" value=\"".get_vocab("save")."\" />\n";
-echo "   <input type=\"submit\" name=\"change_done\" value=\"".get_vocab("back")."\" />";
+echo "<input class=\"btn btn-primary\" type=\"submit\" name=\"valider\" value=\"".get_vocab("save")."\" />\n";
+echo "   <input class=\"btn btn-primary\" type=\"submit\" name=\"change_done\" value=\"".get_vocab("back")."\" />";
 echo "</div>";
 echo "</form>\n";
 echo "</div>";

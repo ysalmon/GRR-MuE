@@ -27,6 +27,7 @@
  * along with GRR; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+ 
 include "../include/admin.inc.php";
 $grr_script_name = "admin_type_modify.php";
 $ok = NULL;
@@ -37,85 +38,91 @@ $day   = date("d");
 $month = date("m");
 $year  = date("Y");
 check_access(6, $back);
+
 // Initialisation
 $id_type = isset($_GET["id_type"]) ? $_GET["id_type"] : 0;
 $type_name = isset($_GET["type_name"]) ? $_GET["type_name"] : NULL;
 $order_display = isset($_GET["order_display"]) ? $_GET["order_display"] : NULL;
-$type_letter = isset($_GET["type_letter"]) ? $_GET["type_letter"] : NULL;
+//$type_letter = isset($_GET["type_letter"]) ? $_GET["type_letter"] : NULL;
 $couleur = isset($_GET["couleur"]) ? $_GET["couleur"] : NULL;
 $disponible = isset($_GET["disponible"]) ? $_GET["disponible"] : NULL;
 $msg = '';
-if (isset($_GET["change_room_and_back"]))
-{
+
+if (isset($_GET["change_room_and_back"])){
+	
 	$_GET['change_type'] = "yes";
 	$_GET['change_done'] = "yes";
 }
+
 // Enregistrement
-if (isset($_GET['change_type']))
-{
+if (isset($_GET['change_type'])){
+	
 	$_SESSION['displ_msg'] = "yes";
 	if ($type_name == '')
 		$type_name = "A définir";
-	if ($type_letter == '')
-		$type_letter = "A";
+	/*if ($type_letter == '')
+		$type_letter = "A";*/
 	if ($couleur == '')
 		$couleur = "1";
 	if ($disponible == '')
 		$disponible = "2";
-	if ($id_type > 0)
-	{
-		// Test sur $type_letter
-		$test = grr_sql_query1("SELECT count(id) FROM ".TABLE_PREFIX."_type_area WHERE type_letter='".$type_letter."' AND id!='".$id_type."'");
-		if ($test > 0)
-			$msg = "Enregistrement impossible : Un type portant la même lettre existe déjà.";
+	
+	if ($id_type > 0){
+			/*// Test sur $type_letter
+			$test = grr_sql_query1("SELECT count(id) FROM ".TABLE_PREFIX."_type_area WHERE type_letter='".$type_letter."' AND id!='".$id_type."'");
+			if ($test > 0)
+				$msg = "Enregistrement impossible : Un type portant la même lettre existe déjà.";
+			else{*/
+			
+		$sql = "UPDATE ".TABLE_PREFIX."_type_area SET
+		type_name='".protect_data_sql($type_name)."',
+		order_display =";
+		if (is_numeric($order_display))
+			$sql= $sql .intval($order_display).",";
 		else
+			$sql= $sql ."0,";
+		//$sql = $sql . 'type_letter="'.$type_letter.'",';
+		$sql = $sql . 'couleur="'.$couleur.'",';
+		$sql = $sql . 'disponible="'.$disponible.'"';
+		$sql = $sql . " WHERE id=$id_type";
+		if (grr_sql_command($sql) < 0)
 		{
-			$sql = "UPDATE ".TABLE_PREFIX."_type_area SET
-			type_name='".protect_data_sql($type_name)."',
-			order_display =";
-			if (is_numeric($order_display))
-				$sql= $sql .intval($order_display).",";
-			else
-				$sql= $sql ."0,";
-			$sql = $sql . 'type_letter="'.$type_letter.'",';
-			$sql = $sql . 'couleur="'.$couleur.'",';
-			$sql = $sql . 'disponible="'.$disponible.'"';
-			$sql = $sql . " WHERE id=$id_type";
-			if (grr_sql_command($sql) < 0)
-			{
-				fatal_error(0, get_vocab('update_type_failed') . grr_sql_error());
-				$ok = 'no';
-			}
-			else
-				$msg = get_vocab("message_records");
+			fatal_error(0, get_vocab('update_type_failed') . grr_sql_error());
+			$ok = 'no';
 		}
+		else
+			$msg = get_vocab("message_records");
+			//}
 	}
-	else
-	{
-		// Test sur $type_letter
-		$test = grr_sql_query1("SELECT count(id) FROM ".TABLE_PREFIX."_type_area WHERE type_letter='".$type_letter."'");
-		if ($test > 0)
-			$msg = "Enregistrement impossible : Un type portant la même lettre existe déjà.";
+	else{
+			/*// Test sur $type_letter
+			$test = grr_sql_query1("SELECT count(id) FROM ".TABLE_PREFIX."_type_area WHERE type_letter='".$type_letter."'");
+			if ($test > 0)
+				$msg = "Enregistrement impossible : Un type portant la même lettre existe déjà.";
+			else
+			{*/
+		$sql = "INSERT INTO ".TABLE_PREFIX."_type_area SET
+		type_name='".protect_data_sql($type_name)."',
+		order_display =";
+		if (is_numeric($order_display))
+			$sql= $sql .intval($order_display).",";
 		else
-		{
-			$sql = "INSERT INTO ".TABLE_PREFIX."_type_area SET
-			type_name='".protect_data_sql($type_name)."',
-			order_display =";
-			if (is_numeric($order_display))
-				$sql= $sql .intval($order_display).",";
-			else
-				$sql= $sql ."0,";
-			$sql = $sql . 'type_letter="'.$type_letter.'",';
-			$sql = $sql . 'couleur="'.$couleur.'"';
-			if (grr_sql_command($sql) < 0)
-			{
-				fatal_error(1, "<p>" . grr_sql_error());
-				$ok = 'no';
-			}
-			else
-				$msg = get_vocab("message_records");
+			$sql= $sql ."0,";
+		//$sql = $sql . 'type_letter="'.$type_letter.'",';
+		$sql = $sql . 'couleur="'.$couleur.'"';
+		
+		if (grr_sql_command($sql) < 0){
+			fatal_error(1, "<p>" . grr_sql_error());
+			$ok = 'no';
 		}
-
+		else{
+			$id = grr_sql_insert_id("", "");
+            $sql = "UPDATE  ".TABLE_PREFIX."_type_area 
+					SET type_letter=id WHERE id = $id";
+            grr_sql_command($sql);	
+			$msg = get_vocab("message_records");
+		}
+			//}
 	}
 }
 // Si pas de problème, retour à la page d'accueil après enregistrement
@@ -128,10 +135,11 @@ if ((isset($_GET['change_done'])) && (!isset($ok)))
 # print the page header
 print_header("", "", "", $type="with_session");
 include "admin_col_gauche.php";
-echo "<div class=\"page_sans_col_gauche\">";
+
 affiche_pop_up($msg,"admin");
-if ((isset($id_type)) && ($id_type > 0))
-{
+
+if ((isset($id_type)) && ($id_type > 0)){
+	
 	$res = grr_sql_query("SELECT * FROM ".TABLE_PREFIX."_type_area WHERE id=$id_type");
 	if (!$res)
 		fatal_error(0, get_vocab('message_records_error'));
@@ -140,8 +148,8 @@ if ((isset($id_type)) && ($id_type > 0))
 	$change_type = 'modif';
 	echo "<h2>".get_vocab("admin_type_modify_modify.php")."</h2>";
 }
-else
-{
+else{
+	
 	$row["id"] = '0';
 	$row["type_name"] = '';
 	$row["type_letter"] = '';
@@ -161,23 +169,23 @@ echo get_vocab('admin_type_explications')."<br /><br />";
 	echo "<td>".get_vocab("type_name").get_vocab("deux_points")."</td>\n";
 	echo "<td><input type=\"text\" name=\"type_name\" value=\"".htmlspecialchars($row["type_name"])."\" size=\"20\" /></td>\n";
 	echo "</tr><tr>\n";
-	echo "<td>".get_vocab("type_num").get_vocab("deux_points")."</td>\n";
+	
+	/*echo "<td>".get_vocab("type_num").get_vocab("deux_points")."</td>\n";
 	echo "<td>";
 	echo "<select name=\"type_letter\" size=\"1\">\n";
 	echo "<option value=''>".get_vocab("choose")."</option>\n";
 	$letter = "A";
-	for ($i = 1; $i <= 100; $i++)
-	{
+	for ($i = 1; $i <= 100; $i++){
 		echo "<option value='".$letter."' ";
 		if ($row['type_letter'] == $letter)
 			echo " selected=\"selected\"";
 		echo ">".$letter."</option>\n";
 		$letter++;
 	}
-
 	echo "</select>";
 	echo "</td>\n";
-	echo "</tr><tr>\n";
+	echo "</tr><tr>\n";*/
+	
 	echo "<td>".get_vocab("type_order").get_vocab("deux_points")."</td>\n";
 	echo "<td><input type=\"text\" name=\"order_display\" value=\"".htmlspecialchars($row["order_display"])."\" size=\"20\" /></td>\n";
 	echo "</tr>";
@@ -220,14 +228,12 @@ echo get_vocab('admin_type_explications')."<br /><br />";
 		}
 		echo "<td  style=\"background-color:".$tab_couleur[$key].";\"><input type=\"radio\" name=\"couleur\" value=\"".$key."\" ".$checked." />______________</td>";
 	}
-	echo "</tr></table>\n";
-	echo "<table><tr><td>\n";
-	echo "<input type=\"submit\" name=\"change_type\"  value=\"".get_vocab("save")."\" />\n";
-	echo "</td><td>\n";
-	echo "<input type=\"submit\" name=\"change_done\" value=\"".get_vocab("back")."\" />";
-	echo "</td><td>\n";
-	echo "<input type=\"submit\" name=\"change_room_and_back\" value=\"".get_vocab("save_and_back")."\" />";
-	echo "</td></tr></table>";
+	echo "</tr></table>\n<br/>";
+	echo "<input class=\"btn btn-primary\" type=\"submit\" name=\"change_type\" value=\"".get_vocab("save")."\" />\n";
+	echo "<input class=\"btn btn-primary\" type=\"submit\" name=\"change_done\" value=\"".get_vocab("back")."\" />\n";
+	echo "<input class=\"btn btn-primary\" type=\"submit\" name=\"change_room_and_back\" value=\"".get_vocab("save_and_back")."\" />";
+
+	
 	?>
 </form>
 </div>

@@ -46,6 +46,9 @@ $month = date("m");
 $year  = date("Y");
 check_access(6, $back);
 $page_config = isset($_GET["page_config"]) ? $_GET["page_config"] : '1';
+
+$config_global = true;
+
 if ($page_config == 1)
 	include "./admin_config1.php";
 else if ($page_config == 2)

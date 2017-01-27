@@ -29,11 +29,13 @@
  */
 include "../include/admin.inc.php";
 $grr_script_name = "admin_room_del.php";
+
 $type = isset($_GET["type"]) ? $_GET["type"] : NULL;
 $confirm = isset($_GET["confirm"]) ? $_GET["confirm"] : NULL;
 $room = isset($_GET["room"]) ? $_GET["room"] : NULL;
 $id_area = isset($_POST["id_area"]) ? $_POST["id_area"] : (isset($_GET["id_area"]) ? $_GET["id_area"] : NULL);
 $id_site = isset($_POST['id_site']) ? $_POST['id_site'] : (isset($_GET['id_site']) ? $_GET['id_site'] : -1);
+
 if (isset($room))
 	settype($room,"integer");
 if (isset($id_area))
@@ -42,15 +44,14 @@ if (isset($id_site))
 	settype($id_site,"integer");
 if (isset($_SERVER['HTTP_REFERER']))
 	$back = htmlspecialchars($_SERVER['HTTP_REFERER']);
-if ($type == "room")
-{
-	if ((authGetUserLevel(getUserName(),$room) < 4) || (!verif_acces_ressource(getUserName(), $room)))
-	{
+
+if ($type == "room"){
+	
+	if ((authGetUserLevel(getUserName(),$room) < 4) || (!verif_acces_ressource(getUserName(), $room))){
 		showAccessDenied($back);
 		exit();
 	}
-	if (isset($confirm))
-	{
+	if (isset($confirm)){
 		//They have confirmed it already, so go blast!
 		//First take out all appointments for this room
 		grr_sql_command("DELETE FROM ".TABLE_PREFIX."_entry WHERE room_id=$room");
@@ -62,8 +63,7 @@ if ($type == "room")
 		//Go back to the admin page
 		Header("Location: admin_room.php?id_area=$id_area&id_site=$id_site");
 	}
-	else
-	{
+	else{
 		//print the page header
 		print_header("", "", "", $type="with_session");
 		echo "<div class=\"page_sans_col_gauche\">";
@@ -89,11 +89,10 @@ if ($type == "room")
 		echo "</div>";
 	}
 }
-if ($type == "area")
-{
+
+if ($type == "area"){
 	// Seul l'admin peut supprimer un domaine
-	if (authGetUserLevel(getUserName(), $id_area, 'area') < 5)
-	{
+	if (authGetUserLevel(getUserName(), $id_area, 'area') < 5){
 		showAccessDenied($back);
 		exit();
 	}

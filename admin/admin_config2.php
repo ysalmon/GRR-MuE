@@ -51,6 +51,15 @@ if (isset($_GET['authentification_obli']))
         die();
     }
 }
+
+// MULTI ETAB : Ouverture des etablissement
+if (isset($_GET['etablissement_open'])) {
+	if (!Settings::set("etablissement_open", $_GET['etablissement_open'])) {
+		echo "Erreur lors de l'enregistrement de etablissement_open !<br />";
+		die();
+	}
+}
+
 // Visualisation de la fiche de description d'une ressource.
 if (isset($_GET['visu_fiche_description']))
 {
@@ -111,6 +120,8 @@ include "admin_col_gauche.php";
 include "../include/admin_config_tableau.inc.php";
 //echo "<h2>".get_vocab('admin_config2.php')."</h2>";
 echo "<form action=\"./admin_config.php\" method=\"get\" style=\"width: 100%;\">\n";
+
+
 // Type d'accès
 # authentification_obli = 1 : il est obligatoire de se connecter pour accéder au site.
 # authentification_obli = 0 : Il n'est pas nécessaire de se connecter pour voir les réservations mais la connection est
@@ -130,6 +141,26 @@ if (Settings::get("authentification_obli") == '1')
 echo " />\n";
 echo "</td><td width='20px'></td></tr>\n";
 echo "</table>\n";
+
+
+// MULTI ETAB : Accès aux établissements
+# etablissement_open = 1 : tous les établissements sont visibles pour tous les utilisateurs.
+# etablissement_open = 0 : seuls les établissements où les utilisateurs ont des droits sont visibles.
+if (Settings::get("module_multietablissement") == "Oui"){
+
+	echo "<hr /><h3>".get_vocab("etablissement_open_msg")."</h3>\n";
+	echo "<table>\n";
+	echo "<tr><td>".get_vocab("etablissement_open0")."</td><td>\n";
+	echo "<input type='radio' name='etablissement_open' value='0' "; if (Settings::get("etablissement_open",true)=='0') echo "checked=\"checked\""; echo " />\n";
+	echo "</td></tr>\n";
+	echo "<tr><td>".get_vocab("etablissement_open1")."</td><td>\n";
+	echo "<input type='radio' name='etablissement_open' value='1' "; if (Settings::get("etablissement_open",true)=='1') echo "checked=\"checked\""; echo " />\n";
+	echo "</td></tr>\n";
+	echo "</table>\n";
+}
+
+
+
 ###########################################################
 # Visualisation de la fiche de description d'une ressource.
 ###########################################################

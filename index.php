@@ -28,6 +28,10 @@
  * along with GRR; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+// Ajout de la variable $base_path pour prise en compte correcte des include
+$base_path = ".";
+ 
 if (!@file_exists("/var/www/lcs/includes/headerauth.inc.php"))
 	error_reporting (E_ALL);
 require_once("include/config.inc.php");
@@ -106,13 +110,24 @@ require_once("include/$dbsys.inc.php");
 require_once("./include/session.inc.php");
 //Settings
 require_once("./include/settings.class.php");
+
 //Chargement des valeurs de la table settingS
 if (!Settings::load())
 	die("Erreur chargement settings");
+
 $cook = session_get_cookie_params();
+
 // Cas d'une authentification CAS
-if ((Settings::get('sso_statut') == 'cas_visiteur') || (Settings::get('sso_statut') == 'cas_utilisateur'))
-{
+if ((Settings::get('sso_statut') == 'cas_visiteur') || (Settings::get('sso_statut') == 'cas_utilisateur')){
+	
+
+	if (isset($_POST) && array_key_exists('logoutRequest', $_POST)) {
+		deleteCASSession($_POST['logoutRequest'] );
+		die();
+	}
+	session_name(SESSION_NAME);
+	@session_start();  
+	
 	require_once("./include/cas.inc.php");
 	// A ce stade, l'utilisateur est authentifié par CAS
 	$password = '';
@@ -126,6 +141,9 @@ if ((Settings::get('sso_statut') == 'cas_visiteur') || (Settings::get('sso_statu
 	if (!isset($user_mail))
 		$user_mail='';
 	$cas_tab_login["user_email"] = $user_mail;
+	if (!isset($user_code_etablissement)) 
+		$user_code_etablissement='';
+	$cas_tab_login["user_code_etablissement"] = $user_code_etablissement;
 	if (!isset($user_code_fonction))
 		$user_code_fonction='';
 	$cas_tab_login["user_code_fonction"] = $user_code_fonction;

@@ -31,11 +31,12 @@ if (empty($db_nopersist))
 	$GLOBALS['db_c'] = @mysqli_connect('p:'.$dbHost, $dbUser, $dbPass, $dbPort);
 else
 	$GLOBALS['db_c'] = mysqli_connect($dbHost, $dbUser, $dbPass, $dbPort);
-if (!$GLOBALS['db_c'] || !mysqli_select_db ($GLOBALS['db_c'], $dbDb))
-{
+
+if (!$GLOBALS['db_c'] || !mysqli_select_db ($GLOBALS['db_c'], $dbDb)){
 	echo "\n<p>Database connection failure</p>\n";
 	exit;
 }
+
 mysqli_query($GLOBALS['db_c'], "SET NAMES UTF8");
 /**
  * @param integer $row
@@ -82,7 +83,7 @@ function grr_sql_query1 ($sql)
 // which should be passed back to grr_sql_row or grr_sql_row_keyed to get the results.
 // Returns 0 on error; use grr_sql_error to get the error message.
 function grr_sql_query($sql)
-{
+{	
 	$r = mysqli_query($GLOBALS['db_c'], $sql);
 	return $r;
 }
@@ -229,4 +230,5 @@ function grr_sql_syntax_caseless_contains_overload($fieldname, $s, $id_overload,
 }
 // Utilisé dans language.inc.php
 $fichier_mysql_inc_est_present = 1;
+
 ?>

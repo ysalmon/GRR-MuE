@@ -45,6 +45,7 @@ function getAttribute($key)
  $user_code_fonction = recuperer_code_fonction(phpCAS::getAttribute('user_code_fonction_ldap'));
  $user_libelle_fonction = recuperer_libelle_fonction(phpCAS::getAttribute('user_libelle_fonction_ldap'));
  $user_mail = recuperer_mail(phpCAS::getAttribute('user_mail_ldap'));
+ $user_code_etablissement=recuperer_code_etablissement(phpCAS::getAttribute('ESCOUAICourant'));
  $user_default_style = "argent";
 
 /*
@@ -142,4 +143,56 @@ function getAttribute($key)
 //Le cas échéant, remplacez la ligne suivante par le code PHP adéquat, correspondant à votre annuaire LDAP
  	return $user_mail;
  }
+ 
+ 
+/*
+Fonction permettant de récupérer le code etablissement dans le champ LDAP $user_etablissement
+*/
+function recuperer_code_etablissement($user_etablissement) {
+
+  $etablissement_principal = recuperer_code_etablissement_principal($user_etablissement);
+  if($etablissement_principal) {
+    return $etablissement_principal;
+  }
+
+  return $user_etablissement;
+}
+
+
+// MODIFICATION RECIA | DEBUT | 2012-04-17
+
+// INCLUDES
+if (file_exists("connect.inc.php")) {
+   include_once "connect.inc.php";
+}
+
+// FUNCTIONS
+// Ajout d'une methode permettant de verifier si un etablissement 
+// est considere comme secondaire.
+// Dans ce cas, l'UAI de l'etablissement principal est retourne.
+
+function recuperer_code_etablissement_principal($etablissement) {
+  global $dbHost, $dbUser, $dbPass, $dbDb;
+
+  // Connection MySQL
+  if (!@mysql_connect("$dbHost", "$dbUser", "$dbPass")) {
+    return null;
+  }
+  if (!@mysql_select_db("$dbDb")) {
+    return null;
+  }
+
+  // Recuperation (eventuelle) de l'UAI principal
+  $query  = "SELECT code_etablissement_principal";
+  $query .= " FROM " . TABLE_PREFIX . "_etablissement_regroupement";
+  $query .= " WHERE code_etablissement_secondaire = '" . $etablissement . "'";
+  $result = @mysql_query($query);
+  $row    = @mysql_fetch_assoc($result);
+
+  if($row) {
+    return $row["code_etablissement_principal"];
+  } 
+  return null;
+}
+// MODIFICATION RECIA | FIN 
  ?>

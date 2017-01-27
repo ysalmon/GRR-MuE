@@ -29,16 +29,20 @@
 
 include "../include/admin.inc.php";
 $grr_script_name = "admin_email_manager.php";
+
 $id_area = isset($_GET["id_area"]) ? $_GET["id_area"] : NULL;
 $room = isset($_GET["room"]) ? $_GET["room"] : NULL;
 if (isset($room))
 	settype($room,"integer");
 if (!isset($id_area))
 	settype($id_area,"integer");
+
 $back = '';
 if (isset($_SERVER['HTTP_REFERER']))
 	$back = htmlspecialchars($_SERVER['HTTP_REFERER']);
 check_access(4, $back);
+
+
 // tableau des ressources auxquelles l'utilisateur n'a pas accès
 $tab_rooms_noaccess = verif_acces_ressource(getUserName(), 'all');
 if (isset($_POST['mail1']))
@@ -47,20 +51,25 @@ if (isset($_POST['mail1']))
 		$temp = '1';
 	else
 		$temp = '0';
-	if (!Settings::set("send_always_mail_to_creator", $temp))
+	
+	//if (!Settings::set("send_always_mail_to_creator", $temp)) // ancien code - GIP RECIA
+	if (!Settings::setEtab("send_always_mail_to_creator", $temp))
 	{
 		echo "Erreur lors de l'enregistrement de send_always_mail_to_creator !<br />";
 		die();
 	}
 }
+
+
 $reg_admin_login = isset($_GET["reg_admin_login"]) ? $_GET["reg_admin_login"] : NULL;
 $action = isset($_GET["action"]) ? $_GET["action"] : NULL;
 $msg='';
 
 if ($reg_admin_login) {
+	
 	// On commence par vérifier que le professeur n'est pas déjà présent dans cette liste.
-	if ($room !=-1)
-	{
+	if ($room !=-1){
+		
 		// Ressource
 		// On vérifie que la ressource $room existe
 		$test = grr_sql_query1("select id from ".TABLE_PREFIX."_room where id='".$room."'");
@@ -76,6 +85,7 @@ if ($reg_admin_login) {
 		}
 		// La ressource existe : on vérifie les privilèges de l'utilisateur
 		check_access(4, $back);
+		
 		$sql = "SELECT * FROM ".TABLE_PREFIX."_j_mailuser_room WHERE (login = '$reg_admin_login' and id_room = '$room')";
 		$res = grr_sql_query($sql);
 		$test = grr_sql_count($res);
@@ -94,12 +104,13 @@ if ($reg_admin_login) {
 		}
 	}
 }
-if ($action)
-{
-	if ($action == "del_admin")
-	{
-		if (authGetUserLevel(getUserName(),$room) < 4)
-		{
+
+if ($action){
+	
+	if ($action == "del_admin"){
+		
+		if (authGetUserLevel(getUserName(),$room) < 4){
+			
 			showAccessDenied($back);
 			exit();
 		}
@@ -110,13 +121,19 @@ if ($action)
 			$msg = get_vocab("del_user_succeed");
 	}
 }
+
+
 # print the page header
 print_header("", "", "", $type="with_session");
+
 // Affichage de la colonne de gauche
 include "admin_col_gauche.php";
+
 affiche_pop_up($msg,"admin");
+
 if (empty($room))
 	$room = -1;
+
 echo "<h2>".get_vocab('admin_email_manager.php')."</h2>\n";
 if (Settings::get("automatic_mail") != 'yes')
 	echo "<h3 class=\"avertissement\">".get_vocab("attention_mail_automatique_désactive")."</h3>";
@@ -127,18 +144,31 @@ if (Settings::get('send_always_mail_to_creator')=='1')
 	echo ' checked="checked" ';
 echo ' />'."\n";
 echo get_vocab("explain_automatic_mail1");
-echo "\n".'<br /><br /><div style="text-align:center;"><input type="submit" name="mail1" value="'.get_vocab('save').'" /></div></div></form><hr />';
+echo "\n".'<br /><br /><div style="text-align:center;"><input class="btn btn-primary btn-xs" type="submit" name="mail1" value="'.get_vocab('save').'" /></div></div></form><hr />';
 echo get_vocab("explain_automatic_mail2")."<br />";
 echo $msg;
+
 # Table with areas, rooms.
 echo "\n<table><tr>\n";
 $this_area_name = "";
 $this_room_name = "";
+
 # Show all areas
 echo "<td ><p><b>".get_vocab("areas")."</b></p>\n";
 $out_html = "<form  id=\"area\" action=\"admin_email_manager.php\" method=\"post\">\n<div><select name=\"area\" onchange=\"area_go()\">\n";
 $out_html .= "<option value=\"admin_email_manager.php?id_area=-1\">".get_vocab('select')."</option>\n";
-$sql = "select id, area_name from ".TABLE_PREFIX."_area order by area_name";
+
+if (Settings::get("module_multietablissement") == "Oui") {
+	$idEtablissement = getIdEtablissementCourant();
+	$sql = "select id, area_name from ".TABLE_PREFIX."_area ".
+			"JOIN ".TABLE_PREFIX."_j_site_area AS SA on id = SA.id_area ".
+			"JOIN ".TABLE_PREFIX."_j_etablissement_site AS ES on ES.id_site = SA.id_site ".
+			"WHERE ES.id_etablissement = $idEtablissement ".
+			"ORDER BY area_name";
+} else  {
+	$sql = "select id, area_name from ".TABLE_PREFIX."_area order by area_name";
+}
+
 $res = grr_sql_query($sql);
 if ($res)
 {
@@ -238,7 +268,7 @@ if ($room == '-1')
 }
 else
 {
-	echo "<table border=\"1\" cellpadding=\"5\"><tr><td>";
+	echo "<table border=\"1\" cellpadding=\"5\"><tr><td class='paddingLR5'>";
 	$sql = "SELECT u.login, u.nom, u.prenom FROM ".TABLE_PREFIX."_utilisateurs u, ".TABLE_PREFIX."_j_mailuser_room j WHERE (j.id_room='$room' and u.login=j.login)  order by u.nom, u.prenom";
 	$res = grr_sql_query($sql);
 	$nombre = grr_sql_count($res);
@@ -264,7 +294,18 @@ else
 	<div><select size="1" name="reg_admin_login">
 		<option value=''><?php echo get_vocab("nobody"); ?></option>
 		<?php
-		$sql = "SELECT DISTINCT login, nom, prenom FROM ".TABLE_PREFIX."_utilisateurs WHERE  (etat!='inactif' and email!='' and statut!='visiteur' ) order by nom, prenom";
+		
+		if (Settings::get("module_multietablissement") == "Oui") {
+			$idEtablissement = getIdEtablissementCourant();
+			$sql = "SELECT DISTINCT U.login, U.nom, U.prenom FROM ".TABLE_PREFIX."_utilisateurs AS U ".
+			"JOIN ".TABLE_PREFIX."_j_user_etablissement AS UE ON UE.login = U.login ".
+			"WHERE  (etat!='inactif' and email!='' and statut!='visiteur' ) ".
+			"AND UE.id_etablissement = $idEtablissement ".
+			"ORDER BY U.nom, U.prenom";
+		} else {
+			$sql = "SELECT DISTINCT login, nom, prenom FROM ".TABLE_PREFIX."_utilisateurs WHERE  (etat!='inactif' and email!='' and statut!='visiteur' ) order by nom, prenom";
+		}
+		
 		$res = grr_sql_query($sql);
 		if ($res)
 		{
@@ -279,7 +320,7 @@ else
 	<input type="hidden" name="add_admin" value="yes" />
 	<input type="hidden" name="id_area" value="<?php echo $id_area;?>" />
 	<input type="hidden" name="room" value="<?php echo $room;?>" />
-	<input class="btn btn-primary" type="submit" value="Enregistrer" /></div>
+	<input class="btn btn-primary btn-xs " type="submit" value="Enregistrer" /></div>
 </form>
 </td>
 </tr>

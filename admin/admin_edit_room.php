@@ -32,8 +32,9 @@
 include "../include/admin.inc.php";
 $grr_script_name = "admin_edit_room.php";
 $ok = NULL;
-if (Settings::get("module_multisite") == "Oui")
+if (Settings::get("module_multisite") == "Oui" || Settings::get("module_multietablissement") == "Oui")
 	$id_site = isset($_POST["id_site"]) ? $_POST["id_site"] : (isset($_GET["id_site"]) ? $_GET["id_site"] : -1);
+
 $action = isset($_POST["action"]) ? $_POST["action"] : (isset($_GET["action"]) ? $_GET["action"] : NULL);
 $add_area = isset($_POST["add_area"]) ? $_POST["add_area"] : (isset($_GET["add_area"]) ? $_GET["add_area"] : NULL);
 $area_id = isset($_POST["area_id"]) ? $_POST["area_id"] : (isset($_GET["area_id"]) ? $_GET["area_id"] : NULL);
@@ -57,11 +58,14 @@ $dont_allow_modify  = isset($_POST["dont_allow_modify"]) ? $_POST["dont_allow_mo
 $qui_peut_reserver_pour  = isset($_POST["qui_peut_reserver_pour"]) ? $_POST["qui_peut_reserver_pour"] : NULL;
 $who_can_see  = isset($_POST["who_can_see"]) ? $_POST["who_can_see"] : NULL;
 $max_booking = isset($_POST["max_booking"]) ? $_POST["max_booking"] : NULL;
+
 settype($max_booking, "integer");
 if ($max_booking<-1)
 	$max_booking = -1;
+
 $statut_room = isset($_POST["statut_room"]) ? "0" : "1";
 $show_fic_room = isset($_POST["show_fic_room"]) ? "y" : "n";
+
 if (isset($_POST["active_ressource_empruntee"]))
 	$active_ressource_empruntee = 'y';
 else
@@ -80,6 +84,7 @@ $change_room = isset($_POST["change_room"]) ? $_POST["change_room"] : NULL;
 $number_periodes = isset($_POST["number_periodes"]) ? $_POST["number_periodes"] : NULL;
 $type_affichage_reser = isset($_POST["type_affichage_reser"]) ? $_POST["type_affichage_reser"] : NULL;
 $retour_resa_obli = isset($_POST["retour_resa_obli"]) ? $_POST["retour_resa_obli"] : NULL;
+$room_warning = isset($_POST["room_warning"]) ? $_POST["room_warning"] : '';
 $moderate = isset($_POST['moderate']) ? $_POST["moderate"] : NULL;
 if ($moderate == 'on')
 	$moderate = 1;
@@ -236,7 +241,8 @@ if ((!empty($room)) || (isset($area_id)))
 			type_affichage_reser='".$type_affichage_reser."',
 			max_booking='".$max_booking."',
 			moderate='".$moderate."',
-			statut_room='".$statut_room."'
+			statut_room='".$statut_room."',
+			room_warning='".protect_data_sql($room_warning)."'
 			WHERE id=$room";
 			if (grr_sql_command($sql) < 0)
 			{
@@ -266,7 +272,8 @@ if ((!empty($room)) || (isset($area_id)))
 			type_affichage_reser='".$type_affichage_reser."',
 			max_booking='".$max_booking."',
 			moderate='".$moderate."',
-			statut_room='".$statut_room."'";
+			statut_room='".$statut_room."',
+			room_warning='".$room_warning."'";
 			if (grr_sql_command($sql) < 0)
 				fatal_error(1, "<p>" . grr_sql_error());
 			$room = mysqli_insert_id($GLOBALS['db_c']);
@@ -395,6 +402,7 @@ if ((!empty($room)) || (isset($area_id)))
 		$row["type_affichage_reser"]  = 0;
 		$row["max_booking"] = -1;
 		$row['statut_room'] = '';
+		$row['room_warning'] = '';
 		$row['moderate'] = '';
 		$row['show_fic_room'] = '';
 		$row['active_ressource_empruntee'] = 'n';
@@ -433,32 +441,76 @@ if ((!empty($room)) || (isset($area_id)))
 		echo "<tr><td>".get_vocab("description")."</td><td><input type=\"text\" name=\"description\"  size=\"40\" value=\"".htmlspecialchars($row["description"])."\" /></td></tr>\n";
 		// Domaine
 		$enable_periods = grr_sql_query1("select enable_periods from ".TABLE_PREFIX."_area where id='".$area_id."'");
-		if (((authGetUserLevel(getUserName(),$area_id,"area") >=4 ) || (authGetUserLevel(getUserName(),$room) >= 4)) && ($enable_periods == 'n'))
-		{
-	  	// les creneaux sont bases sur le temps : on ne peut pas changer une ressource de domaine
-			if(authGetUserLevel(getUserName(),-1,'area') >= 6)
-				$sql = "SELECT id,area_name
-			FROM ".TABLE_PREFIX."_area where enable_periods='n'
-			ORDER BY area_name ASC";
-			else if (authGetUserLevel(getUserName(),$area_id,'area') == 5)
-				$sql = "SELECT distinct a.id, a.area_name
-			FROM ".TABLE_PREFIX."_area a, ".TABLE_PREFIX."_j_site_area j, ".TABLE_PREFIX."_site s,  ".TABLE_PREFIX."_j_useradmin_site u
-			WHERE a.id=j.id_area and u.id_site=j.id_site  and s.id=u.id_site and u.login='".getUserName()."'  and  enable_periods='n'
-			ORDER BY a.area_name ASC";
-			else
-				$sql = "SELECT id,area_name
-			FROM ".TABLE_PREFIX."_area a,  ".TABLE_PREFIX."_j_useradmin_area u
-			WHERE a.id=u.id_area and u.login='".getUserName()."' and  a.enable_periods='n'
-			ORDER BY a.area_name ASC";
+		if (((authGetUserLevel(getUserName(),$area_id,"area") >=4 ) || (authGetUserLevel(getUserName(),$room) >= 4)) && ($enable_periods == 'n')){
+			
+			// les creneaux sont bases sur le temps : on ne peut pas changer une ressource de domaine
+			if(authGetUserLevel(getUserName(),-1,'area') >= 6){
+				
+				if (Settings::get("module_multietablissement") == "Oui") {
+					$idEtablissement = getIdEtablissementCourant();
+					$sql = "SELECT A.id,A.area_name
+								FROM ".TABLE_PREFIX."_area AS A 
+								JOIN  ".TABLE_PREFIX."_j_site_area AS SA ON SA.id_area = A.id
+								JOIN  ".TABLE_PREFIX."_j_etablissement_site AS ES ON ES.id_SITE = SA.id_site
+								WHERE A.enable_periods='n'
+								AND ES.id_etablissement = $idEtablissement
+								ORDER BY A.area_name ASC";
+				} else  {
+					$sql = "SELECT id,area_name
+					FROM ".TABLE_PREFIX."_area where enable_periods='n'
+					ORDER BY area_name ASC";
+				}
+				
+			}
+			else if (authGetUserLevel(getUserName(),$area_id,'area') == 5){
+				
+				if (Settings::get("module_multietablissement") == "Oui") {
+					$idEtablissement = getIdEtablissementCourant();
+					$sql = "SELECT A.id,A.area_name
+										FROM ".TABLE_PREFIX."_area AS A 
+										JOIN  ".TABLE_PREFIX."_j_site_area AS SA ON SA.id_area = A.id
+										JOIN  ".TABLE_PREFIX."_j_useradmin_site U ON SA.id_site = U.id_site 
+										JOIN  ".TABLE_PREFIX."_j_etablissement_site AS ES ON ES.id_SITE = SA.id_site
+										WHERE A.enable_periods='n'
+										AND U.login='".getUserName()."'
+										AND ES.id_etablissement = $idEtablissement
+										ORDER BY A.area_name ASC";
+				} else  {
+					$sql = "SELECT distinct a.id, a.area_name
+					FROM ".TABLE_PREFIX."_area a, ".TABLE_PREFIX."_j_site_area j, ".TABLE_PREFIX."_site s,  ".TABLE_PREFIX."_j_useradmin_site u
+					WHERE a.id=j.id_area and u.id_site=j.id_site  and s.id=u.id_site and u.login='".getUserName()."'  and  enable_periods='n'
+					ORDER BY a.area_name ASC";
+				}
+			} 
+			else{
+				if (Settings::get("module_multietablissement") == "Oui") {
+					$idEtablissement = getIdEtablissementCourant();
+					$sql = "SELECT A.id,A.area_name
+												FROM ".TABLE_PREFIX."_area AS A 
+												JOIN  ".TABLE_PREFIX."_j_useradmin_area U ON A.id = U.id_area
+												JOIN  ".TABLE_PREFIX."_j_site_area AS SA ON SA.id_area = A.id
+												JOIN  ".TABLE_PREFIX."_j_etablissement_site AS ES ON ES.id_SITE = SA.id_site
+												WHERE A.enable_periods='n'
+												AND U.login='".getUserName()."'
+												AND ES.id_etablissement = $idEtablissement
+												ORDER BY A.area_name ASC";
+				} else  {
+					$sql = "SELECT id,area_name
+					FROM ".TABLE_PREFIX."_area a,  ".TABLE_PREFIX."_j_useradmin_area u
+					WHERE a.id=u.id_area and u.login='".getUserName()."' and  a.enable_periods='n'
+					ORDER BY a.area_name ASC";
+				}
+			}
+			
 			$res = grr_sql_query($sql);
 			$nb_area = grr_sql_count($res);
-			if ($nb_area > 1)
-			{
+			if ($nb_area > 1){
+				
 				echo "<tr><td>".get_vocab('match_area').get_vocab('deux_points')."</td>\n";
 				echo "<td><select class=\"form-control\" name=\"area_id\" >\n
 				<option value=\"-1\">".get_vocab('choose_an_area')."</option>\n";
-				for ($enr = 0; ($row1 = grr_sql_row($res, $enr)); $enr++)
-				{
+				for ($enr = 0; ($row1 = grr_sql_row($res, $enr)); $enr++){
+					
 					echo "<option value=\"".$row1[0]."\"";
 					if ($area_id == $row1[0])
 						echo ' selected="selected"';
@@ -468,18 +520,21 @@ if ((!empty($room)) || (isset($area_id)))
 				grr_sql_free($res);
 				echo "</select></td></tr>";
 			}
-			else
-			{
-				if (isset($area_id))
+			else{
+				
+				if (isset($area_id)){
 					echo "<input type=\"hidden\" name=\"area_id\" value=\"".$area_id."\" />\n";
+				}
 			}
 		}
-		else
-		{
-	  	// les creneaux sont bases sur les intitules : on ne peut pas changer une ressource de domaine
-			if (isset($area_id))
+		else{
+			
+			// les creneaux sont bases sur les intitules : on ne peut pas changer une ressource de domaine
+			if (isset($area_id)){
 				echo "<input type=\"hidden\" name=\"area_id\" value=\"".$area_id."\" />\n";
+			}
 		}
+		
 		// Ordre d'affichage du domaine
 		echo "<tr><td>".get_vocab("order_display").get_vocab("deux_points")."</td>\n";
 		echo "<td><input class=\"form-control\" type=\"text\" name=\"area_order\" size=\"1\" value=\"".htmlspecialchars($row["order_display"])."\" /></td>\n";
@@ -638,16 +693,27 @@ if ((!empty($room)) || (isset($area_id)))
 				echo " selected=\"selected\" ";
 			echo ">".get_vocab("tous les utilisateurs")."</option>\n
 		</select></td></tr>\n";
-// Activer la fonctionalite "ressource empruntee/restituee"
+		
+		// Activer la fonctionalite "ressource empruntee/restituee"
 		echo "<tr><td>".get_vocab("activer_fonctionalite_ressource_empruntee_restituee")."</td><td><input type=\"checkbox\" name=\"active_ressource_empruntee\" ";
 		if ($row['active_ressource_empruntee'] == "y")
 			echo " checked=\"checked\" ";
 		echo "/></td></tr>\n";
+		
+		// Rédiger un avertissement sur une ressource
+		echo "<tr><td colspan=\"2\" >".get_vocab("warning_explain")."</td></tr>";
+		echo "<tr> <td colspan=\"2\" ><input type=\"text\" name=\"room_warning\" size=\"100\" ";
+		echo "value=\"".$row['room_warning']."\" /></td></tr>\n";
+		
 		echo "</table>\n";
+		
 		echo "<div style=\"text-align:center;\"><br />\n";
+		
 		echo "<input class=\"btn btn-primary\" type=\"submit\" name=\"change_room\"  value=\"".get_vocab("save")."\" />\n";
-		echo "<input class=\"btn btn-primary\" type=\"submit\" name=\"change_done\" value=\"".get_vocab("back")."\" />";
-		echo "<input class=\"btn btn-primary\" type=\"submit\" name=\"change_room_and_back\" value=\"".get_vocab("save_and_back")."\" />";
+		echo " <input class=\"btn btn-primary\" type=\"submit\" name=\"change_done\" value=\"".get_vocab("back")."\" />";
+		echo " <input class=\"btn btn-primary\" type=\"submit\" name=\"change_room_and_back\" value=\"".get_vocab("save_and_back")."\" />";
+		
+		
 		if (@file_exists($nom_picture) && $nom_picture)
 			echo "<br /><br /><b>".get_vocab("Image de la ressource").get_vocab("deux_points")."</b><br /><img src=\"".$nom_picture."\" alt=\"logo\" />";
 		else
@@ -782,16 +848,19 @@ if ((!empty($id_area)) || (isset($add_area)))
 					fatal_error(1, "<p>" . grr_sql_error());
 				$id_area = grr_sql_insert_id();
 			}
-	  		// Affectation e un site
-			if (Settings::get("module_multisite") == "Oui")
-			{
+			
+	  		// Affectation à un site
+			if (Settings::get("module_multisite") == "Oui" || Settings::get("module_multietablissement") == "Oui") {
+				
 				$sql = "delete from ".TABLE_PREFIX."_j_site_area where id_area='".$id_area."'";
 				if (grr_sql_command($sql) < 0)
 					fatal_error(0, "<p>".grr_sql_error()."</p>");
+				
 				$sql = "INSERT INTO ".TABLE_PREFIX."_j_site_area SET id_site='".$id_site."', id_area='".$id_area."'";
 				if (grr_sql_command($sql) < 0)
 					fatal_error(0, "<p>".grr_sql_error()."</p>");
 			}
+			
 			#Si area_name est vide on le change maintenant que l'on a l'id area
 			if ($area_name == '')
 			{
@@ -917,17 +986,22 @@ if ((!empty($id_area)) || (isset($add_area)))
 			$row["morningstarts_area"] = $morningstarts;
 			$row["eveningends_area"] = $eveningends;
 			$row["resolution_area"] = $resolution;
-			$row["duree_par_defaut_reservation_area"] = $duree_par_defaut_reservation_area;
+			if(isset($duree_par_defaut_reservation_area))
+				$row["duree_par_defaut_reservation_area"] = $duree_par_defaut_reservation_area;
 			$row["duree_max_resa_area"] = $duree_max_resa;
 			$row["eveningends_minutes_area"] = $eveningends_minutes;
 			$row["weekstarts_area"] = $weekstarts;
 			$row["twentyfourhour_format_area"] = $twentyfourhour_format;
-			$row["display_days"] = $display_days;
+			if(isset($display_days))
+				$row["display_days"] = $display_days;
 		}
-		if ($row["enable_periods"] != 'y')
+		if ($row["enable_periods"] != 'y'){
 			$row["enable_periods"] = 'n';
-		if (Settings::get("module_multisite") == "Oui")
+		}
+		
+		if (Settings::get("module_multisite") == "Oui" || Settings::get("module_multietablissement") == "Oui"){
 			$id_site=grr_sql_query1("select id_site from ".TABLE_PREFIX."_j_site_area where id_area='".$id_area."'");
+		}
 	}
 	else
 	{
@@ -978,24 +1052,38 @@ if ((!empty($id_area)) || (isset($add_area)))
 			echo "checked=\"checked\"";
 		echo " /></td>\n";
 		echo "</tr>";
+		
+		
 		// Site
-		if (Settings::get("module_multisite") == "Oui")
-		{
-	  	// Affiche une liste deroulante des sites;
-			if (authGetUserLevel(getUserName(), -1, 'area') >= 6)
-				$sql = "SELECT id,sitecode,sitename
-			FROM ".TABLE_PREFIX."_site
-			ORDER BY sitename ASC";
-			else
-				$sql = "SELECT id,sitecode,sitename
-			FROM ".TABLE_PREFIX."_site s,  ".TABLE_PREFIX."_j_useradmin_site u
-			WHERE s.id=u.id_site and u.login='".getUserName()."'
-			ORDER BY s.sitename ASC";
+		if (Settings::get("module_multisite") == "Oui" || Settings::get("module_multietablissement") == "Oui") {
+
+			// Affiche une liste deroulante des sites;
+		
+			if (Settings::get("module_multietablissement") == "Oui" ){
+				$idEtablissement = getIdEtablissementCourant();
+				$sqlJoin = " INNER JOIN ".TABLE_PREFIX."_j_etablissement_site AS J ON J.id_site = S.id ";
+				$sqlWhereAll= "WHERE J.id_etablissement = $idEtablissement ";
+				$sqlWhereRestreint= "AND J.id_etablissement = $idEtablissement ";
+			  }
+	  
+			if (authGetUserLevel(getUserName(), -1, 'area') >= 6){
+					 $sql = "SELECT S.id,S.sitecode,S.sitename
+								FROM ".TABLE_PREFIX."_site AS S ".$sqlJoin .$sqlWhereAll." 
+								ORDER BY S.sitename ASC";
+			}
+			else{
+				 $sql = "SELECT S.id,S.sitecode,S.sitename
+						FROM ".TABLE_PREFIX."_site AS  S ".$sqlJoin ."  ,  ".TABLE_PREFIX."_j_useradmin_site  AS U
+						WHERE S.id=U.id_site and U.login='".getUserName()."' ".$sqlWhereRestreint  ."
+						ORDER BY S.sitename ASC";
+			}
+				
 			$res = grr_sql_query($sql);
 			$nb_site = grr_sql_count($res);
 			echo "<tr><td>".get_vocab('site').get_vocab('deux_points')."</td>\n";
-			if ($nb_site > 1)
-			{
+			
+			if ($nb_site > 1){
+				
 				echo "<td><select class=\"form-control\" name=\"id_site\" >\n
 				<option value=\"-1\">".get_vocab('choose_a_site')."</option>\n";
 				for ($enr = 0; ($row1 = grr_sql_row($res, $enr)); $enr++)

@@ -40,8 +40,14 @@ if ((authGetUserLevel(getUserName(), -1) < 6) && (authGetUserLevel(getUserName()
 }
 # print the page header
 print_header("", "", "", $type="with_session");
+
+// Affichage de la colonne de gauche
+include "admin_col_gauche.php";
+
 ?>
-<p>| <a href="admin_user.php"><?php echo get_vocab("back");?></a> |</p>
+
+<br/><p>| <a href="admin_user.php"><?php echo get_vocab("back");?></a> |</p><br/>
+
 <?php
 $reg_data = isset($_POST["reg_data"]) ? $_POST["reg_data"] : NULL;
 $is_posted = isset($_POST["is_posted"]) ? $_POST["is_posted"] : NULL;
@@ -337,18 +343,29 @@ if ($reg_data != 'yes')
 				$reg_prenom[$row] = protect_data_sql(corriger_caracteres($reg_prenom[$row]));
 				$reg_email[$row] = protect_data_sql(corriger_caracteres($reg_email[$row]));
 				$test_login = grr_sql_count(grr_sql_query("SELECT login FROM ".TABLE_PREFIX."_utilisateurs WHERE login='$reg_login[$row]'"));
-				if ($test_login == 0)
+				
+				if ($test_login == 0){
+					
 					$regdata = grr_sql_query("INSERT INTO ".TABLE_PREFIX."_utilisateurs SET nom='".$reg_nom[$row]."',prenom='".$reg_prenom[$row]."',login='".$reg_login[$row]."',email='".$reg_email[$row]."',password='".protect_data_sql($reg_mdp[$row])."',statut='".$reg_type_user[$row]."',etat='".$reg_statut[$row]."',source='".$reg_type_auth[$row]."'");
-				else
+					
+					if (Settings::get("module_multietablissement") == "Oui" && authGetUserLevel(getUserName(),-1) <= 7) {
+						$idEtablissement = getIdEtablissementCourant();
+						$regdata = grr_sql_query("INSERT INTO ".TABLE_PREFIX."_j_user_etablissement SET id_etablissement= $idEtablissement,login='".$reg_login[$row]."'");
+					}
+				}else{
 					$regdata = grr_sql_query("UPDATE ".TABLE_PREFIX."_utilisateurs SET nom='".$reg_nom[$row]."',prenom='".$reg_prenom[$row]."',email='".$reg_email[$row]."',password='".protect_data_sql($reg_mdp[$row])."',statut='".$reg_type_user[$row]."',etat='".$reg_statut[$row]."',source='".$reg_type_auth[$row]."' WHERE login='".$reg_login[$row]."'");
-				if (!$regdata)
+				}
+				
+				if (!$regdata){
 					echo "<p><font color=\"red\">".$reg_login[$row].get_vocab("deux_points").get_vocab("message_records_error")."</font></p>";
-				else
+				}else
 				{
-					if ($reg_stat[$row] == "nouveau")
+					echo authGetUserLevel(getUserName(),-1);
+					if ($reg_stat[$row] == "nouveau"){
 						echo "<p>".$reg_login[$row].get_vocab("deux_points").get_vocab("admin_import_users_csv12")."</p>";
-					else
+					}else{
 						echo "<p>".$reg_login[$row].get_vocab("deux_points").get_vocab("message_records")."</p>";
+					}
 				}
 			}
 		}

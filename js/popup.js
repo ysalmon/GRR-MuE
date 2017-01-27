@@ -64,6 +64,8 @@ function getXMLHttpRequest()
 	return xmlhttp;
 }
 
+
+
 function request(id,day,month,year,currentPage,callback)
 {
 	document.getElementById('popup_name').innerHTML="";
@@ -84,4 +86,29 @@ function request(id,day,month,year,currentPage,callback)
 function readData(sData)
 {
 	document.getElementById('popup_name').innerHTML += sData + '<input class=\"closepop btn btn-primary\" type=\"button\" onclick=\"location.href=\'#\'\" title=\"Fermeture\" value=\"Fermer\" ></div> ';
+}
+
+//modal bootstrap
+function requestModal(id,day,month,year,currentPage,callback)
+{
+	
+	document.getElementById('modalBody').innerHTML="";
+	var Id = id;
+	var Day = day;
+	var Month = month ;
+	var Year = year ;
+	var Page = currentPage ;
+	var xhr = getXMLHttpRequest();
+	xhr.onreadystatechange = function()
+	{
+		if (xhr.readyState == 4 && (xhr.status == 200 || xhr.status == 0))
+			callback(xhr.responseText);
+	};
+	xhr.open("GET","view_entry.php?id="+Id+"&day="+Day+"&month="+Month+"&year="+Year+"&page="+Page+"", true);
+	xhr.send(null);
+}
+//modal bootstrap
+function readDataModal(sData)
+{
+	document.getElementById('modalBody').innerHTML += sData;
 }

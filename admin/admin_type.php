@@ -29,28 +29,32 @@
  */
 include "../include/admin.inc.php";
 $grr_script_name = "admin_type.php";
+
 $back = "";
 if (isset($_SERVER['HTTP_REFERER']))
 	$back = htmlspecialchars($_SERVER['HTTP_REFERER']);
+
 check_access(6, $back);
 if ((isset($_GET['msg'])) && isset($_SESSION['displ_msg']) && ($_SESSION['displ_msg'] == 'yes') )
 	$msg = $_GET['msg'];
 else
 	$msg = '';
+
 print_header("", "", "", $type="with_session");
 include "admin_col_gauche.php";
-if ((isset($_GET['action_del'])) && ($_GET['js_confirmed'] == 1) && ($_GET['action_del'] = 'yes'))
-{
+
+if ((isset($_GET['action_del'])) && ($_GET['js_confirmed'] == 1) && ($_GET['action_del'] = 'yes')){
+	
 	// faire le test si il existe une réservation en cours avec ce type de réservation
 	$type_id = grr_sql_query1("SELECT type_letter FROM ".TABLE_PREFIX."_type_area WHERE id = '".$_GET['type_del']."'");
 	$test1 = grr_sql_query1("SELECT count(id) FROM ".TABLE_PREFIX."_entry WHERE type= '".$type_id."'");
 	$test2 = grr_sql_query1("SELECT count(id) FROM ".TABLE_PREFIX."_repeat WHERE type= '".$type_id."'");
-	if (($test1 != 0) || ($test2 != 0))
-	{
+	if (($test1 != 0) || ($test2 != 0)){
+		
 		$msg =  "Suppression impossible : des réservations ont été enregistrées avec ce type.";
 	}
-	else
-	{
+	else{
+		
 		$sql = "DELETE FROM ".TABLE_PREFIX."_type_area WHERE id='".$_GET['type_del']."'";
 		if (grr_sql_command($sql) < 0)
 			fatal_error(1, "<p>" . grr_sql_error());
@@ -59,7 +63,9 @@ if ((isset($_GET['action_del'])) && ($_GET['js_confirmed'] == 1) && ($_GET['acti
 			fatal_error(1, "<p>" . grr_sql_error());
 	}
 }
+
 affiche_pop_up($msg,"admin");
+
 echo "<h2>".get_vocab('admin_type.php')."</h2>";
 echo get_vocab('admin_type_explications');
 echo "<br />\n";
@@ -67,27 +73,39 @@ echo "<br />\n";
 echo "| <a href=\"admin_type_modify.php?id=0\">".get_vocab("display_add_type")."</a> |\n";
 echo "<br />\n";
 echo "<br />\n";
-$sql = "SELECT id, type_name, order_display, couleur, type_letter, disponible FROM ".TABLE_PREFIX."_type_area
-ORDER BY order_display,type_letter";
+
+if (Settings::get("module_multietablissement") == "Oui") {
+	$sql = "SELECT id, type_name, order_display, couleur, type_letter, disponible 
+			FROM ".TABLE_PREFIX."_type_area 
+			LEFT JOIN ".TABLE_PREFIX."_j_etablissement_type_area ON id_type_area = id
+			WHERE id_etablissement IS NULL 
+			ORDER BY order_display,type_letter";
+} else {
+	$sql = "SELECT id, type_name, order_display, couleur, type_letter, disponible 
+			FROM ".TABLE_PREFIX."_type_area
+			ORDER BY order_display,type_letter";
+}
+
 $res = grr_sql_query($sql);
 $nb_lignes = grr_sql_count($res);
-if ($nb_lignes == 0)
-{
+if ($nb_lignes == 0){
 	// fin de l'affichage de la colonne de droite
 	echo "</td></tr></table>";
 	echo "</body></html>";
 	die();
 }
+
+
 // Affichage du tableau
-echo "<table border=\"1\" cellpadding=\"3\"><tr>\n";
+echo "<table class=\"table table-hover table-bordered\"><thead><tr>\n";
 // echo "<tr><td><b>".get_vocab("type_num")."</a></b></td>\n";
-echo "<td><b>".get_vocab("type_num")."</b></td>\n";
-echo "<td><b>".get_vocab("type_name")."</b></td>\n";
-echo "<td><b>".get_vocab("type_color")."</b></td>\n";
-echo "<td><b>".get_vocab("type_order")."</b></td>\n";
-echo "<td><b>".get_vocab("disponible_pour")."</b></td>\n";
-echo "<td><b>".get_vocab("delete")."</b></td>";
-echo "</tr>";
+//echo "<th><b>".get_vocab("type_num")."</b></th>\n";
+echo "<th><b>".get_vocab("type_name")."</b></th>\n";
+echo "<th><b>".get_vocab("type_color")."</b></th>\n";
+echo "<th><b>".get_vocab("type_order")."</b></th>\n";
+echo "<th><b>".get_vocab("disponible_pour")."</b></th>\n";
+echo "<th><b>".get_vocab("delete")."</b></th>";
+echo "</tr></thead><tbody>";
 if ($res)
 {
 	for ($i = 0; ($row = grr_sql_row($res, $i)); $i++)
@@ -106,7 +124,7 @@ if ($res)
 		$col[$i][4] = $order_display;
 		$col[$i][5] = $couleur;
 		echo "<tr>\n";
-		echo "<td>{$col[$i][1]}</td>\n";
+		//echo "<td>{$col[$i][1]}</td>\n";
 		echo "<td><a href='admin_type_modify.php?id_type={$col[$i][2]}'>{$col[$i][3]}</a></td>\n";
 		echo "<td style=\"background-color:".$tab_couleur[$col[$i][5]]."\"></td>\n";
 		echo "<td>{$col[$i][4]}</td>\n";
@@ -119,9 +137,9 @@ if ($res)
 			echo get_vocab("only_administrators");
 		echo "</td>\n";
 		$themessage = get_vocab("confirm_del");
-		echo "<td><a href='admin_type.php?&amp;type_del={$col[$i][2]}&amp;action_del=yes' onclick='return confirmlink(this, \"{$col[$i][1]}\", \"$themessage\")'>".get_vocab("delete")."</a></td>";
+		echo "<td><a href='admin_type.php?&amp;type_del={$col[$i][2]}&amp;action_del=yes' onclick='return confirmlink(this, \"{$col[$i][2]}\", \"$themessage\")'>".get_vocab("delete")."</a></td>";
 	// Fin de la ligne courante
-		echo "</tr>";
+		echo "</tr></tbody>";
 	}
 }
 echo "</table>";

@@ -49,6 +49,7 @@ if (!grr_resumeSession())
 }
 // Paramètres langage
 include "include/language.inc.php";
+
 $erreur = 'n';
 $message_error = "";
 if (isset($_GET["id"]))
@@ -643,8 +644,16 @@ if (empty($err) && ($error_booking_in_past == 'no') && ($error_duree_max_resa_ar
 	grr_sql_mutex_unlock("".TABLE_PREFIX."_entry");
 	$area = mrbsGetRoomArea($room_id);
 	$_SESSION['displ_msg'] = 'yes';
-	if ($message_error != "")
+	if ($message_error != ""){
+		
+		// on enlève les accents qui posent problème à la gestion des sessions
+		$message_error = htmlentities($message_error, ENT_NOQUOTES, $encoding);
+		$message_error = preg_replace('#&([A-za-z])(?:acute|grave|cedil|circ|orn|ring|slash|th|tilde|uml);#', '\1', $message_error);
+		$message_error = preg_replace('#&([A-za-z]{2})(?:lig);#', '\1', $message_error);
+		$message_error = preg_replace('#&[^;]+;#', '', $message_error);
+
 		$_SESSION['session_message_error'] = $message_error;
+	}
 	Header("Location: ".$page.".php?year=$year&month=$month&day=$day&area=$area&room=$room_back");
 	exit;
 }
@@ -748,7 +757,7 @@ if (strlen($err))
 	if (!isset($hide_title))
 		echo "</UL>";
 	if (authGetUserLevel(getUserName(),$area,'area') >= 4)
-		echo "<center><table border=\"1\" cellpadding=\"10\" cellspacing=\"1\"><tr><td class='avertissement'><h3><a href='".traite_grr_url("","y")."edit_entry_handler.php?".$_SERVER['QUERY_STRING']."&amp;del_entry_in_conflict=yes'>".get_vocab("del_entry_in_conflict")."</a></h4></td></tr></table></center><br />";
+		echo "<center><table border=\"1\" cellpadding=\"10\" cellspacing=\"1\"><tr><td class='avertissement'><h3><a href='".traite_grr_url()."edit_entry_handler.php?".$_SERVER['QUERY_STRING']."&amp;del_entry_in_conflict=yes'>".get_vocab("del_entry_in_conflict")."</a></h4></td></tr></table></center><br />";
 }
 echo "<a href=\"".$back."&amp;Err=yes\">".get_vocab('returnprev')."</a><p>";
 include "include/trailer.inc.php"; ?>

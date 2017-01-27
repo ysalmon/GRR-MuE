@@ -35,14 +35,19 @@ include "include/$dbsys.inc.php";
 include "include/mincals.inc.php";
 include "include/mrbs_sql.inc.php";
 $grr_script_name = "month_all.php";
+// Settings
 require_once("./include/settings.class.php");
 if (!Settings::load())
 	die("Erreur chargement settings");
+// Sessions
 require_once("include/session.inc.php");
 include "include/resume_session.php";
+
 Definition_ressource_domaine_site();
 get_planning_area_values($area);
+
 include "include/language.inc.php";
+
 $affiche_pview = '1';
 if (!isset($_GET['pview']))
 	$_GET['pview'] = 0;
@@ -52,6 +57,7 @@ if ($_GET['pview'] == 1)
 	$class_image = "print_image";
 else
 	$class_image = "image";
+
 //Default parameters:
 if (empty($debug_flag))
 	$debug_flag = 0;
@@ -71,43 +77,51 @@ if (isset($_SERVER['HTTP_REFERER']))
 	$back = htmlspecialchars($_SERVER['HTTP_REFERER']);
 if ($type_session == "with_session")
 	$_SESSION['type_month_all'] = "month_all";
+
 $type_month_all = 'month_all';
 print_header($day, $month, $year, $type_session);
-if (check_begin_end_bookings($day, $month, $year))
-{
+
+if (check_begin_end_bookings($day, $month, $year)){
 	showNoBookings($day, $month, $year, $back);
 	exit();
 }
-if (((authGetUserLevel(getUserName(),-1) < 1) && (Settings::get("authentification_obli") == 1)) || authUserAccesArea(getUserName(), $area) == 0)
-{
+
+if (((authGetUserLevel(getUserName(),-1) < 1) && (Settings::get("authentification_obli") == 1)) || authUserAccesArea(getUserName(), $area) == 0){
 	showAccessDenied($back);
 	exit();
 }
-if (Settings::get("verif_reservation_auto") == 0)
-{
+
+if (Settings::get("verif_reservation_auto") == 0){
 	verify_confirm_reservation();
 	verify_retard_reservation();
 }
+
 $month_start = mktime(0, 0, 0, $month, 1, $year);
 $weekday_start = (date("w", $month_start) - $weekstarts + 7) % 7;
 $days_in_month = date("t", $month_start);
 $month_end = mktime(23, 59, 59, $month, $days_in_month, $year);
-if ($enable_periods == 'y')
-{
+
+if ($enable_periods == 'y'){
 	$resolution = 60;
 	$morningstarts = 12;
 	$eveningends = 12;
 	$eveningends_minutes = count($periods_name) - 1;
 }
+
 $this_area_name = "";
 $this_room_name = "";
 $this_area_name = grr_sql_query1("SELECT area_name FROM ".TABLE_PREFIX."_area WHERE id=$area");
+
+#y? are year and month of the previous month.
 $i = mktime(0,0,0,$month - 1, 1, $year);
 $yy = date("Y",$i);
 $ym = date("n",$i);
+
+#t? are year and month of the next month.
 $i = mktime(0,0,0,$month + 1, 1, $year);
 $ty = date("Y",$i);
 $tm = date("n",$i);
+
 $all_day = preg_replace("/ /", " ", get_vocab("all_day2"));
 //Get all meetings for this month in the room that we care about
 //row[0] = Start time
@@ -140,7 +154,7 @@ else
 	include "chargement.php";
 	if ($_GET['pview'] != 1){
 		//if (Settings::get("menu_gauche") == 1){
-			echo '<div class="col-lg-9 col-md-12 col-xs-12">'.PHP_EOL;
+			echo '<div class="col-md-10 col-md-12 col-xs-12">'.PHP_EOL;
 		//}
 		echo '<div id="planning">'.PHP_EOL;
 	}else{
@@ -152,7 +166,7 @@ else
 		#Show Go to week before and after links
 		echo '<tr>'.PHP_EOL;
 		echo '<td class="left">'.PHP_EOL;
-		echo '<button class="btn btn-default btn-xs" onclick="charger();javascript: location.href=\'month_all.php?year='.$yy.'&amp;month='.$ym.'&amp;area='.$area.'\';"><span class="glyphicon glyphicon-backward"></span>'.get_vocab("monthbefore").'</button>'.PHP_EOL;
+		echo '<button class="btn btn-default btn-xs" onclick="charger();javascript: location.href=\'month_all.php?year='.$yy.'&amp;month='.$ym.'&amp;area='.$area.'\';"><span class="glyphicon glyphicon-backward"></span> '.get_vocab("monthbefore").'</button>'.PHP_EOL;
 		echo '</td>'.PHP_EOL;
 		echo '<td>'.PHP_EOL;
 		include "include/trailer.inc.php";
@@ -164,7 +178,8 @@ else
 			echo "<tr>";
 	echo "<td class=\"left\"> ";
 	$month_all2 = 1;
-	echo "<input type=\"button\" class=\"btn btn-default btn-xs\" id=\"voir\" value=\"Afficher le menu à gauche.\" onClick=\"divaffiche($month_all2)\" style=\"display:inline;\" /> ";
+	// Bouton inutile puisque le menu de gauche est inséré par défaut 
+	//echo "<input type=\"button\" class=\"btn btn-default btn-xs\" id=\"voir\" value=\"Afficher le menu à gauche.\" onClick=\"divaffiche($month_all2)\" style=\"display:inline;\" /> ";
 	echo "</td>";
 		echo '</table>'.PHP_EOL;
 	}
@@ -397,7 +412,8 @@ else
 								{
 									$currentPage = 'month_all';
 									$id =   $d[$cday]["id"][$i];
-									echo '<a title="',htmlspecialchars($d[$cday]["who"][$i]),'" data-width="675" onclick="request(',$id,',',$cday,',',$month,',',$year,',\'',$currentPage,'\',readData);" data-rel="popup_name" class="poplight">',PHP_EOL;
+									echo '<a title="'.htmlspecialchars($d[$cday]["who"][$i]).'" class="lienModal" data-toggle="modal" data-target="#myModal" onclick="requestModal('.$id.','.$cday.','.$month.','.$year,',\''.$currentPage.'\',readDataModal);">'.PHP_EOL;
+									//echo '<a title="',htmlspecialchars($d[$cday]["who"][$i]),'" data-width="675" onclick="request(',$id,',',$cday,',',$month,',',$year,',\'',$currentPage,'\',readData);" data-rel="popup_name" class="poplight">',PHP_EOL;
 								}
 								else
 								{
@@ -416,17 +432,17 @@ else
 							echo '</span>',PHP_EOL,'</td>',PHP_EOL,'</tr>',PHP_EOL,'</table>',PHP_EOL;
 						}
 					}
-				/*} else{
-
-					echo "\n<table class='table-noborder'><tr>\n";
-					tdcell('#F49AC2');
-					echo "<span class=\"small_planning\">";
-
-
-				//	echo "<a href=\"edit_entry.php?room=$room&amp;period=$time_t_stripped&amp;year=$year&amp;month=$month&amp;day=$day&amp;page=day\" title=\"".get_vocab("cliquez_pour_effectuer_une_reservation")."\" ><span class=\"glyphicon glyphicon-plus\"></span></a>";
-					echo "<a title=\"".htmlspecialchars(get_vocab("see_all_the_rooms_for_the_day")).$title."\" href=\"day.php?year=$year&amp;month=$month&amp;day=$cday&amp;area=$area\"><span class=\"glyphicon glyphicon-plus\"></span></a>";
-							echo "</span></td></tr></table>\n";
-				*/
+					//} else{
+					//
+					//	echo "\n<table class='table-noborder'><tr>\n";
+					//	tdcell('#F49AC2');
+					//	echo "<span class=\"small_planning\">";
+					//
+					//
+					////	echo "<a href=\"edit_entry.php?room=$room&amp;period=$time_t_stripped&amp;year=$year&amp;month=$month&amp;day=$day&amp;page=day\" title=\"".get_vocab("cliquez_pour_effectuer_une_reservation")."\" ><span class=\"glyphicon glyphicon-plus\"></span></a>";
+					//	echo "<a title=\"".htmlspecialchars(get_vocab("see_all_the_rooms_for_the_day")).$title."\" href=\"day.php?year=$year&amp;month=$month&amp;day=$cday&amp;area=$area\"><span class=\"glyphicon glyphicon-plus\"></span></a>";
+					//			echo "</span></td></tr></table>\n";
+					//
 				}
 			}
 			echo '</td>',PHP_EOL;
@@ -453,20 +469,40 @@ else
 	echo '</table>',PHP_EOL;
 	//Fermeture du div contenu_Planning
 	echo '</div>',PHP_EOL;
-	if ($_GET['pview'] != 1)
-	{
+		
+	if ($_GET['pview'] != 1){
 		echo '<div id="toTop">',PHP_EOL,'<b>',get_vocab("top_of_page"),'</b>',PHP_EOL;
 		bouton_retour_haut ();
 		echo '</div>',PHP_EOL;
 	}
+
 	//Fermeture DIV Panning
 	//echo "</div>".PHP_EOL;
 	//if (Settings::get("menu_gauche") == 0){
 	echo '</div>'.PHP_EOL;
-	//}
+	
+	
 	// Affichage d'un message pop-up
 	echo '</div>'.PHP_EOL;
+	
 	affiche_pop_up(get_vocab("message_records"),"user");
 	echo  "<div id=\"popup_name\" class=\"popup_block\" ></div>";
+	
+	//modal bootstrap
+	echo '
+	<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+		<div class="modal-dialog modal-lg" role="document">
+			<div class="modal-content">
+				<div id="modalBody" class="modal-body">
+					<!-- insertion de la page view-entry.php via la fonction requestModal du fichier js/popup.js -->
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Fermer</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	';
+	
 	include "footer.php";
 	?>

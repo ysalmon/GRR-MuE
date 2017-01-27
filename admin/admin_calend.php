@@ -35,7 +35,9 @@ $grr_script_name = "admin_calend.php";
 $back = '';
 if (isset($_SERVER['HTTP_REFERER']))
 	$back = htmlspecialchars($_SERVER['HTTP_REFERER']);
+
 check_access(4, $back);
+
 // Initialisation
 $etape = isset($_POST["etape"]) ? $_POST["etape"] : NULL;
 $areas = isset($_POST["areas"]) ? $_POST["areas"] : NULL;
@@ -56,28 +58,34 @@ settype($end_minute,"integer");
 $period = isset($_POST["period"]) ? $_POST["period"] : NULL;
 $end_period = isset($_POST["end_period"]) ? $_POST["end_period"] : NULL;
 $all_day = isset($_POST["all_day"]) ? $_POST["all_day"] : NULL;
+
+# print the page header
 print_header("", "", "", $type="with_session");
+
 // Affichage de la colonne de gauche
 include "admin_col_gauche.php";
+
 echo "<h2>".get_vocab('admin_calendar_title.php')."</h2>\n";
+
 $result = 0;
-if (isset($_POST['record']) && ($_POST['record'] == 'yes'))
-{
+if (isset($_POST['record']) && ($_POST['record'] == 'yes')){
+	
 	$etape = 4;
 	$end_bookings = Settings::get("end_bookings");
+	
 	// On reconstitue le tableau des ressources
 	$sql = "SELECT id FROM ".TABLE_PREFIX."_room";
 	$res = grr_sql_query($sql);
-	if ($res)
-	{
-		for ($i = 0; ($row = grr_sql_row($res, $i)); $i++)
-		{
+	if ($res){
+		
+		for ($i = 0; ($row = grr_sql_row($res, $i)); $i++){
+			
 			$temp = "id_room_".$row[0];
-			if ((isset($_POST[$temp])) && verif_acces_ressource(getUserName(),$row[0]))
-			{
-			// La ressource est selectionnée
-			// $rooms[] = $id;
-			// On récupère les données du domaine
+			if ((isset($_POST[$temp])) && verif_acces_ressource(getUserName(),$row[0])){
+				
+				// La ressource est selectionnée
+				// $rooms[] = $id;
+				// On récupère les données du domaine
 				$area_id = grr_sql_query1("SELECT area_id FROM ".TABLE_PREFIX."_room WHERE id = '".$row[0]."'");
 				$id_site = grr_sql_query1("SELECT id_site FROM ".TABLE_PREFIX."_j_site_area WHERE id_area = '".$area_id."'");
 				//if (authGetUserLevel(getUserName(),$id_site,'site') >= 5)
@@ -154,6 +162,7 @@ if (isset($_POST['record']) && ($_POST['record'] == 'yes'))
 		}
 	}
 }
+
 if ($etape == 4)
 {
 	if ($result == '')
@@ -171,6 +180,7 @@ if ($etape == 4)
 		echo "<h3>".get_vocab("suppression_en_bloc_result")."<b>".$result."</b></h3>\n";
 	}
 }
+
 
 if ($etape == 3)
 {
@@ -395,14 +405,26 @@ else if ($etape == 2)
 		echo "</body></html>\n";
 		die();
 	}
+	
 	// Choix des ressources
 	echo "<form action=\"admin_calend.php\" method=\"post\" id=\"main\" onsubmit=\"return validate_and_submit();\">\n";
 	echo "<table border=\"0\">\n";
-	if ($type_resa == "resa")
-	{
+	if ($type_resa == "resa"){
+		
 		echo "<tr><td class=\"CR\"><b>".ucfirst(trim(get_vocab("reservation au nom de"))).get_vocab("deux_points")."</b></td>\n\n";
 		echo "<td class=\"CL\"><select size=\"1\" name=\"beneficiaire\" class=\"form-control\">\n";
-		$sql = "SELECT DISTINCT login, nom, prenom FROM ".TABLE_PREFIX."_utilisateurs WHERE  (etat!='inactif' and statut!='visiteur' ) order by nom, prenom";
+		
+		if (Settings::get("module_multietablissement") == "Oui"  ){
+			$id_etablissement = getIdEtablissementCourant();
+			$sql = "SELECT DISTINCT U.login, U.nom, U.prenom FROM ".TABLE_PREFIX."_utilisateurs AS U
+				  LEFT JOIN  ".TABLE_PREFIX."_j_user_etablissement AS UE ON UE.login = U.login
+				  WHERE  (U.etat!='inactif' and U.statut!='visiteur' ) AND 
+				  (UE.id_etablissement = $id_etablissement OR (UE.id_etablissement IS NULL AND U.statut='administrateur')) 
+				  ORDER BY U.nom, U.prenom";
+		} else{
+			$sql = "SELECT DISTINCT login, nom, prenom FROM ".TABLE_PREFIX."_utilisateurs WHERE  (etat!='inactif' and statut!='visiteur' ) order by nom, prenom";
+		}
+	  
 		$res = grr_sql_query($sql);
 		if ($res)
 		{
@@ -415,16 +437,18 @@ else if ($etape == 2)
 			}
 		}
 		echo "</select></td>\n</tr>\n";
+		
 		echo "<tr><td class=\"CR\"><b>".get_vocab("namebooker").get_vocab("deux_points")."</b></td>\n";
 		echo "<td class=\"CL\"><input class=\"form-control\" name=\"name\" size=\"40\" value=\"\" /></td></tr>";
 		echo "<tr><td class=\"TR\"><b>".get_vocab("fulldescription")."</b></td>\n";
 		echo "<td class=\"TL\"><textarea class=\"form-control\" name=\"description\" rows=\"8\" cols=\"40\" ></textarea></td></tr>";
 	}
+	
 	echo "<tr><td class=\"CR\"><b>".get_vocab("rooms").get_vocab("deux_points")."</b></td>\n";
 	echo "<td class=\"CL\" valign=\"top\"><table border=\"0\"><tr><td>";
 	echo "<select name=\"rooms[]\" multiple class=\"form-control\">";
-	foreach ( $areas as $area_id )
-	{
+	foreach ( $areas as $area_id ){
+		
 		# then select the rooms in that area
 		$sql = "SELECT id, room_name FROM ".TABLE_PREFIX."_room WHERE area_id=$area_id ";
 		// tableau des ressources auxquelles l'utilisateur n'a pas accès
@@ -434,22 +458,23 @@ else if ($etape == 2)
 			$sql .= " and id != $key ";
 		$sql .= "order by order_display,room_name";
 		$res = grr_sql_query($sql);
-		if ($res)
-		{
+		if ($res){
+			
 			for ($i = 0; ($row = grr_sql_row($res, $i)); $i++)
 				echo "<option value=\"".$row[0]."\">".$row[1]."</option>";
 		}
 	}
 	echo "</select></td><td>".get_vocab("ctrl_click")."</td></tr></table>\n";
 	echo "</td></tr>\n";
-	if ($type_resa == "resa")
-	{
+	
+	if ($type_resa == "resa"){
+		
 		echo "<tr><td class=\"CR\"><b>".get_vocab("type").get_vocab("deux_points")."</b></td>\n";
 		echo "<td class=\"CL\"><select name=\"type_\" class=\"form-control\">\n";
 		echo "<option value='0'>".get_vocab("choose")."</option>\n";
 		$sql = "SELECT DISTINCT t.type_name, t.type_letter FROM ".TABLE_PREFIX."_type_area t
-		LEFT JOIN ".TABLE_PREFIX."_j_type_area j on j.id_type=t.id
-		WHERE (j.id_area  IS NULL or (";
+				LEFT JOIN ".TABLE_PREFIX."_j_type_area j on j.id_type=t.id
+				WHERE (j.id_area  IS NULL or (";
 			$ind = 0;
 			foreach ( $areas as $area_id )
 			{
@@ -478,23 +503,54 @@ echo "<input type=\"hidden\" name=\"type_resa\" value=\"".$type_resa."\" />\n";
 echo "<input type=\"submit\" class=\"btn btn-primary\" value=\"".get_vocab("next")."\" />";
 echo "</div></form>";
 }
-else if (!$etape)
-{
+else if (!$etape){
+	
 	// Etape 1 :
 	echo get_vocab("admin_calendar_explain_1.php");
+	
 	echo "<h3 style=\"text-align:center;\">".get_vocab("etape_n")."1/3</h3>\n";
+	
 	// Choix des domaines
 	echo "<form action=\"admin_calend.php\" method=\"post\">\n";
 	echo "<table border=\"1\"><tr><td>\n";
 	echo "<p><b>".get_vocab("choix_domaines")."</b></p>";
 	echo "<select name=\"areas[]\" multiple=\"multiple\" class=\"form-control\">\n";
-	if (authGetUserLevel(getUserName(), -1) >= 2)
-		$sql = "SELECT id, area_name FROM ".TABLE_PREFIX."_area
-	ORDER BY order_display, area_name";
-	else
-		$sql = "SELECT a.id, a.area_name FROM ".TABLE_PREFIX."_area a, ".TABLE_PREFIX."_j_site_area j, ".TABLE_PREFIX."_site s, ".TABLE_PREFIX."_j_useradmin_site u
-	WHERE a.id=j.id_area and j.id_site = s.id and s.id=u.id_site and u.login='".getUserName()."'
-	ORDER BY a.order_display, a.area_name";
+	
+	if (authGetUserLevel(getUserName(), -1) >= 7){
+		
+		if (Settings::get("module_multietablissement") == "Oui"){
+    		$id_etablissement = getIdEtablissementCourant();
+    		$sql = "select A.id, A.area_name from ".TABLE_PREFIX."_area AS A
+    		        JOIN ".TABLE_PREFIX."_j_site_area AS SA ON SA.id_area = A.id
+    		        JOIN ".TABLE_PREFIX."_j_etablissement_site AS ES ON ES.id_site = SA.id_site
+    		        WHERE ES.id_etablissement = $id_etablissement
+	    			ORDER BY A.order_display, A.area_name";
+    	} else {
+    		$sql = "select id, area_name from ".TABLE_PREFIX."_area
+    		      order by order_display, area_name";    		
+    	}
+	}
+	else{
+		
+		if (Settings::get("module_multietablissement") == "Oui"){
+    		$id_etablissement = getIdEtablissementCourant();
+    		$sql = "SELECT a.id, a.area_name FROM ".TABLE_PREFIX."_area a
+    			        JOIN ".TABLE_PREFIX."_j_site_area j ON j.id_area = a.id
+    			        JOIN ".TABLE_PREFIX."_j_etablissement_site es ON es.id_site = j.id_site 
+    			        LEFT JOIN ".TABLE_PREFIX."_j_useradmin_site u ON j.id_site = u.id_site
+    			        LEFT JOIN ".TABLE_PREFIX."_j_useradmin_etablissement ue ON es.id_etablissement = ue.id_etablissement
+    			      	WHERE  (u.login='".getUserName()."' OR  ue.login = '".getUserName()."' ) AND es.id_etablissement = $id_etablissement 
+    			      	ORDER BY a.order_display, a.area_name";
+
+    	} else {
+    		$sql = "select a.id, a.area_name from ".TABLE_PREFIX."_area a,
+	        ".TABLE_PREFIX."_j_site_area j, 
+	        ".TABLE_PREFIX."_site s, 
+	        ".TABLE_PREFIX."_j_useradmin_site u
+	      	WHERE a.id=j.id_area and j.id_site = s.id and s.id=u.id_site and u.login='".getUserName()."'
+	      	order by a.order_display, a.area_name";
+    	}
+	}
 	$res = grr_sql_query($sql);
 	if ($res)
 	{

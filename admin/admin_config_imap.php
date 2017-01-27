@@ -76,7 +76,7 @@ print_header("", "", "", $type="with_session");
 include "admin_col_gauche.php";
 echo encode_message_utf8("<h2>Configuration de l'authentification IMAP/POP"."</h2>");
 ?>
-<script type="text/javascript" src="../js/functions.js"></script>
+<script type="text/javascript" src="./functions.js"></script>
 <?php
 if ($etape == 1)
 {
@@ -141,7 +141,7 @@ if ($etape == 1)
 			echo "<form action=\"admin_config_imap.php\" method=\"post\"><div>";
 			echo "<input type=\"hidden\" name=\"etape\" value=\"0\" />";
 			echo "<input type=\"hidden\" name=\"valid\" value=\"$valid\" />";
-			echo "<div style=\"text-align:center;\"><input type=\"submit\" name=\"Valider\" value=\"Terminer\" /></div>";
+			echo "<div style=\"text-align:center;\"><input class='btn btn-primary' type=\"submit\" name=\"Valider\" value=\"Terminer\" /></div>";
 			echo "</div></form>";
 		}
 	}
@@ -208,7 +208,7 @@ if ($etape == 1)
 		echo "selected=\"selected\"";
 	echo ">NO-TLS</option>";
 	echo "</select>";
-	echo "<div style=\"text-align:center;\"><input type=\"submit\" name=\"Valider1\" value=\"Enregistrer\" /></div>";
+	echo "<div style=\"text-align:center;\"><input class='btn btn-primary' type=\"submit\" name=\"Valider1\" value=\"Enregistrer\" /></div>";
 	echo "<input type=\"hidden\" name=\"etape\" value=\"1\" />";
 	echo "<input type=\"hidden\" name=\"valid\" value=\"$valid\" />";
 	echo "</div></form>";
@@ -242,7 +242,7 @@ else if ($etape ==0)
 		echo "/>Usager<br />";
 		echo "Ou bien <br />";
 		echo "<input type=\"radio\" name=\"imap_statut\" value=\"no_imap\" />".encode_message_utf8("Désactiver l'authentification IMAP/POP")."<br />";
-		echo "<div style=\"text-align:center;\"><input type=\"submit\" value=\"Valider\" /></div></div></form>";
+		echo "<div style=\"text-align:center;\"><input class='btn btn-primary' type=\"submit\" value=\"Valider\" /></div></div></form>";
 		if (@file_exists("../include/config_imap.inc.php"))
 		{
 			include("../include/config_imap.inc.php");
@@ -255,7 +255,7 @@ else if ($etape ==0)
 				echo "<input type='text' name='imap_login' value=\"\" size=\"20\" /><br />";
 				echo encode_message_utf8("Mot de passe de l'utilisateur : ");
 				echo "<input type='password' name='imap_password' value=\"\" size=\"20\" />";
-				echo "<div style=\"text-align:center;\"><input type=\"submit\" name=\"Valider2\" value=\"Test\"  /></div>";
+				echo "<div style=\"text-align:center;\"><input class='btn btn-primary' type=\"submit\" name=\"Valider2\" value=\"Test\"  /></div>";
 				echo "<input type=\"hidden\" name=\"valid\" value=\"$valid\" />";
 				echo "</div></form>";
 				if ((isset($_POST['Valider2'])) && $_POST['Valider2'] == "Test")
@@ -304,7 +304,7 @@ else if ($etape ==0)
 		echo "<form action=\"admin_config_imap.php\" method=\"post\"><div>";
 		echo "<input type=\"hidden\" name=\"etape\" value=\"1\" />";
 		echo "<input type=\"hidden\" name=\"valid\" value=\"$valid\" />";
-		echo "<div style=\"text-align:center;\"><input type=\"submit\" value=\"Configurer IMAP/POP\" /></div></div></form>";
+		echo "<div style=\"text-align:center;\"><input class='btn btn-primary' type=\"submit\" value=\"Configurer IMAP/POP\" /></div></div></form>";
 	}
 	else
 	{
@@ -315,7 +315,7 @@ else if ($etape ==0)
 		echo "<input type=\"radio\" name=\"imap_statut\" value=\"utilisateur\" />Usager<br />\n";
 		echo "<input type=\"radio\" name=\"imap_statut\" value=\"no_imap\" checked=\"checked\" />Ne pas activer<br />\n";
 		echo "<input type=\"hidden\" name=\"valid\" value=\"$valid\" />\n";
-		echo "<div style=\"text-align:center;\"><input type=\"submit\" name=\"Valider2\" value=\"Valider\"  /></div>\n";
+		echo "<div style=\"text-align:center;\"><input class='btn btn-primary' type=\"submit\" name=\"Valider2\" value=\"Valider\"  /></div>\n";
 		echo "</div></form>";
 	}
 }

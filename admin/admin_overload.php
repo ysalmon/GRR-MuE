@@ -31,25 +31,50 @@
  */
 include "../include/admin.inc.php";
 $grr_script_name = "admin_overload.php";
+
 $back = '';
 if (isset($_SERVER['HTTP_REFERER']))
 	$back = htmlspecialchars($_SERVER['HTTP_REFERER']);
+
 $day   = date("d");
 $month = date("m");
 $year  = date("Y");
 check_access(4, $back);
+
+// Utilisation de la bibliothèqye prototype dans ce script
 $use_prototype = 'y';
+
+// Utilisation de la bibliothèqye tooltip.js dans ce script
 $use_tooltip_js = 'y';
+
 print_header("", "", "", $type = "with_session");
+
+// Affichage de la colonne de gauche
 include "admin_col_gauche.php";
+
 echo "<h2>".get_vocab("admin_overload.php")."</h2>\n";
+
 if (isset($_POST["action"]))
 	$action = $_POST["action"];
 else
 	$action = "default";
-$res = grr_sql_query("SELECT id, area_name, access FROM ".TABLE_PREFIX."_area ORDER BY order_display");
+
+// 1- On récupère la liste des domaines accessibles à l'utilisateur dans un tableau.
+if (Settings::get("module_multietablissement") == "Oui"){
+	$id_etablissement = getIdEtablissementCourant();
+	$sql = "SELECT A.id, A.area_name, A.access FROM ".TABLE_PREFIX."_area AS A"; 
+	$sql .= " JOIN ".TABLE_PREFIX."_j_site_area AS SA ON SA.id_area = A.id ";
+	$sql .= " JOIN ".TABLE_PREFIX."_j_etablissement_site AS ES ON ES.id_site = SA.id_site ";
+	$sql .= " WHERE id_etablissement = $id_etablissement ";
+	$sql .= "ORDER BY order_display";
+} else {
+	$sql = "SELECT id, area_name, access FROM ".TABLE_PREFIX."_area ORDER BY order_display";
+}
+
+$res = grr_sql_query($sql);
 if (!$res)
 	fatal_error(0, grr_sql_error());
+
 $userdomain = array();
 if (grr_sql_count($res) != 0)
 {
@@ -59,9 +84,13 @@ if (grr_sql_count($res) != 0)
 			$userdomain[$row[0]] = $row[1];
 	}
 }
+
+// 2- On traite la demande si nécessaire
 if ($action == "add")
 {
 	$arearight = false;
+	
+	// on récupère les données importantes du POST.
 	if (isset($_POST["id_area"]))
 		$id_area = $_POST["id_area"];
 	else
@@ -75,47 +104,63 @@ if ($action == "add")
 		$fieldtype = $_POST["fieldtype"];
 	else
 		$fieldtype = "";
+	
 	$fieldlist = "";
+	
 	if (isset($_POST["obligatoire"]))
 		$obligatoire = "y";
 	else
 		$obligatoire = "n";
+	
 	if (isset($_POST["affichage"]))
 		$affichage = "y";
 	else
 		$affichage = "n";
+	
 	if (isset($_POST["overload_mail"]))
 		$overload_mail = "y";
 	else
 		$overload_mail = "n";
+	
 	if (isset($_POST["confidentiel"]))
 		$confidentiel = "y";
 	else
 		$confidentiel = "n";
-	if ($confidentiel == "y")
-	{
+	
+	if ($confidentiel == "y"){
 		$affichage = "n";
 		$overload_mail = "n";
 	}
+	
+	
+	// Gestion des droits : on vérifie que le user a les droits pour id_area..
 	foreach ($userdomain as $key=>$value)
 	{
 		if ($key == $id_area)
 			$arearight = true;
 	}
-	if ($arearight == true)
-	{
+	
+	// On fait l'action si l'id/area a été validé.
+	if ($arearight == true){
+		
 		$sql = "INSERT INTO ".TABLE_PREFIX."_overload (id_area, fieldname, fieldtype, obligatoire, confidentiel, fieldlist, affichage, overload_mail) VALUES ($id_area, '".protect_data_sql($fieldname)."', '".protect_data_sql($fieldtype)."', '".$obligatoire."', '".$confidentiel."', '".protect_data_sql($fieldlist)."', '".$affichage."', '".$overload_mail."');";
 		if (grr_sql_command($sql) < 0)
 			fatal_error(0, "$sql \n\n" . grr_sql_error());
 	}
 }
+
+
 if ($action == "delete")
 {
 	$arearight = false ;
+	
+	// on récupère les données importantes du POST.
 	if (isset($_POST["id_overload"]))
 		$id_overload = $_POST["id_overload"];
 	else
 		$id_overload = "";
+	
+	// Gestion des droits : on vérifie si l'id à supprimer est dans l'area autorisée.
 	$sql = "SELECT id_area FROM ".TABLE_PREFIX."_overload WHERE id=$id_overload;";
 	$resquery = grr_sql_query($sql);
 	if (!$resquery)
@@ -129,16 +174,21 @@ if ($action == "delete")
 					$arearight = true;
 			}
 		}
+		// On fait l'action si l'id/area a été validé.
 		if ($arearight == true)
 		{
+			// Suppression des données dans les réservations déjà effectuées
 			grrDelOverloadFromEntries($id_overload);
 			$sql = "DELETE FROM ".TABLE_PREFIX."_overload WHERE id=$id_overload;";
 			if (grr_sql_command($sql) < 0)
 				fatal_error(0, "$sql \n\n" . grr_sql_error());
 		}
 	}
+	
+	
 	if ($action == "change")
 	{
+		// on récupère les données importantes du POST.
 		$arearight = false ;
 		if (isset($_POST["id_overload"]))
 			$id_overload = $_POST["id_overload"];
@@ -180,6 +230,8 @@ if ($action == "delete")
 			$affichage = "n";
 			$overload_mail = "n";
 		}
+		
+		// Gestion des droits : on vérifie si l'id à modifier est dans l'area autorisée.
 		$sql = "SELECT id_area FROM ".TABLE_PREFIX."_overload WHERE id=$id_overload;";
 		$resquery = grr_sql_query($sql);
 		if (!$resquery)
@@ -193,6 +245,7 @@ if ($action == "delete")
 						$arearight = true;
 				}
 			}
+			// On fait l'action si l'id/area a été validé.
 			if ($arearight == true)
 			{
 				$sql = "UPDATE ".TABLE_PREFIX."_overload SET
@@ -208,20 +261,26 @@ if ($action == "delete")
 					fatal_error(0, "$sql \n\n" . grr_sql_error());
 			}
 		}
+		
+		// X- On affiche la première ligne du tableau avec les libelles.
 		$html = get_vocab("explication_champs_additionnels")."\n";
-		$html .= "<form method=\"post\" action=\"admin_overload.php\" >\n<table border=\"1\">";
-		$html .= "<tr><td>".get_vocab("match_area").get_vocab("deux_points")."</td>\n";
-		$html .= "<td>".get_vocab("fieldname").get_vocab("deux_points")."</td>\n";
-		$html .= "<td>".get_vocab("fieldtype").get_vocab("deux_points")."</td>\n";
-		$html .= "<td><span class='small'>".get_vocab("champ_obligatoire")."</span></td>\n";
-		$html .= "<td><span class='small'>".get_vocab("affiche_dans_les vues")."</span></td>\n";
-		$html .= "<td><span class='small'>".get_vocab("affiche_dans_les mails")."</span></td>\n";
-		$html .= "<td><span class='small'>".get_vocab("champ_confidentiel")."</span></td>\n";
-		$html .= "<td> </td></tr>\n";
+		$html .= "<form method=\"post\" action=\"admin_overload.php\" >\n<table border=\"1\"><thead>";
+		$html .= "<tr><th>".get_vocab("match_area").get_vocab("deux_points")."</th>\n";
+		$html .= "<th>".get_vocab("fieldname").get_vocab("deux_points")."</th>\n";
+		$html .= "<th>".get_vocab("fieldtype").get_vocab("deux_points")."</th>\n";
+		$html .= "<th><span class='small'>".get_vocab("champ_obligatoire")."</span></th>\n";
+		$html .= "<th><span class='small'>".get_vocab("affiche_dans_les vues")."</span></th>\n";
+		$html .= "<th><span class='small'>".get_vocab("affiche_dans_les mails")."</span></th>\n";
+		$html .= "<th><span class='small'>".get_vocab("champ_confidentiel")."</span></th>\n";
+		$html .= "<th> </th></tr></thead><tbody>\n";
+		
+		// X+1- On affiche le formulaire d'ajout
 		$html .= "\n<tr><td>";
 		$html .= "<select name=\"id_area\" size=\"1\">";
+		
 		foreach ($userdomain as $key=>$value)
 			$html .= "<option value=\"$key\">".$userdomain[$key]."</option>\n";
+			
 		$html .= "</select></td>\n";
 		$html .= "<td><div><input type=\"text\" name=\"fieldname\" size=\"20\" /></div></td>\n";
 		$html .= "<td><div><select name=\"fieldtype\" size=\"1\">\n
@@ -243,7 +302,9 @@ if ($action == "delete")
 	$html .= "<input type=\"checkbox\" id=\"confidentiel\" name=\"confidentiel\" title=\"".get_vocab("champ_confidentiel")."\" value=\"y\" />\n";
 	$html .= "<input type=\"hidden\" name=\"action\" value=\"add\" /></div></td>\n";
 	$html .= "<td><div><input type=\"submit\" name=\"submit\" value=\"".get_vocab('add')."\" /></div></td>\n";
-	$html .= "</tr></table></form>\n";
+	$html .= "</tr><tbody></table></form>\n";
+	
+	// X+2- On affiche les données du tableau
 	$breakkey = "";
 	$ouvre_table = false;
 	$ferme_table = false;
@@ -257,11 +318,11 @@ if ($action == "delete")
 		{
 			if (!$ouvre_table)
 			{
-				$html .= "<table cellpadding=\"3\" border=\"1\">";
+				$html .= '<table  border="1" cellpadding="3">';
 				$ferme_table = true;
 				$ouvre_table = true;
 			}
-			$html .= "<tr><th>".get_vocab("match_area")."</th><th>".get_vocab("fieldname")."</th><th>".get_vocab("fieldtype")."</th><th>".get_vocab("champ_obligatoire")."</th><th>".get_vocab("affiche_dans_les vues")."</th><th>".get_vocab("affiche_dans_les mails")."</th><th>".get_vocab("champ_confidentiel")."</th><th colspan='2'>Actions</th></tr>";
+			$html .= "<thead><tr><th>".get_vocab("match_area")."</th><th>".get_vocab("fieldname")."</th><th>".get_vocab("fieldtype")."</th><th>".get_vocab("champ_obligatoire")."</th><th>".get_vocab("affiche_dans_les vues")."</th><th>".get_vocab("affiche_dans_les mails")."</th><th>".get_vocab("champ_confidentiel")."</th><th colspan='2'>Actions</th></tr></thead><tbody>";
 		}
 		$breakkey = $key;
 		if (grr_sql_count($res) != 0)
@@ -323,7 +384,8 @@ if ($action == "delete")
 		}
 		echo $html;
 		if ($ferme_table)
-			echo "</table>";
+			echo "</tbody></table>";
+		// Fabrication des div pour les tooltip
 		echo "<div class='tooltip' id='tooltip_affichage' style=\"display:none;\">\n";
 		echo get_vocab("affiche_dans_les vues");
 		echo "</div>\n";
@@ -349,6 +411,9 @@ if ($action == "delete")
 			echo "var my_tooltip_obli = new Tooltip('confidentiel_".$i."', 'tooltip_confidentiel');\n";
 		}
 		echo "</script>\n";
+		// Fin fabrication des div pour les tooltip
+		
+		// fin de l'affichage de la colonne de droite
 		echo "</td></tr></table>\n";
 		?>
 	</body>

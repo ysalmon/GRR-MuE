@@ -150,6 +150,7 @@ if ($valid == 'yes')
 }
 if (($valid == 'yes') || ($valid=='reset'))
 {
+	$default_etablissement = isset($_POST['id_etab']) ? $_POST['id_etab'] : NULL;
 	$default_site = isset($_POST['id_site']) ? $_POST['id_site'] : NULL;
 	$default_area = isset($_POST['id_area']) ? $_POST['id_area'] : NULL;
 	$default_room = isset($_POST['id_room']) ? $_POST['id_room'] : NULL;
@@ -157,51 +158,77 @@ if (($valid == 'yes') || ($valid=='reset'))
 	$default_list_type = isset($_POST['area_item_format']) ? $_POST['area_item_format'] : NULL;
 	$default_language = isset($_POST['default_language']) ? $_POST['default_language'] : NULL;
 	$sql = "UPDATE ".TABLE_PREFIX."_utilisateurs
-	SET default_site = '".protect_data_sql($default_site)."',
-	default_area = '".protect_data_sql($default_area)."',
-	default_room = '".protect_data_sql($default_room)."',
-	default_style = '". protect_data_sql($default_style)."',
-	default_list_type = '".protect_data_sql($default_list_type)."',
-	default_language = '".protect_data_sql($default_language)."'
+	SET default_etablissement = '".protect_data_sql($default_etablissement)."',
+		default_site = '".protect_data_sql($default_site)."',
+		default_area = '".protect_data_sql($default_area)."',
+		default_room = '".protect_data_sql($default_room)."',
+		default_style = '". protect_data_sql($default_style)."',
+		default_list_type = '".protect_data_sql($default_list_type)."',
+		default_language = '".protect_data_sql($default_language)."'
 	WHERE login='".getUserName()."'";
 	if (grr_sql_command($sql) < 0)
 		fatal_error(0, get_vocab('message_records_error').grr_sql_error());
 	else
 	{
+		if (($default_etablissement !='') and ($default_etablissement !='0'))
+			$_SESSION['default_etablissement'] = $default_etablissement;
+		 else
+			$_SESSION['default_etablissement'] = Settings::get('default_etablissement');
+		
 		if (($default_site != '') && ($default_site !='0'))
 			$_SESSION['default_site'] = $default_site;
 		else
 			$_SESSION['default_site'] = Settings::get('default_site');
+		
 		if (($default_area != '') && ($default_area !='0'))
 			$_SESSION['default_area'] = $default_area;
 		else
 			$_SESSION['default_area'] = Settings::get('default_area');
+		
 		if (($default_room != '') && ($default_room !='0'))
 			$_SESSION['default_room'] = $default_room;
 		else
 			$_SESSION['default_room'] = Settings::get('default_room');
+		
 		if ($default_style != '')
 			$_SESSION['default_style'] = $default_style;
 		else
 			$_SESSION['default_style'] = Settings::get('default_css');
+		
 		if ($default_list_type != '')
 			$_SESSION['default_list_type'] = $default_list_type;
 		else
 			$_SESSION['default_list_type'] = Settings::get('area_list_format');
+		
 		if ($default_language != '')
 			$_SESSION['default_language'] = $default_language;
 		else
 			$_SESSION['default_language'] = Settings::get('default_language');
 	}
 }
+
+// Utilisation de la bibliothèqye prototype dans ce script
 $use_prototype = 'y';
+
 print_header($day, $month, $year, $type="with_session");
+
 echo "\n    <!-- Repere ".$grr_script_name." -->\n";
+
+// MULTI ETAB
+if (Settings::get("module_multietablissement") == "Oui")
+ 	$use_etab='y';
+ else
+ 	$use_etab='n';
+
+// MULTI SITE
 if (Settings::get("module_multisite") == "Oui")
 	$use_site = 'y';
 else
 	$use_site = 'n';
-$sql = "SELECT nom,prenom,statut,email,default_site,default_area,default_room,default_style,default_list_type,default_language,source FROM ".TABLE_PREFIX."_utilisateurs WHERE login='".getUserName()."'";
+
+$sql = "SELECT nom,prenom,statut,email,default_site,default_area,default_room,default_style,default_list_type,default_language,source,default_etablissement 
+		FROM ".TABLE_PREFIX."_utilisateurs 
+		WHERE login='".getUserName()."'";
 $res = grr_sql_query($sql);
 if ($res)
 {
@@ -235,28 +262,81 @@ if ($res)
 			$default_language = $row[9];
 		else
 			$default_language = Settings::get('default_language');
+		
+		 if (($row[11] !='') and ($row[11] !='0'))
+			$default_etablissement = $row[11];
+		 else
+			$default_etablissement = Settings::get('default_etablissement');
+	
 		$user_source = $row[10];
 	}
 }
 ?>
 <script type="text/javascript" >
-	function modifier_liste_domaines(){
+	
+function modifier_liste_etabs(action){
+		$.ajax({
+			url: "my_account_modif_listes.php",
+			type: "get",
+			dataType: "html",
+			data: {
+					type:'etab',
+					default_etab:'<?php echo $default_etablissement ?>',
+					session_login:'<?php echo getUserName(); ?>',
+					use_site:'<?php echo $use_site; ?>',
+					action:action
+			},
+			success: function(returnData){
+				$("#div_liste_etabs").html(returnData);
+			},
+			error: function(e){
+				console.log(e);
+			}		
+		});
+}
+ 
+ function modifier_liste_sites(action){
+		$.ajax({
+			url: "my_account_modif_listes.php",
+			type: "get",
+			dataType: "html",
+			data: {
+				id_etab: $('#id_etab').val(),
+				type:'site',
+				default_site:'<?php echo $default_site; ?>',
+				session_login:'<?php echo getUserName(); ?>',
+				use_etab:'<?php echo $use_etab; ?>',
+				action:action
+			},
+			success: function(returnData){
+				$("#div_liste_sites").html(returnData);
+			},
+			error: function(e){
+				console.log(e);
+			}
+		});
+	 }
+	
+	function modifier_liste_domaines(action){
 		$.ajax({
 			url: "my_account_modif_listes.php",
 			type: "get",
 			dataType: "html",
 			data: {
 				id_site: $('#id_site').val(),
-				default_area : '<?php echo Settings::get("default_area"); ?>',
+				type:'domaine',
+				default_area : '<?php echo $default_area; ?>',
 				session_login:'<?php echo getUserName(); ?>',
 				use_site:'<?php echo $use_site; ?>',
-				type:'domaine',
+				use_etab:'<?php echo $use_etab; ?>',
+				id_etab: $('#id_etab').val(),
+				action:action
 			},
 			success: function(returnData){
 				$("#div_liste_domaines").html(returnData);
 			},
 			error: function(e){
-				alert(e);
+				console.log(e);
 			}
 		});
 	}
@@ -266,16 +346,17 @@ if ($res)
 			type: "get",
 			dataType: "html",
 			data: {
-				id_area:$('id_area').serialize(true),
-				default_room : '<?php echo Settings::get("default_room"); ?>',
+				id_area:$('#id_area').val(),
 				type:'ressource',
-				action:+action,
+				default_room : '<?php echo $default_room; ?>',
+				session_login:'<?php echo getUserName(); ?>',
+				action:action,
 				},
 			success: function(returnData){
 				$("#div_liste_ressources").html(returnData);
 			},
 			error: function(e){
-				alert(e);
+				console.log(e);
 			}
 		});
 	}
@@ -283,7 +364,9 @@ if ($res)
 <?php
 affiche_pop_up($msg,'admin');
 echo ('
-	<div class="container">
+	<div class="container-fluid">
+	<h2>'.$vocab["manage_my_account"].'</h2>
+	<div class="blocBlanc colPadding">
 	<form id="param_account" action="my_account.php" method="post">
 		<table>');
 	if (!(IsAllowedToModifyProfil()))
@@ -413,59 +496,102 @@ echo ('
 				</td>
 			</tr>
 		</table>';
+		
+	if (Settings::get("module_multietablissement") == "Oui")
+		echo ('
+				  <h4>'.get_vocab('explain_default_area_and_room_and_site_and_etablissement').'</h4>');
+	 else if (Settings::get("module_multisite") == "Oui")
+		echo ('
+			  <h4>'.get_vocab('explain_default_area_and_room_and_site').'</h4>');
+	 else
+		echo ('
+			  <h4>'.get_vocab('explain_default_area_and_room').'</h4>');
+
+/**
+ * Liste des établissements
+ */
+ echo '<table>';
+ if (Settings::get("module_multietablissement") == "Oui") {
+	if ($desactive_gestion_compte_etablissement == 0) { 
+	 	 echo '<tr><td colspan="2">';
+		 echo '<div id="div_liste_etabs">';
+		 echo '<input type="hidden" id="id_etab" name="id_etab" value="'.$default_etablissement.'" />';
+		 // Ici, on insère la liste des établissement avec de l'ajax !
+		 echo '</div></td></tr>';
+	} else {
+		echo '<tr><td colspan="2">';
+		echo '<div >';
+		echo '<td> '.get_vocab('default_etablissement').'</td>';
+		if ($default_etablissement == -1){
+			echo '<td> Aucun </td>';
+		} else {
+			echo '<td> '.getNomCourtEtablissementFromId($default_etablissement).'</td>';			
+		}
+		echo '<input type="hidden" id="id_etab" name="id_etab" value="'.$default_etablissement.'" />';
+		echo '</div></td></tr>';
+	}
+ } else {
+ 	 echo '<input type="hidden" id="id_etab" name="id_etab" value="-1" />';
+ }
+ 
 /**
  * Liste des sites
  */
-		if (Settings::get("module_multisite") == "Oui")
-		{
-			echo '<h4>'.get_vocab('explain_default_area_and_room_and_site').'</h4>';
+ 
+ if (Settings::get("module_multisite") == "Oui") {
+	echo '<tr><td colspan="2">';
+	echo '<div id="div_liste_sites">';
+	echo '<input type="hidden" id="id_site" name="id_site" value="'.$default_site.'" />';
+	// Ici, on insère la liste des sites avec de l'ajax !
+	echo '</div></td></tr>';
+ } else {
+ 	echo '<input type="hidden" id="id_site" name="id_site" value="-1" />';
+ }
+ 
 
-			$sql = "SELECT id,sitecode,sitename
-			FROM ".TABLE_PREFIX."_site
-			ORDER BY id ASC";
-			$resultat = grr_sql_query($sql);
-			echo '
-			<table>
-				<tr>
-					<td>'.get_vocab('default_site').get_vocab('deux_points').'</td>
-					<td>
-						<select class="form-control" id="id_site" name="id_site" onchange="modifier_liste_domaines();modifier_liste_ressources(2)">
-							<option value="-1">'.get_vocab('choose_a_site').'</option>'."\n";
-							for ($enr = 0; ($row = grr_sql_row($resultat, $enr)); $enr++)
-							{
-								echo '<option value="'.$row[0].'"';
-								if ($default_site == $row[0])
-									echo ' selected="selected" ';
-								echo '>'.htmlspecialchars($row[2]);
-								echo '</option>'."\n";
-							}
-							echo '</select>
-						</td>
-					</tr>';
-		}
-		else
-		{
-			echo '<h4>'.get_vocab('explain_default_area_and_room').'</h4>';
-			echo '<input type="hidden" id="id_site" name="id_site" value="-1" />
-			<table>';
-		}
-		/* Liste des domaines */
+		/**
+		  * Liste des domaines
+		 */
+		//echo  $default_area;
 		echo '<tr><td colspan="2">';
 		echo '<div id="div_liste_domaines">';
+		echo '<input type="hidden" id="id_area" name="id_area" value="'.$default_area.'" />';
+		// Ici, on insère la liste des domaines avec de l'ajax !
 		echo '</div></td></tr>';
+		
+
+		/*echo '<tr><td colspan="2">';
+		echo '<div id="div_liste_domaines">';
+		echo '</div></td></tr>';*/
+		
 		/* Liste des ressources */
 		echo '<tr><td colspan="2">';
 		echo '<div id="div_liste_ressources">';
-		echo '<input type="hidden" id="id_area" name="id_area" value="'.$default_area.'" />';
+		echo '<input type="hidden" id="id_area" name="id_area" value="'.$default_room.'" />';
+		// Ici, on insère la liste des domaines avec de l'ajax !
 		echo '</div></td></tr></table>';
+		
+		
+		// Au chargement de la page, on remplit les listes de domaine et de ressources
+		if (Settings::get("module_multietablissement") == "Oui" && ($desactive_gestion_compte_etablissement == 0)) {
+			echo "\n".'<script type="text/javascript">modifier_liste_etabs(\'actualiser\');</script>'."\n";
+		}
+		if (Settings::get("module_multisite") == "Oui" || Settings::get("module_multietablissement") == "Oui" ) {
+			echo '<script type="text/javascript">modifier_liste_sites(\'actualiser\');</script>'."\n";
+		}
+
 		/* Au chargement de la page, on itialise les select */
-		echo '<script type="text/javascript">modifier_liste_domaines();</script>'."\n";
-		echo '<script type="text/javascript">modifier_liste_ressources(1);</script>'."\n";
+		echo '<script type="text/javascript">modifier_liste_domaines(\'actualiser\');</script>'."\n";
+		echo '<script type="text/javascript">modifier_liste_ressources(\'actualiser\');</script>'."\n";
+		//echo '<script type="text/javascript">modifier_liste_domaines();</script>'."\n";
+		//echo '<script type="text/javascript">modifier_liste_ressources(1);</script>'."\n";
 /**
  * Choix de la feuille de style part défaut
  */
-		echo '<h4>'.get_vocab('explain_css').'</h4>';
-		echo '
+	/* 20161220 : l'utilisateur ne doit pas pouvoir changer son thème */
+	/*
+		 echo '<h4>'.get_vocab('explain_css').'</h4>';
+		 echo '
 					<table>
 						<tr>
 							<td>'.get_vocab('choose_css').'</td>
@@ -484,10 +610,11 @@ echo ('
 								</td>
 							</tr>
 						</table>'."\n";
+	*/		
 /**
  * Choix de la langue
  */
-						echo '      <h4>'.get_vocab('choose_language').'</h4>';
+						echo '<h4>'.get_vocab('choose_language').'</h4>';
 						echo '
 						<table>
 							<tr>
@@ -514,7 +641,9 @@ echo ('
 								<input type="hidden" name="month" value="'.$month.'" />
 								<input type="hidden" name="year" value="'.$year.'" />
 								<br />
+								<div id="fixe" style="text-align:center;">
 								<input class="btn btn-primary" type="submit" value="'.get_vocab('save').'" />
+								</div>
 							</div>
 						</form>
 						<!-- Formulaire de Reset des données -->
@@ -524,6 +653,7 @@ echo ('
 								<input type="hidden" name="day" value="'.$day.'" />
 								<input type="hidden" name="month" value="'.$month.'" />
 								<input type="hidden" name="year" value="'.$year.'" />
+								<input type="hidden" name="id_etab" value="-1" />
 								<input type="hidden" name="id_site" value="-1" />
 								<input type="hidden" name="id_area" value="-1" />
 								<input type="hidden" name="id_room" value="-1" />
@@ -533,6 +663,7 @@ echo ('
 								<input class="btn btn-primary" type="submit" value="'.get_vocab('reset').'" />
 							</div>
 						</form>
+						</div>
 						</div>
 					</body>
 					</html>';

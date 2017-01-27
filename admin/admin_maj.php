@@ -32,26 +32,31 @@ include "../include/config.inc.php";
 include "../include/misc.inc.php";
 include "../include/functions.inc.php";
 include "../include/$dbsys.inc.php";
+
 $grr_script_name = "admin_maj.php";
+
 // Settings
 require_once("../include/settings.class.php");
 //Chargement des valeurs de la table settingS
 if (!Settings::load())
 	die("Erreur chargement settings");
+
 // Session related functions
 require_once("../include/session.inc.php");
 // Paramètres langage
 include "../include/language.inc.php";
-function traite_requete($requete = "")
-{
+
+
+function traite_requete($requete = ""){
+	
 	mysqli_query($GLOBALS['db_c'], $requete);
 	$erreur_no = mysqli_errno($GLOBALS['db_c']);
 	if (!$erreur_no)
 		$retour = "";
-	else
-	{
-		switch ($erreur_no)
-		{
+	else{
+		
+		switch ($erreur_no){
+			
 			case "1060":
 			// le champ existe déjà : pas de problème
 			$retour = "";
@@ -79,6 +84,7 @@ function traite_requete($requete = "")
 	}
 	return $retour;
 }
+
 $valid = isset($_POST["valid"]) ? $_POST["valid"] : 'no';
 $version_old = isset($_POST["version_old"]) ? $_POST["version_old"] : '';
 if (isset($_GET["force_maj"]))
@@ -149,7 +155,7 @@ if ((!@grr_resumeSession()) && $valid!='yes')
 			<link REL="stylesheet" href="themes/default/css/style.css" type="text/css">
 			<TITLE>GRR</TITLE>
 			<LINK REL="SHORTCUT ICON" href="./favicon.ico">
-				<script type="text/javascript" src="../js/functions.js" ></script>
+				<script type="text/javascript" src="./functions.js" ></script>
 			</HEAD>
 			<BODY>
 				<form action="admin_maj.php" method='post' style="width: 100%; margin-top: 24px; margin-bottom: 48px;">
@@ -219,7 +225,7 @@ if ((!@grr_resumeSession()) && $valid!='yes')
 					}
 
 					?>
-					<script type="text/javascript" src="../js/functions.js" ></script>
+					<script type="text/javascript" src="./functions.js" ></script>
 					<?php
 					$result = '';
 					$result_inter = '';
@@ -804,26 +810,33 @@ if ((!@grr_resumeSession()) && $valid!='yes')
 							grr_sql_query("INSERT INTO ".TABLE_PREFIX."_setting VALUES ('maj196_qui_peut_reserver_pour', '1');");
 							$result .= "<b>Mise à jour du champs qui_peut_reserver_pour : </b><span style=\"color:green;\">Ok !</span><br /><br />";
 						}
+						
 						// Mise à jour du numéro de version
 						$req = grr_sql_query1("SELECT VALUE FROM ".TABLE_PREFIX."_setting WHERE NAME='version'");
 						if ($req == -1)
 							$result_inter .= traite_requete("INSERT INTO ".TABLE_PREFIX."_setting VALUES ('version', '".$version_grr."');");
 						else
 							$result_inter .= traite_requete("UPDATE ".TABLE_PREFIX."_setting SET VALUE='".$version_grr."' WHERE NAME='version';");
+						
 						// Mise à jour du numéro de RC
 						$req = grr_sql_command("DELETE FROM ".TABLE_PREFIX."_setting WHERE NAME='versionRC'");
 						$result_inter .= traite_requete("INSERT INTO ".TABLE_PREFIX."_setting VALUES ('versionRC', '".$version_grr_RC."');");
+						
 						//Re-Chargement des valeurs de la table settingS
 						if (!Settings::load())
 							die("Erreur chargement settings");
+						
 						affiche_pop_up(get_vocab("maj_good"),"force");
 					}
+					
 					// Numéro de version effective
 					$version_old = Settings::get("version");
 					if ($version_old == "")
 						$version_old = "1.3";
+					
 					// Numéro de RC
 					$version_old_RC = Settings::get("versionRC");
+					
 					// Calcul du numéro de version actuel de la base qui sert aux test de comparaison et de la chaine à afficher
 					if ($version_old_RC == "")
 					{
@@ -833,6 +846,7 @@ if ((!@grr_resumeSession()) && $valid!='yes')
 					else
 						$display_version_old = $version_old."_RC".$version_old_RC;
 					$version_old .= ".".$version_old_RC;
+					
 					// Calcul de la chaine à afficher
 					if ($version_grr_RC == "")
 						$display_version_grr = $version_grr.$sous_version_grr;
@@ -840,6 +854,7 @@ if ((!@grr_resumeSession()) && $valid!='yes')
 						$display_version_grr = $version_grr."_RC".$version_grr_RC;
 					echo "<h2>".get_vocab('admin_maj.php')."</h2>";
 					echo "<hr />";
+					
 					// Numéro de version
 					//Hugo - Mise a jour temporaire du numéro de version à afficher
 					//11/06/2013

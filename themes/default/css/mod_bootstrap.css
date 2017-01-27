@@ -1,7 +1,7 @@
-a{color:#31A3DD;text-decoration:none}
-.text-primary{color:#31A3DD}
-.bg-primary{color:#fff;background-color:#31A3DD}
-.btn-primary{color:#fff;background-color:#31A3DD;border-color:#31A3DD}
+a{color:#4B4B4B;text-decoration:none}
+.text-primary{color:#4B4B4B}
+.bg-primary{color:#fff;background-color:#4B4B4B}
+.btn-primary{color:#fff;background-color:#4B4B4B;border-color:#4B4B4B}
 .btn-primary.disabled,
 .btn-primary[disabled],
 fieldset[disabled] .btn-primary,
@@ -19,9 +19,43 @@ fieldset[disabled] .btn-primary.focus,
 fieldset[disabled] .btn-primary:active,
 .btn-primary.disabled.active,
 .btn-primary[disabled].active,
-fieldset[disabled] .btn-primary.active{background-color:#31A3DD;border-color:#31A3DD}
-.btn-primary .badge{color:#31A3DD;background-color:#fff}
-.btn-link{color:#31A3DD;font-weight:normal;border-radius:0}
-.panel-primary>.panel-heading .badge{color:#31A3DD;background-color:#fff}
-.panel-primary>.panel-footer+.panel-collapse>.panel-body{border-bottom-color:#31A3DD}
+fieldset[disabled] .btn-primary.active{background-color:#4B4B4B;border-color:#4B4B4B}
+.btn-primary .badge{color:#4B4B4B;background-color:#fff}
+.btn-link{color:#4B4B4B;font-weight:normal;border-radius:0}
+.panel-primary>.panel-heading .badge{color:#4B4B4B;background-color:#fff}
+.panel-primary>.panel-footer+.panel-collapse>.panel-body{border-bottom-color:#4B4B4B}
 caption{text-align: center}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: #2D2D2D;
+  background-position: 0 -15px;
+  border-color:#333333
+}
+.btn-primary:active,
+.btn-primary.active {
+  background-color: #2D2D2D;
+  border-color:#333333
+}
+.btn-primary:disabled,
+.btn-primary[disabled] {
+  background-color: #2D2D2D;
+  background-image: none;
+  border-color:#333333
+}
+
+.btn-danger {
+	color:#fff !important;
+	background-color:#E085AB !important;
+	border-color:#D17FA1 !important;
+	font-weight: normal !important;
+}
+.btn-danger:hover,.btn-danger:focus,.btn-danger.focus,.btn-danger:active,.btn-danger.active,.open>.dropdown-toggle.btn-danger {
+	color:#fff !important;
+	background-color:#CC789B !important;
+	border-color:#BF7090 !important;
+	font-weight: normal !important;
+}
+.btn-danger:active,.btn-danger.active,.open>.dropdown-toggle.btn-danger {
+	background-image:none
+}

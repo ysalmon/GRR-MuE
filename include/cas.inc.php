@@ -32,18 +32,19 @@
  */
 // Le package phpCAS doit etre stocké dans un sous-répertoire « CAS »
 // dans un répertoire correspondant a l'include_path du php.ini (exemple : /var/lib/php)
-include_once(dirname(__FILE__).'/CAS/CAS.php');
+include_once('CAS/CAS.php');
+
 // cas.sso est le fichier d'informations de connexions au serveur cas
 // Le fichier cas.sso doit etre stocké dans un sous-répertoire « CAS »
 // dans un répertoire correspondant a l'include_path du php.ini (exemple : /var/lib/php)
-include(dirname(__FILE__).'/CAS/cas.sso');
+include('CAS/cas.sso');
+
 /* declare le script comme un client CAS
  Si le dernier argument est à true, cela donne la possibilité à phpCAS d'ouvrir une session php.
 */
- phpCAS::client(CAS_VERSION_2_0,$serveurSSO,$serveurSSOPort,$serveurSSORacine,true);
+ phpCAS::client(CAS_VERSION_3_0,$serveurSSO,$serveurSSOPort,$serveurSSORacine,true);
  phpCAS::setLang(PHPCAS_LANG_FRENCH);
-
-//            phpCAS::setCasServerCACert();
+ 
 //Set the fixed URL that will be set as the CAS service parameter. When this method is not called, a phpCAS script uses its own URL.
 //Le paramètre $Url_CAS_setFixedServiceURL est défini dans le fichier config.inc.php
  if (isset($Url_CAS_setFixedServiceURL) && ($Url_CAS_setFixedServiceURL != ''))
@@ -60,25 +61,24 @@ Commentez la ligne suivante si vous avez une erreur du type
 PHP Fatal error:  Call to undefined method phpCAS::handlelogoutrequests() in /var/www/html/grr/include/cas.inc.php
 */
 phpCAS::handleLogoutRequests(false);
-if (phpCAS::checkAuthentication())
-{
+if (phpCAS::checkAuthentication()){
 	// L'utilisateur est déjà authentifié, on continue
 }
-else
-{
+else{
+	
 	// L'utilisateur n'est pas authentifié. Que fait-on ?
-	if (Settings::get("sso_redirection_accueil_grr") == 'y')
-	{
+	if (Settings::get("sso_redirection_accueil_grr") == 'y'){
+		
 		if (isset($_GET['force_authentification']))
 			phpCAS::forceAuthentication();
 		else
 			header("Location: ".htmlspecialchars_decode(page_accueil())."");
 	}
-	else
-	{
+	else{
 		phpCAS::forceAuthentication();
 	}
 }
+
 $login = phpCAS::getUser();
 $user_ext_authentifie = 'cas';
 if (file_exists("./include/config_CAS.inc.php"))

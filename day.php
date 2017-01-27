@@ -54,6 +54,7 @@ if ($_GET['pview'] == 1)
 else
 	$class_image = "image";
 $back = '';
+
 if (isset($_SERVER['HTTP_REFERER']))
 	$back = htmlspecialchars($_SERVER['HTTP_REFERER']);
 if (($settings->get("authentification_obli") == 0) && (getUserName() == ''))
@@ -167,7 +168,7 @@ else
 	}
 }
 grr_sql_free($res);
-$sql = "SELECT room_name, capacity, id, description, statut_room, show_fic_room, delais_option_reservation, moderate FROM ".TABLE_PREFIX."_room WHERE area_id='".protect_data_sql($area)."' ORDER BY order_display, room_name";
+$sql = "SELECT room_name, capacity, id, description, statut_room, show_fic_room, delais_option_reservation, moderate, room_warning FROM ".TABLE_PREFIX."_room WHERE area_id='".protect_data_sql($area)."' ORDER BY order_display, room_name";
 $res = grr_sql_query($sql);
 if (!$res)
 	fatal_error(0, grr_sql_error());
@@ -181,7 +182,7 @@ else
 	echo '<div class="row">'.PHP_EOL;
 	include("menu_gauche.php");
 	if ($_GET['pview'] != 1){
-		echo '<div class="col-lg-9 col-md-12 col-xs-12">'.PHP_EOL;
+		echo '<div class="col-md-10 col-md-12 col-xs-12">'.PHP_EOL;
 		echo '<div id="planning">'.PHP_EOL;
 	} else{
 		echo '<div id="print_planning">'.PHP_EOL;
@@ -233,8 +234,16 @@ else
 		if ($_GET['pview'] == 1 && $_GET['precedent'] == 1)
 			echo '<span id="lienPrecedent"><button class="btn btn-default btn-xs" onclick="charger();javascript:history.back();">Précedent</button></span>'.PHP_EOL;
 	}
+	
+	// Gestion du scroll horizontal en haut du tableau
+	echo '<div class="contenu_planning_scroll">
+				<div class="div_scroll_top">
+				</div>
+		  </div>'.PHP_EOL;
+	
+	
 	echo '<div class="contenu_planning">'.PHP_EOL;
-	echo '<table class="table-bordered table-striped">'.PHP_EOL;
+	echo '<table class="table-bordered table-striped table-planning">'.PHP_EOL;
 	echo '<tr>'.PHP_EOL.'<th style="width:5%;">'.PHP_EOL;
 	if ($enable_periods == 'y')
 		echo get_vocab("period");
@@ -254,6 +263,9 @@ else
 			$room_name[$i] = $row['0'];
 			$statut_room[$id_room[$i]] =  $row['4'];
 			$statut_moderate[$id_room[$i]] =  $row['7'];
+			$room_warning[$id_room[$i]] =  $row['8'];
+			
+			// Calcul du niveau d'accès aux fiche de réservation détaillées des ressources
 			$acces_fiche_reservation = verif_acces_fiche_reservation(getUserName(), $id_room[$i]);
 			if ($row['1']  && $_GET['pview'] != 1)
 				$temp = '<br /><span class="small">('.$row['1'].' '.($row['1'] > 1 ? get_vocab("number_max2") : get_vocab("number_max")).')</span>'.PHP_EOL;
@@ -264,11 +276,19 @@ else
 			if ($statut_moderate[$id_room[$i]] == "1"  && $_GET['pview'] != 1)
 				$temp .= '<br /><span class="texte_ress_moderee">'.get_vocab("reservations_moderees").'</span>'.PHP_EOL;
 			echo '<th style="width:'.$room_column_width.'%;" ';
+			
+			// Si la ressource est temporairement indisponible, on le signale
 			if ($statut_room[$id_room[$i]] == "0")
 				echo 'class="avertissement" ';
+			
 			$a = $a + 1;
 			echo '><a id="afficherBoutonSelection'.$a.'" class="lienPlanning" href="#" onclick="afficherMoisSemaine('.$a.')" style="display:inline;">'.htmlspecialchars($row['0']).'</a>'.PHP_EOL;
 			echo '<a id="cacherBoutonSelection'.$a.'" class="lienPlanning" href="#" onclick="cacherMoisSemaine('.$a.')" style="display:none;">'.htmlspecialchars($row['0']).'</a>'.PHP_EOL;
+			
+			if ($room_warning[$id_room[$i]] != ''){
+				echo "<br /><span class='avertissement' ><span class =\"small\">". htmlspecialchars($room_warning[$id_room[$i]])."</span></span>\n";
+			}
+		
 			if (htmlspecialchars($row['3']).$temp != '')
 			{
 				if (htmlspecialchars($row['3']) != '')
@@ -377,8 +397,15 @@ else
 					}
 					else
 					{
-						if (((authGetUserLevel(getUserName(), -1) > 1) || (auth_visiteur(getUserName(), $room) == 1)) && (UserRoomMaxBooking(getUserName(), $room, 1) != 0) && verif_booking_date(getUserName(), -1, $room, $date_booking, $date_now, $enable_periods) && verif_delais_max_resa_room(getUserName(), $room, $date_booking) && verif_delais_min_resa_room(getUserName(), $room, $date_booking) && (($statut_room[$room] == "1") || (($statut_room[$room] == "0") && (authGetUserLevel(getUserName(),$room) > 2) )) && $_GET['pview'] != 1)
-						{
+						if (((authGetUserLevel(getUserName(), -1) > 1) || (auth_visiteur(getUserName(), $room) == 1)) 
+							&& (UserRoomMaxBooking(getUserName(), $room, 1) != 0) 
+							&& verif_booking_date(getUserName(), -1, $room, $date_booking, $date_now, $enable_periods) 
+							&& verif_delais_max_resa_room(getUserName(), $room, $date_booking) 
+							&& verif_delais_min_resa_room(getUserName(), $room, $date_booking) 
+							&& (($statut_room[$room] == "1") || (($statut_room[$room] == "0") && (authGetUserLevel(getUserName(),$room) > 2) )) 
+							&& $_GET['pview'] != 1
+							&& auth_user_reserv_room_etab($room) ) {
+
 							if ($enable_periods == 'y')
 							{
 								echo '<a href="edit_entry.php?room='.$room.'&amp;period='.$time_t_stripped.'&amp;year='.$year.'&amp;month='.$month.'&amp;day='.$day.'&amp;page=day" title="'.get_vocab("cliquez_pour_effectuer_une_reservation").'" ><span class="glyphicon glyphicon-plus"></span></a>'.PHP_EOL;
@@ -416,7 +443,8 @@ else
 							if ($settings->get("display_level_view_entry") == 0)
 							{
 								$currentPage = 'day';
-								echo '<a title="'.htmlspecialchars($today[$room][$t]["who"]).'" data-width="675" onclick="request('.$id.','.$day.','.$month.','.$year.',\''.$currentPage.'\',readData);" data-rel="popup_name" class="poplight">'.$descr.PHP_EOL;
+								echo '<a title="'.htmlspecialchars($today[$room][$t]["who"]).'" class="lienModal" onclick="requestModal('.$id.','.$day.','.$month.',',$year.',\''.$currentPage.'\',readDataModal);" data-toggle="modal" data-target="#myModal" >'.$descr.PHP_EOL;
+								//echo '<a title="'.htmlspecialchars($today[$room][$t]["who"]).'" data-width="675" onclick="request('.$id.','.$day.','.$month.','.$year.',\''.$currentPage.'\',readData);" data-rel="popup_name" class="poplight">'.$descr.PHP_EOL;
 							}
 							else
 							{
@@ -495,11 +523,28 @@ affiche_pop_up(get_vocab('message_records'), 'user');
 			$row.find('a').css('padding-top', height/2 - h2/2);
 
 		});
+		
+		$(function(){
+
+			$('.div_scroll_top').css('width', $(".contenu_planning .table-planning").width());
+			$(".contenu_planning_scroll").scroll(function(){
+				$(".contenu_planning")
+					.scrollLeft($(".contenu_planning_scroll").scrollLeft());
+			});
+			$(".contenu_planning").scroll(function(){
+				$(".contenu_planning_scroll")
+					.scrollLeft($(".contenu_planning").scrollLeft());
+			});
+		});
+		
 	});
 	jQuery(document).ready(function($){
 		$("#popup_name").draggable({containment: "#container"});
 		$("#popup_name").resizable();
 	});
+	
+	
+	
 
 </script>
 <?php
@@ -507,5 +552,22 @@ unset($row);
 echo '</div>'.PHP_EOL;
 echo '</div>'.PHP_EOL;
 echo '<div id="popup_name" class="popup_block"></div>'.PHP_EOL;
+
+//modal bootstrap
+echo '
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+	<div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content">
+			<div id="modalBody" class="modal-body">
+				<!-- insertion de la page view-entry.php via la fonction requestModal du fichier js/popup.js -->
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Fermer</button>
+			</div>
+		</div>
+	</div>
+</div>
+';
+	
 include "footer.php";
 ?>

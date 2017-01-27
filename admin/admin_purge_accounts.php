@@ -30,8 +30,10 @@
 include "../include/admin.inc.php";
 $grr_script_name = "admin_user.php";
 $back = '';
+
 if (isset($_SERVER['HTTP_REFERER']))
 	$back = htmlspecialchars($_SERVER['HTTP_REFERER']);
+
 $display = isset($_GET["display"]) ? $_GET["display"] : NULL;
 $order_by = isset($_GET["order_by"]) ? $_GET["order_by"] : NULL;
 $msg = '';
@@ -40,15 +42,22 @@ if (((Settings::get("ldap_statut") == "") && (Settings::get("sso_statut") == "")
 	showAccessDenied($back);
 	exit();
 }
+
 print_header("", "", "", $type="with_session");
+
 // Affichage de la colonne de gauche
 include "admin_col_gauche.php";
+
 $themessage = str_replace ( "'"  , "\\'"  , get_vocab("admin_purge_accounts_confirm"));
 $themessage2 = str_replace ( "'"  , "\\'"  , get_vocab("admin_purge_accounts_confirm2"));
 $themessage3 = str_replace ( "'"  , "\\'"  , get_vocab("admin_purge_tables_confirm"));
 $themessage4 = str_replace ( "'"  , "\\'"  , get_vocab("admin_purge_accounts_confirm4"));
+
 echo "<h2>".get_vocab('admin_purge_accounts.php')."</h2>";
-echo get_vocab('admin_clean_accounts_desc');
+
+
+// Ancien code
+/*echo get_vocab('admin_clean_accounts_desc');
 echo "<div style=\"text-align:center;\">\n
 <form id=\"purge_liaison\" action=\"admin_purge_accounts.php\" method=\"post\">\n
 	<div>
@@ -58,8 +67,38 @@ echo "<div style=\"text-align:center;\">\n
 		value=\"".get_vocab('admin_purge_tables_liaison')."\"
 		onclick=\"return confirmButton('purge_liaison', '$themessage3')\" />\n
 	</div></form></div>";
+	echo "<hr />";*/
+
+// nouveau code
+if (authGetUserLevel(getUserName(),-1) >= 7){
+	echo get_vocab('admin_clean_accounts_desc');
+	
+	echo "<div style=\"text-align:center;\">\n
+	<form id=\"purge_liaison\" action=\"admin_purge_accounts.php\" method=\"post\">\n
+	<div>
+	<input type=\"hidden\" name=\"do_purge_table_liaison\" value=\"1\" />\n
+	<input
+		type=\"button\"
+		value=\"".get_vocab('admin_purge_tables_liaison')."\"
+		onclick=\"return confirmButton('purge_liaison', '$themessage3')\" />\n
+	</div></form></div>";
+	
 	echo "<hr />";
-	echo get_vocab('admin_purge_accounts_desc');
+}
+// fin nouveau code
+
+
+	// Ancien code
+	//echo get_vocab('admin_purge_accounts_desc');
+	
+	// Nouveau code
+	if (authGetUserLevel(getUserName(),-1) >= 7){
+		echo get_vocab('admin_purge_accounts_desc');
+	} else {
+		echo get_vocab('admin_purge_accounts_etabs_desc');
+	}
+	//Fin nouveau code
+	
 	echo "<div style=\"text-align:center;\">\n
 	<form id=\"purge_sauf_privileges\" action=\"admin_purge_accounts.php\" method=\"post\">\n
 		<div>
@@ -87,32 +126,44 @@ echo "<div style=\"text-align:center;\">\n
 					value=\"".get_vocab('admin_purge_accounts_with_bookings')."\"
 					onclick=\"return confirmButton('purge_avec_resa', '$themessage2')\" />\n
 				</div></form></div>";
-				if (isset($_POST['do_purge_table_liaison']))
-				{
-					if ($_POST['do_purge_table_liaison'] == 1)
-					{
+				if (isset($_POST['do_purge_table_liaison'])){
+					
+					if ($_POST['do_purge_table_liaison'] == 1){
+						
 						NettoyerTablesJointure();
 					}
 				}
-				if (isset($_POST['do_purge_sauf_privileges']))
-				{
-					if ($_POST['do_purge_sauf_privileges'] == 1)
-					{
-						supprimerReservationsUtilisateursEXT("n","n");
+				
+				if (isset($_POST['do_purge_sauf_privileges'])){
+					
+					if ($_POST['do_purge_sauf_privileges'] == 1){
+						if (authGetUserLevel(getUserName(),-1) >= 7){
+							supprimerReservationsUtilisateursEXT("n","n");
+						}else{
+							supprimerReservationsUtilisateursEXTParEtab("n","n");
+						}
 					}
 				}
-				if (isset($_POST['do_purge']))
-				{
-					if ($_POST['do_purge'] == 1)
-					{
-						supprimerReservationsUtilisateursEXT("n","y");
+				
+				if (isset($_POST['do_purge'])){
+					
+					if ($_POST['do_purge'] == 1){
+						if (authGetUserLevel(getUserName(),-1) >= 7){
+							supprimerReservationsUtilisateursEXT("n","y");
+						}else{
+							supprimerReservationsUtilisateursEXTParEtab("n","y");
+						}
 					}
 				}
-				if (isset($_POST['do_purge_avec_resa']))
-				{
-					if ($_POST['do_purge_avec_resa'] == 1)
-					{
-						supprimerReservationsUtilisateursEXT("y","y");
+				
+				if (isset($_POST['do_purge_avec_resa'])){
+					
+					if ($_POST['do_purge_avec_resa'] == 1){
+						if (authGetUserLevel(getUserName(),-1) >= 7){
+							supprimerReservationsUtilisateursEXT("y","y");
+						}else{
+							supprimerReservationsUtilisateursEXTParEtab("y","y");
+						}
 					}
 				}
  // fin de l'affichage de la colonne de droite

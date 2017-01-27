@@ -43,6 +43,7 @@ include "include/resume_session.php";
 Definition_ressource_domaine_site();
 get_planning_area_values($area);
 include "include/language.inc.php";
+
 $affiche_pview = '1';
 if (!isset($_GET['pview']))
 	$_GET['pview'] = 0;
@@ -118,17 +119,11 @@ $this_area_resolution = grr_sql_query1("SELECT resolution_area FROM ".TABLE_PREF
 $this_room_name = grr_sql_query1("SELECT room_name FROM ".TABLE_PREFIX."_room WHERE id=$room");
 $this_room_name_des = grr_sql_query1("SELECT description FROM ".TABLE_PREFIX."_room WHERE id=$room");
 $this_statut_room = grr_sql_query1("SELECT statut_room FROM ".TABLE_PREFIX."_room WHERE id=$room");
+$this_room_warning = grr_sql_query1("select room_warning from ".TABLE_PREFIX."_room where id=$room");
 $this_moderate_room = grr_sql_query1("SELECT moderate FROM ".TABLE_PREFIX."_room WHERE id=$room");
 $this_delais_option_reservation = grr_sql_query1("SELECT delais_option_reservation FROM ".TABLE_PREFIX."_room WHERE id=$room");
 $this_area_comment = grr_sql_query1("SELECT comment_room FROM ".TABLE_PREFIX."_room WHERE id=$room");
 $this_area_show_comment = grr_sql_query1("SELECT show_comment FROM ".TABLE_PREFIX."_room WHERE id=$room");
-
-//Pour vérifier si la plage de fin arrive sur un créneau ou non.
-$minutesFinCrenaux = array();
-for($h=0; $h<3600; $h+=$this_area_resolution) {
-	$minutesFinCrenaux[] = date('i', $h);
-}
-
 if ($room <= 0)
 {
 	echo "<h1>".get_vocab("no_rooms_for_area")."</h1>";
@@ -137,7 +132,7 @@ if ($room <= 0)
 echo '<div class="row">'.PHP_EOL;
 include("menu_gauche.php");
 if ($_GET['pview'] != 1){
-	echo '<div class="col-lg-9 col-md-12 col-xs-12">'.PHP_EOL;
+	echo '<div class="col-md-10 col-md-12 col-xs-12">'.PHP_EOL;
 	echo '<div id="planning">'.PHP_EOL;
 }else{
 	echo '<div id="print_planning">'.PHP_EOL;}
@@ -181,6 +176,9 @@ if ($this_moderate_room == "1" && $_GET['pview'] != 1)
 {
 	echo '<br><span class="texte_ress_moderee">',get_vocab("reservations_moderees"),'</span>',PHP_EOL;
 }
+if (isset($this_room_warning) && $this_room_warning!='' && $this_room_warning!='-1')
+    echo "<br /><span class='avertissement'>".htmlspecialchars($this_room_warning)."</span>";
+
 if ($this_area_show_comment == "y" && $_GET['pview'] != 1 && ($this_area_comment != "") && ($this_area_comment != -1))
 {
 	echo '<span style="text-align:center;">',$this_area_comment,'</span>',PHP_EOL;
@@ -288,10 +286,6 @@ else
 					$d[$weekday][$slot]["horaireDebut"] = $row[0];
 					$d[$weekday][$slot]["horaireFin"] = $row[1];
 					$d[$weekday][$slot]["duree"] = ($row[1]- $row[0]) / $this_area_resolution;
-				}
-				//Si la plage de fin dépasse le créneau, augmenter la durée
-				if(!in_array(date('i', $d[$weekday][$slot]["horaireFin"]), $minutesFinCrenaux)) {
-					$d[$weekday][$slot]["duree"] += 1;
 				}
 				if ($prev_weekday != $weekday)
 				{
@@ -507,17 +501,22 @@ for ($t = $week_start; $t <= $week_end; $t += 86400)
 						echo "<img src=\"img_grr/stop.png\" alt=\"".get_vocab("reservation_impossible")."\"  title=\"".get_vocab("reservation_impossible")."\" width=\"16\" height=\"16\" class=\"".$class_image."\"  />";
 					else
 					{
-						if ((($authGetUserLevel > 1) || ($auth_visiteur == 1)) && ($UserRoomMaxBooking != 0) && verif_booking_date(getUserName(), -1, $room, $date_booking, $date_now, $enable_periods) && verif_delais_max_resa_room(getUserName(), $room, $date_booking) && verif_delais_min_resa_room(getUserName(), $room, $date_booking) && (($this_statut_room == "1") || (($this_statut_room == "0") && (authGetUserLevel(getUserName(),$room) > 2) )) && $_GET['pview'] != 1)
-						{
-							if ($enable_periods == 'y')
-							{
+						if ((($authGetUserLevel > 1) || ($auth_visiteur == 1)) 
+								&& ($UserRoomMaxBooking != 0) 
+								&& verif_booking_date(getUserName(), -1, $room, $date_booking, $date_now, $enable_periods) 
+								&& verif_delais_max_resa_room(getUserName(), $room, $date_booking) 
+								&& verif_delais_min_resa_room(getUserName(), $room, $date_booking) 
+								&& (($this_statut_room == "1") || (($this_statut_room == "0") && (authGetUserLevel(getUserName(),$room) > 2) )) 
+								&& ($_GET['pview'] != 1)
+								&& auth_user_reserv_room_etab($room)){
+									
+							if ($enable_periods == 'y'){
 								echo "<a href=\"edit_entry.php?room=$room"
 								. "&amp;period=$time_t_stripped&amp;year=$wyear&amp;month=$wmonth"
 								. "&amp;day=$wday&amp;page=week\" title=\"".get_vocab("cliquez_pour_effectuer_une_reservation")."\"><span class=\"glyphicon glyphicon-plus\"></span>";
 								echo "</a>";
 							}
-							else
-							{
+							else{
 								echo "<a href=\"edit_entry.php?room=$room"
 								. "&amp;hour=$hour&amp;minute=$minute&amp;year=$wyear&amp;month=$wmonth"
 								. "&amp;day=$wday&amp;page=week\" title=\"".get_vocab("cliquez_pour_effectuer_une_reservation")."\"><span class=\"glyphicon glyphicon-plus\"></span>";
@@ -549,7 +548,8 @@ for ($t = $week_start; $t <= $week_end; $t += 86400)
 								{
 									$currentPage = 'week';
 									$id =  $d[$weekday][$slot - $decale_slot * $nb_case]["id"];
-									echo "<a title=\"".htmlspecialchars($d[$weekday][$slot - $decale_slot * $nb_case]["who"])."\"  data-width=\"675\" onclick=\"request($id,$wday,$wmonth,$wyear,'$currentPage',readData);\" data-rel=\"popup_name\" class=\"poplight\">" ;
+									echo '<a title="'.htmlspecialchars($d[$weekday][$slot - $decale_slot * $nb_case]["who"]).'" class="lienModal" onclick="requestModal('.$id.','.$wday.','.$wmonth.','.$wyear.',\''.$currentPage.'\',readDataModal);" data-toggle="modal" data-target="#myModal">';
+									//echo "<a title=\"".htmlspecialchars($d[$weekday][$slot - $decale_slot * $nb_case]["who"])."\"  data-width=\"675\" onclick=\"request($id,$wday,$wmonth,$wyear,'$currentPage',readData);\" data-rel=\"popup_name\" class=\"poplight\">" ;
 								}
 								else
 									echo "<a class=\"lienCellule\" title=\"".htmlspecialchars($d[$weekday][$slot-$decale_slot*$nb_case]["who"])."\"  href=\"view_entry.php?id=" . $d[$weekday][$slot - $decale_slot * $nb_case]["id"]."&amp;day=$wday&amp;month=$wmonth&amp;year=$wyear&amp;page=week\">";
@@ -632,5 +632,22 @@ for ($t = $week_start; $t <= $week_end; $t += 86400)
 	echo '</div>'.PHP_EOL;
 	echo '</div>'.PHP_EOL;
 	echo '</div>',PHP_EOL,'</div>',PHP_EOL,'<div id="popup_name" class="popup_block" ></div>',PHP_EOL;
+	
+	//modal bootstrap
+	echo '
+	<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+		<div class="modal-dialog modal-lg" role="document">
+			<div class="modal-content">
+				<div id="modalBody" class="modal-body">
+					<!-- insertion de la page view-entry.php via la fonction requestModal du fichier js/popup.js -->
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Fermer</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	';
+	
 	include "footer.php";
 	?>

@@ -510,6 +510,8 @@ echo '<h3>'.get_vocab('miscellaneous').'</h3>'.PHP_EOL;
 			</textarea>
 		</td>
 	</tr>
+	<?php //En Multi-établissement, le pramètre nom de l'établissement n'a pas de sens.
+	if (Settings::get("module_multietablissement") != "Oui") { ?>
 	<tr>
 		<td>
 			<?php echo get_vocab('company'); ?>
@@ -518,6 +520,7 @@ echo '<h3>'.get_vocab('miscellaneous').'</h3>'.PHP_EOL;
 			<input class="form-control" type="text" name="company" size="40" value="<?php echo(Settings::get('company')); ?>" />
 		</td>
 	</tr>
+	<?php } ?>
 	<tr>
 		<td>
 			<?php echo get_vocab('grr_url'); ?>
@@ -752,14 +755,20 @@ echo ' />'.PHP_EOL;
 echo '</td>'.PHP_EOL;
 echo '</tr>'.PHP_EOL;
 echo '</table>'.PHP_EOL;
+
 if (Settings::get('module_multisite') == 'Oui') {
     $use_site = 'y';
 } else {
     $use_site = 'n';
 }
+
+ $use_etab='n';  
+ $idEtablissement = -1;
+ 
 ?>
 <script type="text/javascript">
-	function modifier_liste_domaines(){
+	function modifier_liste_domaines(action){
+
 		$.ajax({
 			url: "../my_account_modif_listes.php",
 			type: "get",
@@ -769,13 +778,16 @@ if (Settings::get('module_multisite') == 'Oui') {
 				default_area : '<?php echo Settings::get('default_area'); ?>',
 				session_login:'<?php echo getUserName(); ?>',
 				use_site:'<?php echo $use_site; ?>',
+				use_etab:'<?php echo $use_etab; ?>',
+                id_etab:'<?php echo $idEtablissement?>',
 				type:'domaine',
+				action:action
 			},
 			success: function(returnData){
 				$("#div_liste_domaines").html(returnData);
 			},
 			error: function(e){
-				alert(e);
+				console.log(e);
 			}
 		});
 	}
@@ -785,16 +797,17 @@ if (Settings::get('module_multisite') == 'Oui') {
 			type: "get",
 			dataType: "html",
 			data: {
-				id_area:$('id_area').serialize(true),
-				default_room : '<?php echo Settings::get('default_room'); ?>',
+				id_area:$('#id_area').val(),
 				type:'ressource',
-				action:+action,
+				default_room : '<?php echo Settings::get('default_room'); ?>',
+				session_login:'<?php echo getUserName(); ?>',
+				action:action,
 			},
 			success: function(returnData){
 				$("#div_liste_ressources").html(returnData);
 			},
 			error: function(e){
-				alert(e);
+				console.log(e);
 			}
 		});
 	}
@@ -815,10 +828,10 @@ if (Settings::get('module_multisite') == 'Oui') {
     $resultat = grr_sql_query($sql);
     echo('
 		<table>
-			<tr>
+			<tr><td><div><table><tr>
 				<td>'.get_vocab('default_site').get_vocab('deux_points').'</td>
 				<td>
-					<select class="form-control" id="id_site" name="id_site" onchange="modifier_liste_domaines();modifier_liste_ressources(2)">
+					<select class="form-control" id="id_site" name="id_site" onchange="modifier_liste_domaines(\'actualiser\');modifier_liste_ressources(\'vider\')">
 						<option value="-1">'.get_vocab('choose_a_site').'</option>'."\n");
     for ($enr = 0; ($row = grr_sql_row($resultat, $enr)); ++$enr) {
         echo '<option value="'.$row[0].'"';
@@ -830,14 +843,14 @@ if (Settings::get('module_multisite') == 'Oui') {
     }
     echo('</select>
 </td>
-</tr>');
+</tr></table></div></td></tr>');
 } else {
     echo '<input class="form-control" type="hidden" id="id_site" name="id_site" value="-1" />
 	<table>';
 }
-/*
-  * Liste des domaines
- */
+// ----------------------------------------------------------------------------
+// Liste domaines
+// ----------------------------------------------------------------------------
 echo '<tr>'.PHP_EOL;
 echo '<td>'.PHP_EOL;
 echo '<div id="div_liste_domaines">'.PHP_EOL;
@@ -845,9 +858,10 @@ echo '<div id="div_liste_domaines">'.PHP_EOL;
 echo '</div>'.PHP_EOL;
 echo '</td>'.PHP_EOL;
 echo '</tr>'.PHP_EOL;
-/*
- * Liste des ressources
- */
+
+// ----------------------------------------------------------------------------
+// Liste des ressources
+// ----------------------------------------------------------------------------
 echo '<tr>'.PHP_EOL;
 echo '<td>'.PHP_EOL;
 echo '<div id="div_liste_ressources">'.PHP_EOL;
@@ -857,8 +871,9 @@ echo '</div>'.PHP_EOL;
 echo '</td>'.PHP_EOL;
 echo '</tr>'.PHP_EOL;
 echo '</table>'.PHP_EOL;
-echo '<script type="text/javascript">modifier_liste_domaines();</script>'.PHP_EOL;
-echo '<script type="text/javascript">modifier_liste_ressources(1);</script>'.PHP_EOL;
+
+echo '<script type="text/javascript">modifier_liste_domaines(\'actualiser\');</script>'.PHP_EOL;
+echo '<script type="text/javascript">modifier_liste_ressources(\'actualiser\');</script>'.PHP_EOL;
 //
 // Choix de la feuille de style
 //

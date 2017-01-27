@@ -35,12 +35,12 @@ table.table-striped th{background-color:gray !important; border:0px !important;}
 .administration{background-color:#fff;width:20%;text-align:center;margin:0 auto}
 .configuration{background-color:#fff;width:20%;text-align:center;margin:0 auto}
 .contactformulaire{background-color:#fff;width:20%;vertical-align:middle;text-align:center}
-#menuGauche{background-color:#B029E5;float:left;height:100%;min-width:200px;width:100%;padding-bottom:10px}
-#menuGaucheMonthAll2{display:none;background-color:#B029E5;float:left;height:100%;min-width:200px;width:300px;padding-bottom:10px}
+#menuGauche{background-color:#B029E5;float:left;height:100%;min-width:200px;width:100%;padding: 0px 4px 15px 4px;}
+#menuGaucheMonthAll2{display:none;background-color:#B029E5;float:left;height:100%;min-width:200px;width:300px;padding: 0px 4px 15px 4px;}
 .cal_current_day{color:#000;vertical-align:middle;text-align:center;line-height:30px}
 .week td a{background-color:#8b8b8b;vertical-align:middle;text-align:center;height:100%;width:100%}
 .table-header{width:100%}
-.table-noborder{width:100%;border:0px !important}
+.table-noborder{width:100%;border:0px !important;margin-bottom: 1px; }
 .table-bordered{border-collapse:collapse;border-spacing:0;width:100%}
 table.calendar{text-align:center;width:99%;padding:1px;margin:auto;background-color:#fff}
 .calendar caption{background-color:#B029E5}
@@ -65,7 +65,7 @@ span a{color:#FFF }
 b,strong{color:#000;text-align:center}
 #liste_select{color:#B029E5;font-weight:700}
 #liste{color:#CCF}
-table.legende{margin-left:25px;width:250px}
+/*table.legende{margin-left:25px;width:250px}*/
 table.legende td{width:125px;text-align:center}
 .pied_menuGauche{border-top:3px solid #B029E5}
 th{color:#eee;font-size:10pt;font-family:verdana,sans-serif;background-color:#B029E5 !important;vertical-align:top;text-align:center !important;border:none !important}

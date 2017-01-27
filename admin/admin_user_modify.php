@@ -28,14 +28,17 @@
  */
 include "../include/admin.inc.php";
 $grr_script_name = "admin_user_modify.php";
+
 $back = '';
 if (isset($_SERVER['HTTP_REFERER']))
 	$back = htmlspecialchars($_SERVER['HTTP_REFERER']);
+
 if ((authGetUserLevel(getUserName(), -1) < 6) && (authGetUserLevel(getUserName(), -1, 'user') !=  1))
 {
 	showAccessDenied($back);
 	exit();
 }
+
 // un gestionnaire d'utilisateurs ne peut pas modifier un administrateur général ou un gestionnaire d'utilisateurs
 if (isset($_GET["user_login"]) && (authGetUserLevel(getUserName(),-1,'user') ==  1))
 {
@@ -46,6 +49,7 @@ if (isset($_GET["user_login"]) && (authGetUserLevel(getUserName(),-1,'user') == 
 		exit();
 	}
 }
+
 #If we dont know the right date then make it up
 unset($user_login);
 $user_login = isset($_GET["user_login"]) ? $_GET["user_login"] : NULL;
@@ -59,6 +63,8 @@ $user_source = 'local';
 $user_etat = '';
 $display = "";
 $retry = '';
+
+
 if ($valid == "yes")
 {
 	// Restriction dans le cas d'une démo
@@ -148,14 +154,28 @@ if ($valid == "yes")
 						$sql .= "source='local'";
 					else
 						$sql .= "source='ext'";
-					if (grr_sql_command($sql) < 0)
-					{
+					if (grr_sql_command($sql) < 0){
+						
 						fatal_error(0, get_vocab("msg_login_created_error") . grr_sql_error());
 					}
-					else
-					{
-						$msg = get_vocab("msg_login_created");
+					else{
+						
+						if (Settings::get("module_multietablissement") == "Oui"){
+							
+                    		$id_etablissement = getIdEtablissementCourant();
+                    		$sql = "INSERT INTO ".TABLE_PREFIX."_j_user_etablissement SET
+                    		 login='".protect_data_sql($new_login)."',
+                    		 id_etablissement = $id_etablissement";
+                    		if (grr_sql_command($sql) < 0)
+                    		{
+                    			fatal_error(0, get_vocab("msg_login_created_error") . grr_sql_error());
+                    		} else {
+                    			$msg = get_vocab("msg_login_created");
+                    		}
+                    	}
+						
 					}
+					
 					$user_login = $new_login;
 				}
 			}
@@ -267,13 +287,24 @@ if ($valid == "yes")
 					$sql = "DELETE FROM ".TABLE_PREFIX."_j_user_room WHERE login='$user_login'";
 					if (grr_sql_command($sql) < 0)
 						fatal_error(0, get_vocab('message_records_error') . grr_sql_error());
+					
 					$sql = "DELETE FROM ".TABLE_PREFIX."_j_user_area WHERE login='$user_login'";
 					if (grr_sql_command($sql) < 0)
 						fatal_error(0, get_vocab('message_records_error') . grr_sql_error());
+					
 					$sql = "DELETE FROM ".TABLE_PREFIX."_j_useradmin_area WHERE login='$user_login'";
 					if (grr_sql_command($sql) < 0)
 						fatal_error(0, get_vocab('message_records_error') . grr_sql_error());
+					
 					$sql = "DELETE FROM ".TABLE_PREFIX."_j_useradmin_site WHERE login='$user_login'";
+					if (grr_sql_command($sql) < 0)
+						fatal_error(0, get_vocab('message_records_error') . grr_sql_error());
+					
+					 $sql = "DELETE FROM ".TABLE_PREFIX."_j_useradmin_etablissement WHERE login='$user_login'";
+					if (grr_sql_command($sql) < 0)
+						fatal_error(0, get_vocab('message_records_error') . grr_sql_error());
+					
+					$sql = "DELETE FROM ".TABLE_PREFIX."_j_user_etablissement WHERE login='$user_login'";
 					if (grr_sql_command($sql) < 0)
 						fatal_error(0, get_vocab('message_records_error') . grr_sql_error());
 				}
@@ -333,13 +364,15 @@ include "admin_col_gauche.php";
 ?>
 <script type='text/javascript'>
 	function display_password_fields(id){
-		if ($('#'+id).val()=='locale')
+		if ($(id).value=='locale')
 		{
-			$('#password_fields').show();
+			$('password_fields').style.display='block';
+			$('password_fields').style.visibility='visible';
 		}
 		else
 		{
-			$('#password_fields').hide();
+			$('password_fields').style.visibility='hidden';
+			$('password_fields').style.display='none';
 		}
 	}
 </script>
@@ -358,54 +391,100 @@ else
 <p class="bold">
 	| <a href="admin_user.php?display=<?php echo $display; ?>"><?php echo get_vocab("back"); ?></a> |
 	<?php
-	if (isset($user_login) && ($user_login != ''))
-	{
-		echo "<a href=\"admin_user_modify.php?display=$display\">".get_vocab("display_add_user")."</a> | ";
+	if (sso_IsAllowedAddUser()) { // On peut ajouter un utilisateur si cela est autorise - GIP RECIA
+		if (isset($user_login) && ($user_login != '')){
+			echo "<a href=\"admin_user_modify.php?display=$display\">".get_vocab("display_add_user")."</a> | ";
+		}
 	}
 	?>
 	<br /><?php echo get_vocab("required"); ?>
 </p>
 <form action="admin_user_modify.php?display=<?php echo $display; ?>" method='get'><div>
 	<?php
-	if ((Settings::get("sso_statut") != "") || (Settings::get("ldap_statut") != '') || (Settings::get("imap_statut") != ''))
-	{
-		echo get_vocab("authentification").get_vocab("deux_points");
-		echo "<select id=\"select_auth_mode\" name='type_authentification' onchange=\"display_password_fields(this.id);\">\n";
-		echo "<option value='locale'";
-		if ($user_source == 'local')
-			echo "selected=\"selected\" ";
-		echo ">".get_vocab("authentification_base_locale")."</option>\n";
-		echo "<option value='externe'";
-		if ($user_source == 'ext')
-			echo "selected=\"selected\" ";
-		echo ">".get_vocab("authentification_base_externe")."</option>\n";
-		echo "</select><br /><br />\n";
+	// Modif : si la modification de profil n'est pas possible, alors elle ne l'est pas non plus dans la gestion des utilisateurs - Ajout GIP RECIA
+	if (IsAllowedToModifyProfil()){
+		
+		if ((Settings::get("sso_statut") != "") || (Settings::get("ldap_statut") != '') || (Settings::get("imap_statut") != '')){
+			
+			echo get_vocab("authentification").get_vocab("deux_points");
+			echo "<select id=\"select_auth_mode\" name='type_authentification' onchange=\"display_password_fields(this.id);\">\n";
+			echo "<option value='locale'";
+			if ($user_source == 'local')
+				echo "selected=\"selected\" ";
+			echo ">".get_vocab("authentification_base_locale")."</option>\n";
+			echo "<option value='externe'";
+			if ($user_source == 'ext')
+				echo "selected=\"selected\" ";
+			echo ">".get_vocab("authentification_base_externe")."</option>\n";
+			echo "</select><br /><br />\n";
+		}
+	}else{
+		echo '<input type="hidden" name="type_authentification" value="externe"/>';
 	}
-	echo get_vocab("login")." *".get_vocab("deux_points");
-	if (isset($user_login) && ($user_login!=''))
-	{
-		echo $user_login;
-		echo "<input type=\"hidden\" name=\"reg_login\" value=\"$user_login\" />\n";
-	}
-	else
-	{
-		echo "<input type=\"text\" name=\"new_login\" size=\"40\" value=\"".htmlentities($user_login)."\" />\n";
-	}
-	echo "<table border=\"0\" cellpadding=\"5\"><tr>\n";
-	echo "<td>".get_vocab("last_name")." *".get_vocab("deux_points")."</td>\n<td><input type=\"text\" name=\"reg_nom\" size=\"40\" value=\"";
-	if ($user_nom)
-		echo htmlspecialchars($user_nom);
-	echo "\" /></td>\n";
-	echo "<td>".get_vocab("first_name")." *".get_vocab("deux_points")."</td>\n<td><input type=\"text\" name=\"reg_prenom\" size=\"20\" value=\"";
-	if ($user_nom)
-		echo htmlspecialchars($user_prenom);
-	echo "\" /></td>\n";
-	echo "<td></td><td></td>";
-	echo "</tr>\n";
-	echo "<tr><td>".get_vocab("mail_user").get_vocab("deux_points")."</td><td><input type=\"text\" name=\"reg_email\" size=\"30\" value=\"";
-	if ($user_mail)
-		echo htmlspecialchars($user_mail);
-	echo "\" /></td>\n";
+	
+	// Si la modification de profil n'est pas possible, alors elle ne l'est pas non plus dans la gestion des utilisateurs - Ajout GIP RECIA
+	// Pas de modif possible
+	if (!(IsAllowedToModifyProfil())){
+		
+		echo '<table>
+           <tr>
+              <td><b>'.get_vocab("login").'</b></td><td>'.get_vocab("deux_points").'</td>
+              <td>'.$user_login.'</td>
+              <td><input type="hidden" name="reg_login" value="'.$user_login.'" /></td>
+           <tr>';
+		echo '  <tr>
+				  <td><b>'.get_vocab("last_name").'</b></td><td>'.get_vocab("deux_points").'</td>
+				  <td>'.$user_nom.'</td>
+				  <td><input type="hidden" name="reg_nom" size=\"40\" value="';
+				  if ($user_nom) echo htmlspecialchars($user_nom);
+		echo '     "<td>
+			   </tr>';
+		echo '  <tr>
+				  <td><b>'.get_vocab("first_name").'</b></td><td>'.get_vocab("deux_points").'</td>
+				  <td>'.$user_prenom.'</td>
+				  <td><input type="hidden" name="reg_prenom" size=\"40\" value="';
+				  if ($user_prenom) echo htmlspecialchars($user_prenom);
+		echo '     "<td>
+			   </tr>';
+		echo '  <tr>
+				  <td><b>'.get_vocab("mail_user").'</b></td><td>'.get_vocab("deux_points").'</td>
+				  <td>'.$user_mail.'</td>
+				  <td><input type="hidden" name="reg_email" size=\"40\" value="';
+				  if ($user_mail) echo htmlspecialchars($user_mail);
+		echo '     "<td>
+			   </tr>
+			 </table>';
+		echo "<table border=\"0\" cellpadding=\"5\"><tr>\n";
+   
+   } else {
+	
+		echo get_vocab("login")." *".get_vocab("deux_points");
+		if (isset($user_login) && ($user_login!=''))
+		{
+			echo $user_login;
+			echo "<input type=\"hidden\" name=\"reg_login\" value=\"$user_login\" />\n";
+		}
+		else
+		{
+			echo "<input type=\"text\" name=\"new_login\" size=\"40\" value=\"".htmlentities($user_login)."\" />\n";
+		}
+		echo "<table border=\"0\" cellpadding=\"5\"><tr>\n";
+		echo "<td>".get_vocab("last_name")." *".get_vocab("deux_points")." </td>\n<td><input type=\"text\" name=\"reg_nom\" size=\"40\" value=\"";
+		if ($user_nom)
+			echo htmlspecialchars($user_nom);
+		echo "\" /></td>\n";
+		echo "<td>".get_vocab("first_name")." *".get_vocab("deux_points")." </td>\n<td><input type=\"text\" name=\"reg_prenom\" size=\"20\" value=\"";
+		if ($user_nom)
+			echo htmlspecialchars($user_prenom);
+		echo "\" /></td>\n";
+		echo "<td></td><td></td>";
+		echo "</tr>\n";
+		echo "<tr><td>".get_vocab("mail_user").get_vocab("deux_points")."</td><td><input type=\"text\" name=\"reg_email\" size=\"30\" value=\"";
+		if ($user_mail)
+			echo htmlspecialchars($user_mail);
+		echo "\" /></td>\n";
+   }
+	
 	echo "<td>".get_vocab("statut").get_vocab("deux_points")."</td>\n";
 	echo "<td><select name=\"reg_statut\" size=\"1\">\n";
 	echo "<option value=\"visiteur\" ";
@@ -467,7 +546,7 @@ else
 	echo "<input type=\"hidden\" name=\"valid\" value=\"yes\" />\n";
 	if (isset($user_login))
 		echo "<input type=\"hidden\" name=\"user_login\" value=\"".$user_login."\" />\n";
-	echo "<br /><div style=\"text-align:center;\"><input type=\"submit\" value=\"".get_vocab("save")."\" /></div>\n";
+	echo "<br /><div style=\"text-align:center;\"><input class=\"btn btn-primary\" type=\"submit\" value=\"".get_vocab("save")."\" /></div>\n";
 	echo "</div></form>\n";
 	if ((isset($user_login)) && ($user_login != ''))
 	{

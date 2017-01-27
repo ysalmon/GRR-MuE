@@ -35,24 +35,85 @@
 	}
 </script>
 <?php
-echo "<table class=\"table_adm\">\n";
+
+// Gestion onglet bootstrap
+echo '<ul class="nav nav-pills nav-justified">';
+
+if ($config_global){
+	
+	for ($k = 1; $k < 6; $k++){
+		
+		if ($page_config == $k){
+
+			echo '<li role="presentation" class="active"><a href="#">'.get_vocab('admin_config'.$k.'.php').'</a></li>';
+		}
+		else{
+			
+			echo '<li role="presentation"><a href="./admin_config.php?page_config='.$k.'">'.get_vocab('admin_config'.$k.'.php').'</a></li>';	
+		}
+	}
+
+}else{
+	
+	for ($k = 1; $k < 6; $k++){
+		
+		if ($k != 4) {
+			
+			if ($page_config == $k) {
+				
+				echo '<li role="presentation" class="active"><a href="#">'.get_vocab('admin_config'.$k.'.php').'</a></li>';
+			} 
+			else {
+				
+				echo '<li role="presentation"><a href="./admin_config_etablissement.php?page_config='.$k.'">'.get_vocab('admin_config'.$k.'.php').'</a></li>';
+			
+			}
+		}
+	}	
+}
+echo '</ul><hr>';
+	
+
+// Ancienne gestion onglet par tableau
+/*echo "<table class=\"table_adm\">\n";
 echo "<tbody>\n";
 echo "<tr>";
-for ($k = 1; $k < 6; $k++)
-{
-	echo "<td style=\"width:170px;\">";
-	if ($page_config == $k)
+
+if ($config_global){
+	for ($k = 1; $k < 6; $k++)
 	{
-		echo "<div style=\"position: relative;\"><div class=\"onglet_off\" style=\"position: relative; top: 0px; padding-left: 20px; padding-right: 20px; min-height: 2.5em;\">".
-		get_vocab('admin_config'.$k.'.php')."</div></div>";
+		echo "<td style=\"width:170px;\">";
+		if ($page_config == $k)
+		{
+			echo "<div style=\"position: relative;\"><div class=\"onglet_off\" style=\"position: relative; top: 0px; padding-left: 20px; padding-right: 20px; min-height: 2.5em;\">".
+			get_vocab('admin_config'.$k.'.php')."</div></div>";
+		}
+		else
+		{
+			echo "<div style=\"position: relative;\">".PHP_EOL;
+			echo "<div onmouseover=\"changeclass(this, 'onglet_on');\" onmouseout=\"changeclass(this, 'onglet');\" class=\"onglet\" style=\"position: relative; top: 0px; padding-left: 20px; padding-right: 20px; min-height: 2.5em;\">".PHP_EOL;
+			echo "<a href=\"./admin_config.php?page_config=".$k."\">".get_vocab('admin_config'.$k.'.php')."</a></div></div>".PHP_EOL;
+		}
+		echo "</td>\n";
 	}
-	else
-	{
-		echo "<div style=\"position: relative;\">".PHP_EOL;
-		echo "<div onmouseover=\"changeclass(this, 'onglet_on');\" onmouseout=\"changeclass(this, 'onglet');\" class=\"onglet\" style=\"position: relative; top: 0px; padding-left: 20px; padding-right: 20px; min-height: 2.5em;\">".PHP_EOL;
-		echo "<a href=\"./admin_config.php?page_config=".$k."\">".get_vocab('admin_config'.$k.'.php')."</a></div></div>".PHP_EOL;
+	echo "</tr></tbody></table>".PHP_EOL;
+}else{
+	
+	for ($k=1;$k<6;$k++) {
+		if ($k != 4) {
+			echo "<td style=\"width:20%;\">";
+			if ($page_config == $k) {
+				echo "<div style=\"position: relative;\"><div class=\"onglet_off\" style=\"position: relative; top: 0px; padding-left: 20px; padding-right: 20px; min-height: 2.5em;\">".
+				get_vocab('admin_config'.$k.'.php')."</div></div>";
+			} else {
+				echo "<div style=\"position: relative;\">".PHP_EOL;
+			    echo "<div onmouseover=\"changeclass(this, 'onglet_on');\" onmouseout=\"changeclass(this, 'onglet');\" class=\"onglet\" style=\"position: relative; top: 0px; padding-left: 20px; padding-right: 20px; min-height: 2.5em;\">".PHP_EOL;
+			    echo "<a href=\"admin_config_etablissement.php?page_config=".$k."\">".get_vocab('admin_config'.$k.'.php')."</a></div></div>".PHP_EOL;
+			}
+			echo "</td>\n";
+		}
 	}
-	echo "</td>\n";
-}
-echo "</tr></tbody></table>".PHP_EOL;
+	echo "</tr></tbody></table>\n".PHP_EOL;
+	
+}*/
 ?>

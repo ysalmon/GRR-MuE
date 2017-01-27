@@ -34,7 +34,7 @@ function returnmsg($type,$test, $status, $msg = '')
 	echo encode_message_utf8('<div class="alert alert-'.$type.'" role="alert"><h3>'.$test);
 	echo encode_message_utf8($status)."</h3>";
 	if ($msg != '')
-		echo encode_message_utf8("($msg)"),PHP_EOL;
+		echo encode_message_utf8('($msg)'),PHP_EOL;
 	echo '</div>',PHP_EOL;
 }
 
@@ -279,7 +279,7 @@ function affiche_lien_contact($_cible, $_type_cible, $option_affichage)
 		?>
 		<script type="text/javascript">
 			function encode_adresse(user,domain,debut)
-			{
+			{	
 				var address = user+'@'+domain;
 				var toWrite = '';
 				if (debut > 0)
@@ -315,17 +315,20 @@ function affiche_lien_contact($_cible, $_type_cible, $option_affichage)
 				{
 					$i++;
 					$domain = $item_email_explode[1];
-					if ($i == 1)
-					{
-						$affichage .= '<script type="text/javascript">'.PHP_EOL;
-						$affichage .=  'encode_adresse("'.$person.'", "'.$domain.'", 1);'.PHP_EOL;
+					if ($i == 1){
+						
+						$affichage .= '<a href="mailto:'.$person.'@'.$domain;
+						//$affichage .= '<script type="text/javascript">'.PHP_EOL;
+						//$affichage .=  'encode_adresse("'.$person.'", "'.$domain.'", 1);'.PHP_EOL;
 					}
 					else
-						$affichage .=  'encode_adresse("'.$person.'", "'.$domain.'", 0);'.PHP_EOL;
+							$affichage .= ';'.$person.'@'.$domain;
+					//$affichage .=  'encode_adresse("'.$person.'", "'.$domain.'", 0);'.PHP_EOL;
 				}
 			}
-			$affichage .=  'encode_fin_adresse("'.AddSlashes($_identite).'");'.PHP_EOL;
-			$affichage .=  '</script>'.PHP_EOL;
+			$affichage .=  '">'.AddSlashes($_identite).'</a>';
+			//$affichage .=  'encode_fin_adresse("'.AddSlashes($_identite).'");'.PHP_EOL;
+			//$affichage .=  '</script>'.PHP_EOL;
 		}
 	}
 	return $affichage;
@@ -366,7 +369,8 @@ function Definition_ressource_domaine_site()
 			}
 			else
 			{
-				$id_site = get_default_site();
+				$id_etablissement = get_default_etablissement();
+				$id_site = get_default_site($id_etablissement);
 				$area = get_default_area($id_site);
 			}
 		}
@@ -588,28 +592,28 @@ function plages_libre_semaine_ressource($id_room, $month_week, $day_week, $year_
  	$est_membre="non";
 	// LDAP attributs
  	$members_attr = array (
-		$ldap_group_member_attr
+ 		"memberUid"
 		// Recherche des Membres du groupe
  		);
 		// Avec des GroupOfNames, ce ne serait pas ça.
  	$ds = @ldap_connect($ldap_adresse, $ldap_port);
  	if ($ds)
  	{
- 		$r = @ldap_bind ($ds, $ldap_login, $ldap_pwd);
+ 		$r = @ldap_bind ($ds);
 		// Bind anonyme
  		if ($r)
  		{
 			// La requête est adaptée à un serveur SE3...
-			$result = @ldap_search($ds, "cn={$grp},{$ldap_group_base}",$ldap_group_filter, $members_attr);
+ 			$result = @ldap_read($ds,"cn=$grp,ou=Groups,$ldap_base","cn=*",$members_attr);
 			// Peut-être faudrait-il dans le $tab_grp_autorise mettre des chaines 'cn=$grp,ou=Groups'
  			if ($result)
  			{
  				$info = @ldap_get_entries($ds, $result);
  				if ($info["count"] == 1)
  				{
- 					for ($loop = 0; $loop < $info[0][$ldap_group_member_attr]["count"]; $loop++)
+ 					for ($loop = 0; $loop < $info[0]["memberuid"]["count"]; $loop++)
  					{
- 						if ($info[0][$ldap_group_member_attr][$loop] == $uid)
+ 						if ($info[0]["memberuid"][$loop] == $uid)
  							$est_membre="oui";
  					}
  				}
@@ -775,13 +779,9 @@ function verif_page()
 		return "day";
 }
 
-function page_accueil($param = 'no')
-{
-	// Definition de $defaultroom
-	if (isset($_SESSION['default_room']) && ($_SESSION['default_room'] > 0))
-		$defaultroom = $_SESSION['default_room'];
-	else
-		$defaultroom = Settings::get("default_room");
+function page_accueil($param = 'no'){
+	
+	
 	// Definition de $defaultsite
 	if (isset($_SESSION['default_site']) && ($_SESSION['default_site'] > 0))
 		$defaultsite = $_SESSION['default_site'];
@@ -789,6 +789,14 @@ function page_accueil($param = 'no')
 		$defaultsite = Settings::get("default_site");
 	else
 		$defaultsite = get_default_site();
+	
+	if (Settings::get("module_multietablissement") == "Oui") {
+		$idEtablissement = getIdEtablissementCourant();
+		if (! isSiteInEtablissement($defaultsite, $idEtablissement)){
+			$defaultsite = findFirstIdSiteInEtablissement($idEtablissement);
+		}
+	}
+	
 	// Definition de $defaultarea
 	if (isset($_SESSION['default_area']) && ($_SESSION['default_area'] > 0))
 		$defaultarea = $_SESSION['default_area'];
@@ -796,6 +804,31 @@ function page_accueil($param = 'no')
 		$defaultarea = Settings::get("default_area");
 	else
 		$defaultarea = get_default_area($defaultsite);
+	
+	if (Settings::get("module_multietablissement") == "Oui") {
+		if (! isAreaInSite($defaultarea, $defaultsite)){
+			$defaultarea = findFirstIdAreaInSite($defaultsite);
+		}
+	}
+	
+	
+	// Definition de $defaultroom
+	if (isset($_SESSION['default_room']) && ($_SESSION['default_room'] > 0)){
+		$defaultroom = $_SESSION['default_room'];
+	}else{
+		$defaultroom = Settings::get("default_room");
+	}
+	
+	if($defaultroom > 0 ){
+		if (Settings::get("module_multietablissement") == "Oui") {
+			if (! isRoomInArea($defaultroom, $defaultarea)){
+			    $defaultroom = findFirstIdRoomInArea($defaultroom);
+			}
+		}
+	}
+	
+	
+	
 	// Calcul de $page_accueil
 	if ($defaultarea == - 1)
 		$page_accueil = 'day.php?noarea=';
@@ -810,23 +843,31 @@ function page_accueil($param = 'no')
 		$page_accueil = 'month_all2.php?area='.$defaultarea;
 	else
 		$page_accueil = 'week.php?area='.$defaultarea.'&amp;room='.$defaultroom;
-	if ((Settings::get("module_multisite") == "Oui") && ($defaultsite > 0))
+	
+	if (((Settings::get("module_multisite") == "Oui") || (Settings::get("module_multietablissement") == "Oui")) && ($defaultsite > 0))
 		$page_accueil .= '&amp;id_site='.$defaultsite;
+	
 	if ($param == 'yes')
 		$page_accueil .= '&amp;';
 	return $page_accueil ;
 }
-function begin_page($title, $page = "with_session")
-{
-	if ($page == "with_session")
-	{
-		if (isset($_SESSION['default_style']))
-			$sheetcss = 'themes/'.$_SESSION['default_style'].'/css';
 
-		else
+function begin_page($title, $page = "with_session"){
+
+	if ($page == "with_session"){
+		
+		if (isset($_SESSION['default_style']) || function_exists('Settings::get')){
+			if(!empty(Settings::get("default_css"))){
+				$sheetcss = 'themes/'.Settings::get("default_css").'/css';
+			}else{
+				$sheetcss = 'themes/'.$_SESSION['default_style'].'/css';
+			}
+
+		}else{
 			$sheetcss = 'themes/bleu/css';
-		if (isset($_GET['default_language']))
-		{
+		}
+		if (isset($_GET['default_language'])){
+			
 			$_SESSION['default_language'] = $_GET['default_language'];
 			if (isset($_SESSION['chemin_retour']) && ($_SESSION['chemin_retour'] != ''))
 				header("Location: ".$_SESSION['chemin_retour']);
@@ -835,8 +876,8 @@ function begin_page($title, $page = "with_session")
 			die();
 		}
 	}
-	else
-	{
+	else{
+		
 		if (Settings::get("default_css"))
 			$sheetcss = 'themes/'.Settings::get("default_css").'/css';
 		else
@@ -875,6 +916,9 @@ function begin_page($title, $page = "with_session")
 		$a .= '<link rel="stylesheet" type="text/css" href="../include/admin_grr.css" />'.PHP_EOL;
 		$a .= '<link rel="stylesheet" type="text/css" href="../themes/default/css/select2.css" />'.PHP_EOL;
 		$a .= '<link rel="stylesheet" type="text/css" href="../themes/default/css/select2-bootstrap.css" />'.PHP_EOL;
+		$a .= '<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Roboto%7CRoboto+Slab%7CRoboto+Condensed" >'.PHP_EOL;
+		$a .= '<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" >'.PHP_EOL;
+		$a .= '<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/icon?family=Material+Icons">'.PHP_EOL;
 		if ((isset($_GET['pview'])) && ($_GET['pview'] == 1))
 			$a .= '<link rel="stylesheet" type="text/css" href="../themes/print/css/style.css" />'.PHP_EOL;
 		$a .= '<link rel="stylesheet" type="text/css" href="../themes/default/css/jquery-ui.css" />'.PHP_EOL;
@@ -919,6 +963,9 @@ function begin_page($title, $page = "with_session")
 			$a .= '<link rel="stylesheet" type="text/css" href="themes/default/css/bootstrap-multiselect.css">'.PHP_EOL;
 			$a .= '<link rel="stylesheet" type="text/css" href="themes/default/css/bootstrap-clockpicker.min.css">'.PHP_EOL;
 		}
+		$a .= '<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Roboto%7CRoboto+Slab%7CRoboto+Condensed" >'.PHP_EOL;
+		$a .= '<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" >'.PHP_EOL;
+		$a .= '<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/icon?family=Material+Icons">'.PHP_EOL;
 		if ((isset($_GET['pview'])) && ($_GET['pview'] == 1))
 			$a .= '<link rel="stylesheet" type="text/css" href="themes/print/css/style.css" />'.PHP_EOL;
 		$a .= '<link rel="stylesheet" type="text/css" href="themes/default/css/jquery-ui.css" />'.PHP_EOL;
@@ -966,12 +1013,15 @@ function print_header($day = '', $month = '', $year = '', $type_session = 'with_
 
 	if (!($desactive_VerifNomPrenomUser))
 		$desactive_VerifNomPrenomUser = 'n';
+	
 	// On vérifie que les noms et prénoms ne sont pas vides
 	VerifNomPrenomUser($type_session);
+	
 	if ($type_session == "with_session")
 		echo begin_page(Settings::get("company"),"with_session");
 	else
 		echo begin_page(Settings::get("company"),"no_session");
+
 	// Si nous ne sommes pas dans un format imprimable
 	if ((!isset($_GET['pview'])) || ($_GET['pview'] != 1))
 	{
@@ -1024,52 +1074,241 @@ function print_header($day = '', $month = '', $year = '', $type_session = 'with_
 			$day   = date("d",$date_);
 			$month = date("m",$date_);
 			$year  = date("Y",$date_);
-			echo '<div id="toppanel">'.PHP_EOL;
+			
+			// Nouvel affichage du menu
+			
+			echo '<div class="navbar navbar-default">';
+			
+			echo '		<div class="navbar-header">';
+			
+			echo '			<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbarcollapse">';
+			echo '				<span class="icon-bar"></span>';
+			echo '				<span class="icon-bar"></span>';
+			echo '				<span class="icon-bar"></span>';
+			echo '			</button>';
+			
+			
+			$nom_picture = $racine."images/".Settings::get("logo");
+			if ((Settings::get("logo") != '') && (@file_exists($nom_picture))){
+				//Logo
+				echo '<a class="logo" href="'.$racine.page_accueil('yes').'day='.$day.'&amp;year='.$year.'&amp;month='.$month.'"><img src="'.$nom_picture.'" alt="logo"/></a>'.PHP_EOL.''.PHP_EOL;
+			}
+			else{	
+				// Texte "Accueil"
+				echo '<a class="navbar-brand" href="'.$racine.page_accueil('yes'),'day=',$day,'&amp;year=',$year,'&amp;month=',$month,'"><span class="glyphicon glyphicon-home glyphicon-accueil" alt="',get_vocab("welcome"),'" title="',get_vocab("welcome"),'"></span></a>';
+			}
+			
+			// Liste des établissements
+			echo ' 			<span class="listEtablissement">'.getCompanyNameForBandeau().'</span>';
+			
+			// Message d'accueil : affiché à la fin du bandeau de menu
+			if(Settings::get('message_accueil') != ''){
+				
+				echo '<span id="message-accueil">';
+					if(strlen(strip_tags(Settings::get('message_accueil'))) >= 100){
+						echo substr(strip_tags(Settings::get('message_accueil')), 0, 100).'...';
+						$messageEchappe = addslashes(Settings::get('message_accueil'));
+						echo "<a id='popoverMessage' role='button' class='btn btn-link' data-toggle='popover' data-content='".$messageEchappe."' data-placement='bottom' data-html='true' data-trigger='click'>Lire la suite</a>";
+					}else{
+						echo Settings::get('message_accueil');
+					}
+				echo '</span>';
+				echo "<script>$('#popoverMessage').popover();</script>";
+				
+			}
+
+			//Mail réservartion
+			$sql = "SELECT value FROM ".TABLE_PREFIX."_setting WHERE name='mail_etat_destinataire'";
+			$res = grr_sql_query1($sql);
+			//Libère le résultat de la mémoire
+			grr_sql_free($res);
+			if ($res == 1){
+				if ($type_session == "no_session"){
+					echo '<span class="contactformulaire">',PHP_EOL,'<input class="btn btn-default" type="submit" rel="popup_name" value="Réserver" onClick="javascript:location.href=\'contactFormulaire.php?day=',$day,'&amp;month=',$month,'&amp;year=',$year,'\'" >',PHP_EOL,'</span>',PHP_EOL;
+				}
+			}
+
+			echo '		</div>'; // fin navbar-header
+			
+			echo '		<div class="navbarcollapse collapse">';	
+			echo '			<ul class="nav navbar-nav navbar-right">';
+			
+			// Drapeaux langues
+			echo '				<li>
+									<span class="drapeaux">';
+			
+			$_SESSION['chemin_retour'] = '';
+			if (isset($_SERVER['QUERY_STRING']) && ($_SERVER['QUERY_STRING'] != '')){
+				
+				$parametres_url = htmlspecialchars($_SERVER['QUERY_STRING'])."&amp;";
+				$_SESSION['chemin_retour'] = traite_grr_url($grr_script_name)."?". $_SERVER['QUERY_STRING'];
+				echo '<a onclick="charger();" href="'.traite_grr_url($grr_script_name).'?'.$parametres_url.'default_language=fr"><img src="'.$racine.'img_grr/fr_dp.png" alt="France" title="france" width="20" height="13" class="image" /></a>'.PHP_EOL;
+				echo '<a onclick="charger();" href="'.traite_grr_url($grr_script_name).'?'.$parametres_url.'default_language=de"><img src="'.$racine.'img_grr/de_dp.png" alt="Deutch" title="deutch" width="20" height="13" class="image" /></a>'.PHP_EOL;
+				echo '<a onclick="charger();" href="'.traite_grr_url($grr_script_name).'?'.$parametres_url.'default_language=en"><img src="'.$racine.'img_grr/en_dp.png" alt="English" title="English" width="20" height="13" class="image" /></a>'.PHP_EOL;
+				echo '<a onclick="charger();" href="'.traite_grr_url($grr_script_name).'?'.$parametres_url.'default_language=it"><img src="'.$racine.'img_grr/it_dp.png" alt="Italiano" title="Italiano" width="20" height="13" class="image" /></a>'.PHP_EOL;
+				echo '<a onclick="charger();" href="'.traite_grr_url($grr_script_name).'?'.$parametres_url.'default_language=es"><img src="'.$racine.'img_grr/es_dp.png" alt="Spanish" title="Spanish" width="20" height="13" class="image" /></a>'.PHP_EOL;
+			}
+			echo '					</span>
+								</li>'; // fin drapeaux langues
+			
+			
+			if ($type_session == 'no_session'){
+				
+				if ((Settings::get('sso_statut') == 'cas_visiteur') || (Settings::get('sso_statut') == 'cas_utilisateur')){
+					
+					echo '<li><a href="index.php?force_authentification=y">'.get_vocab("authentification").'</a></li>';
+					echo '<li><small><i><a href="login.php">'.get_vocab("connect_local").'</a></i></small></li>';
+				}
+				else
+					echo '<li><a href="login.php">'.get_vocab("connect").'</a></li>';
+			}
+			else{
+				
+				echo '	<li>
+							<a href="'.$racine.'my_account.php?day='.$day.'&amp;year='.$year.'&amp;month='.$month.'">'.get_vocab("manage_my_account").'</a>
+						</li>';
+				if (verif_access_search(getUserName()))
+					echo '<li><a href="'.$racine.'report.php">'.get_vocab("report").'</a></li>';
+				
+				$disconnect_link = false;
+				
+				if (!((Settings::get("cacher_lien_deconnecter") == 'y') && (isset($_SESSION['est_authentifie_sso'])))){
+					
+					$disconnect_link = true;
+					if (Settings::get("authentification_obli") == 1)
+						echo '<li><a href="'.$racine.'logout.php?auto=0" >'.get_vocab('disconnect').'</a></li>';
+					else
+						echo '<li><a href="'.$racine.'logout.php?auto=0&amp;redirect_page_accueil=yes" >'.get_vocab('disconnect').'</a></li>'.PHP_EOL;
+				}
+				if ((Settings::get("Url_portail_sso") != '') && (isset($_SESSION['est_authentifie_sso']))){
+					
+					if ($disconnect_link)
+						echo ' - '.PHP_EOL;
+					else
+						echo '<br />'.PHP_EOL;
+					echo '<li><a href="'.Settings::get("Url_portail_sso").'">'.get_vocab("Portail_accueil").'</a></li>'.PHP_EOL;
+				}
+				if ((Settings::get('sso_statut') == 'lasso_visiteur') || (Settings::get('sso_statut') == 'lasso_utilisateur')){
+					
+					echo '<br />';
+					if ($_SESSION['lasso_nameid'] == NULL)
+						echo '<li><a href="lasso/federate.php">'.get_vocab('lasso_federate_this_account').'</a></li>'.PHP_EOL;
+					else
+						echo '<li><a href="lasso/defederate.php">'.get_vocab('lasso_defederate_this_account').'</a></li>'.PHP_EOL;
+				}
+			}
+			
+			if ($type_session != "with_session")
+				echo '<script>selection()</script>'.PHP_EOL;
+
+			// Administration div Sauvegarde
+			if ($type_session == "with_session"){
+				
+				if ((authGetUserLevel(getUserName(), -1, 'area') >= 4) || (authGetUserLevel(getUserName(), -1, 'user') == 1)){
+					
+					echo '		<li role="separator" class="menuAdmin divider"></li>'; // séparateur de menu
+					echo '		<li class="menuAdmin">';
+					echo "			<a href='{$racineAd}admin_accueil.php?day={$day}&amp;month={$month}&amp;year={$year}'>".get_vocab('admin')."</a>";
+					echo '		</li>';
+					if (authGetUserLevel(getUserName(), -1, 'area') >= 6){
+					
+						echo '	<li style="display:none">'; // le formulaire n'est pas affiché
+						echo "		<form name='sauvegardeBd' action='{$racineAd}admin_save_mysql.php' method='get'><div>".PHP_EOL;
+						echo '			<input type="hidden" name="flag_connect" value="yes" />'.PHP_EOL;
+						echo '			<input type="submit" class="btn btn-link" value="'.get_vocab("submit_backup").'" /></div>'.PHP_EOL;
+						echo '		</form>'.PHP_EOL;
+						echo '	</li>';
+						// exécution du formulaire de sauvegarde grace à la fonction js document.forms
+						echo '	<li class="menuAdmin"><a href="#" onclick="document.forms[\'sauvegardeBd\'].submit();">'.get_vocab("submit_backup").'</a></li>';
+						echo '	<li class="menuAdmin">';
+									how_many_connected();
+						echo '	</li>';
+					}
+				}
+			}
+			
+			echo '			</ul>';
+
+			echo '		</div>'; //<!-- /.navbar-collapse -->	
+			
+			echo '</div>';
+			
+			
+			// function permettant de refermer le menu déroulant lors d'un clic sur la page
+			echo '
+				<script>
+					$(document).ready(function () {
+						$(document).click(function (event) {
+							var clickover = $(event.target);
+							var _opened = $(".navbarcollapse").hasClass("collapse in");
+							if (_opened === true && !clickover.hasClass("navbar-toggle")) {
+								$("button.navbar-toggle").click();
+							}
+						});
+					});
+				</script>
+			';
+			
+			echo '<div class="container-fluid">';
+			
+			
+			//Ancien header
+		/*	echo '<div id="toppanel">'.PHP_EOL;
 			echo '<div id="panel">'.PHP_EOL;
-			echo '<div class="content">'.PHP_EOL;
-			echo '<table id="header">'.PHP_EOL;
-			echo '<tr>'.PHP_EOL;
+		echo '<div class="content">'.PHP_EOL;
+			echo '<div class="row" id="header">'.PHP_EOL;
+
 			//Logo
 			$nom_picture = $racine."images/".Settings::get("logo");
 			if ((Settings::get("logo") != '') && (@file_exists($nom_picture)))
 				echo '<td class="logo" height="100">'.PHP_EOL.'<a href="'.$racine.page_accueil('yes').'day='.$day.'&amp;year='.$year.'&amp;month='.$month.'"><img src="'.$nom_picture.'" alt="logo"/></a>'.PHP_EOL.'</td>'.PHP_EOL;
+			
 			//Accueil
-			echo '<td class="accueil ">',PHP_EOL,'<h2>',PHP_EOL,'<a href="'.$racine.page_accueil('yes'),'day=',$day,'&amp;year=',$year,'&amp;month=',$month,'">',get_vocab("welcome"),' - <b>',Settings::get("company"),'</b></a>',PHP_EOL,'</h2>',PHP_EOL;
+			echo '<div class="col-md-4 accueil ">',PHP_EOL,'<h3>',PHP_EOL,'<a href="'.$racine.page_accueil('yes'),'day=',$day,'&amp;year=',$year,'&amp;month=',$month,'">',get_vocab("welcome"),'</a>';
+			echo ' - <b style="font-size: 20px;">',getCompanyNameForBandeau(),'</b>',PHP_EOL,'</h3>',PHP_EOL;
+			
+			
+			
 			//Mail réservartion
 			echo Settings::get('message_accueil');
 			$sql = "SELECT value FROM ".TABLE_PREFIX."_setting WHERE name='mail_etat_destinataire'";
 			$res = grr_sql_query1($sql);
+			
 			//Libère le résultat de la mémoire
 			grr_sql_free($res);
 			if ($res == 1)
 			{
 				if ($type_session == "no_session")
 				{
-					echo '<td class="contactformulaire">',PHP_EOL,'<input class="btn btn-default" type="submit" rel="popup_name" value="Réserver" onClick="javascript:location.href=\'contactFormulaire.php?day=',$day,'&amp;month=',$month,'&amp;year=',$year,'\'" >',PHP_EOL,'</td>',PHP_EOL;
+					echo '<span class="contactformulaire">',PHP_EOL,'<input class="btn btn-default" type="submit" rel="popup_name" value="Réserver" onClick="javascript:location.href=\'contactFormulaire.php?day=',$day,'&amp;month=',$month,'&amp;year=',$year,'\'" >',PHP_EOL,'</span>',PHP_EOL;
 				}
 			}
+			echo '</div>';
+			
 			// Administration div Sauvegarde
 			if ($type_session == "with_session")
 			{
 				if ((authGetUserLevel(getUserName(), -1, 'area') >= 4) || (authGetUserLevel(getUserName(), -1, 'user') == 1))
 				{
-					echo '<td class="administration">'.PHP_EOL;
+					echo '<div class="col-md-4 administration">'.PHP_EOL;
 					echo "<br><a href='{$racineAd}admin_accueil.php?day={$day}&amp;month={$month}&amp;year={$year}'>".get_vocab('admin')."</a>".PHP_EOL;
 					if (authGetUserLevel(getUserName(), -1, 'area') >= 6)
 					{
 						echo '<br />'.PHP_EOL;
 						echo "<form action='{$racineAd}admin_save_mysql.php' method='get'><div>".PHP_EOL;
 						echo '<input type="hidden" name="flag_connect" value="yes" />'.PHP_EOL;
-						echo '<input type="submit" class="btn btn-default" value="'.get_vocab("submit_backup").'" /></div>'.PHP_EOL;
+						echo '<input type="submit" class="btn btn-default btn-xs" value="'.get_vocab("submit_backup").'" /></div>'.PHP_EOL;
 						echo '</form>'.PHP_EOL;
 						how_many_connected();
 					}
-					echo '</td>'.PHP_EOL;
+					echo '</div>'.PHP_EOL;
 				}
 			}
 			if ($type_session != "with_session")
 				echo '<script>selection()</script>'.PHP_EOL;
-			echo '<td class="configuration" >'.PHP_EOL;
+			
+			echo '<div class="col-md-4 configuration" >'.PHP_EOL;
+			// Suppression de la date/heure
 			if (@file_exists('js/'.$clock_file))
 			{
 				echo '<div class="clock">'.PHP_EOL;
@@ -1102,29 +1341,31 @@ function print_header($day = '', $month = '', $year = '', $type_session = 'with_
 			}
 			else
 			{
-				echo '<br /> <b>'.get_vocab("welcome_to").htmlspecialchars($_SESSION['prenom']).' '.htmlspecialchars($_SESSION['nom']).'</b>'.PHP_EOL;
+				// suppression du "Bienvenue + nom d'utilisateur"
+				//echo '<br /> <b>'.get_vocab("welcome_to").htmlspecialchars($_SESSION['prenom']).' '.htmlspecialchars($_SESSION['nom']).'</b>'.PHP_EOL;
 				echo '<br /> <a href="'.$racine.'my_account.php?day='.$day.'&amp;year='.$year.'&amp;month='.$month.'">'.get_vocab("manage_my_account").'</a>'.PHP_EOL;
 				if (verif_access_search(getUserName()))
 					echo '<br/><a href="'.$racine.'report.php">'.get_vocab("report").'</a>'.PHP_EOL;
 				$disconnect_link = false;
-				if (!((Settings::get("cacher_lien_deconnecter") == 'y') && (isset($_SESSION['est_authentifie_sso']))))
-				{
+				
+				if (!((Settings::get("cacher_lien_deconnecter") == 'y') && (isset($_SESSION['est_authentifie_sso'])))){
+					
 					$disconnect_link = true;
 					if (Settings::get("authentification_obli") == 1)
 						echo '<br /> <a href="'.$racine.'logout.php?auto=0" >'.get_vocab('disconnect').'</a>'.PHP_EOL;
 					else
 						echo '<br /> <a href="'.$racine.'logout.php?auto=0&amp;redirect_page_accueil=yes" >'.get_vocab('disconnect').'</a>'.PHP_EOL;
 				}
-				if ((Settings::get("Url_portail_sso") != '') && (isset($_SESSION['est_authentifie_sso'])))
-				{
+				if ((Settings::get("Url_portail_sso") != '') && (isset($_SESSION['est_authentifie_sso']))){
+					
 					if ($disconnect_link)
 						echo ' - '.PHP_EOL;
 					else
 						echo '<br />'.PHP_EOL;
 					echo '<a href="'.Settings::get("Url_portail_sso").'">'.get_vocab("Portail_accueil").'</a>'.PHP_EOL;
 				}
-				if ((Settings::get('sso_statut') == 'lasso_visiteur') || (Settings::get('sso_statut') == 'lasso_utilisateur'))
-				{
+				if ((Settings::get('sso_statut') == 'lasso_visiteur') || (Settings::get('sso_statut') == 'lasso_utilisateur')){
+					
 					echo '<br />';
 					if ($_SESSION['lasso_nameid'] == NULL)
 						echo '<a href="lasso/federate.php">'.get_vocab('lasso_federate_this_account').'</a>'.PHP_EOL;
@@ -1132,19 +1373,20 @@ function print_header($day = '', $month = '', $year = '', $type_session = 'with_
 						echo '<a href="lasso/defederate.php">'.get_vocab('lasso_defederate_this_account').'</a>'.PHP_EOL;
 				}
 			}
-			echo '</td>'.PHP_EOL;
-			echo '</tr>'.PHP_EOL;
-			echo '</table>'.PHP_EOL;
+
+			echo '</div>'.PHP_EOL;
 			echo '</div>'.PHP_EOL;
 			echo '</div>'.PHP_EOL;
 			echo '<div class="tab">'.PHP_EOL;
-		//	echo '<ul class="login">'.PHP_EOL;
-			//echo '<li>'.PHP_EOL;
-			echo '<a id="open" class="open" href="#">Menu <i>(ouvrir/fermer)</i></a>'.PHP_EOL;
-		//	echo '</li>'.PHP_EOL;
-		//	echo '</ul>'.PHP_EOL;
+				//	echo '<ul class="login">'.PHP_EOL;
+					//echo '<li>'.PHP_EOL;
+					// Suppression de l'option "ouvrir/fermer"
+					//echo '<a id="open" class="open" href="#">Menu <i>(ouvrir/fermer)</i></a>'.PHP_EOL;
+				//	echo '</li>'.PHP_EOL;
+				//	echo '</ul>'.PHP_EOL;
 			echo '</div>'.PHP_EOL;
 			echo '</div>'.PHP_EOL;
+			echo '</div>'.PHP_EOL;*/
 		}
 	}
 }
@@ -1181,6 +1423,30 @@ function sso_IsAllowedModify()
 	else
 		return true;
 }
+
+/*
+  Vérifie si on peut importer des utilisateurs
+  Renvoie True (peut importer) ou False (ne peut pas)
+*/
+function sso_IsAllowedImportUsers() {
+    if (Settings::get("sso_IsNotAllowedImportUsers")=="y") {
+      return FALSE;
+    } else
+        return TRUE;
+}
+
+/*
+  Vérifie si on peut ajouter des utilisateurs via l'interface
+  Renvoie True (peut ajouter) ou False (ne peut pas)
+*/
+function sso_IsAllowedAddUser() {
+    if (Settings::get("sso_IsNotAllowedAddUser")=="y") {
+      return FALSE;
+    } else
+        return TRUE;
+}
+
+
 //Vérifie que l'utilisateur est autorisé à changer ses noms et prénoms
 //Renvoie true (peut changer ses noms et prénoms) ou false (ne peut pas)
 function IsAllowedToModifyProfil()
@@ -1420,7 +1686,7 @@ function genDateSelectorForm($prefix, $day, $month, $year, $option)
 		$year = date("y");
 	if ($day != "")
 	{
-		$selector_data .= "<select class='test' name=\"${prefix}day\" id=\"${prefix}day\">\n";
+		$selector_data .= "<select name=\"${prefix}day\" id=\"${prefix}day\">\n";
 		for ($i = 1; $i <= 31; $i++)
 		{
 			if ($i < 10)
@@ -1430,7 +1696,7 @@ function genDateSelectorForm($prefix, $day, $month, $year, $option)
 		}
 		$selector_data .= "</select>";
 	}
-	$selector_data .= "<select class='test' name=\"${prefix}month\" id=\"${prefix}month\">\n";
+	$selector_data .= "<select name=\"${prefix}month\" id=\"${prefix}month\">\n";
 	for ($i = 1; $i <= 12; $i++)
 	{
 		$m = utf8_strftime("%b", mktime(0, 0, 0, $i, 1, $year));
@@ -1444,7 +1710,7 @@ function genDateSelectorForm($prefix, $day, $month, $year, $option)
 		}
 	}
 	$selector_data .=  "</select>";
-	$selector_data .=  "<select class='test' name=\"${prefix}year\" id=\"${prefix}year\">\n";
+	$selector_data .=  "<select name=\"${prefix}year\" id=\"${prefix}year\">\n";
 	$min = strftime("%Y", Settings::get("begin_bookings"));
 	if ($option == "more_years")
 		$min = date("Y") - $nb_year_calendar;
@@ -1548,10 +1814,11 @@ function compare_ip_adr($ip1, $ip2)
 //Retourne le domaine par défaut; Utilisé si aucun domaine n'a été défini.
 function get_default_area($id_site = -1)
 {
-	if (Settings::get("module_multisite") == "Oui")
+	if (Settings::get("module_multisite") == "Oui" || Settings::get("module_multietablissement") == "Oui")
 		$use_multisite = true;
 	else
 		$use_multisite = false;
+	
 	if (OPTION_IP_ADR==1)
 	{
 		$sql = "SELECT ip_adr, id FROM ".TABLE_PREFIX."_area WHERE ip_adr!='' ORDER BY access, order_display, area_name";
@@ -1619,11 +1886,25 @@ function get_default_area($id_site = -1)
 /**
  * @return integer
  */
-function get_default_site()
-{
-	$res = grr_sql_query1("SELECT min(id) FROM ".TABLE_PREFIX."_site");
+function get_default_site($id_etablissement=-1){
+
+	if ((Settings::get("module_multietablissement") == "Oui") && ($id_etablissement != -1 ) ){
+		$res = grr_sql_query1("SELECT min(id) FROM ".TABLE_PREFIX."_j_etablissement_site WHERE id_etablissement = $id_etablissement");
+	} else {
+        $res = grr_sql_query1("SELECT min(id) FROM ".TABLE_PREFIX."_site");
+	}
+	
 	return $res;
 }
+
+
+# Retourne l'établissement par défaut;
+function get_default_etablissement()
+{
+	$res = grr_sql_query1("SELECT min(id) FROM ".TABLE_PREFIX."_etablissement");
+	return $res;
+}
+
 
 # Get the local day name based on language. Note 2000-01-02 is a Sunday.
 /**
@@ -1735,15 +2016,24 @@ function tdcell($colclass, $width = '')
 		$temp = ' style="width:'.$width.'%;" ';
 	else
 		$temp = "";
+	
 	global $tab_couleur;
 	static $ecolors;
-	if (($colclass >= "A") && ($colclass <= "Z"))
-	{
+	//if (($colclass >= "A") && ($colclass <= "Z")){
+
+	if (preg_match("/[[:alnum:]]+/",$colclass)) {
+
 		$num_couleur = grr_sql_query1("SELECT couleur FROM ".TABLE_PREFIX."_type_area WHERE type_letter='".$colclass."'");
-		echo '<td style="background-color:'.$tab_couleur[$num_couleur].';" '.$temp.'>'.PHP_EOL;
+		
+		if($num_couleur > 0){
+			echo '<td style="background-color:'.$tab_couleur[$num_couleur].';" '.$temp.'>'.PHP_EOL;	
+		}else{
+			echo '<td class="'.$colclass.' '.$temp.'">'.PHP_EOL;
+		}
 	}
 	else
 		echo '<td class="'.$colclass.' '.$temp.'">'.PHP_EOL;
+	
 }
 
 function tdcell_rowspan($colclass, $step)
@@ -1752,8 +2042,9 @@ function tdcell_rowspan($colclass, $step)
 	static $ecolors;
 	if ($step < 1)
 		$step = 1;
-	if (($colclass >= "A") && ($colclass <= "Z"))
-	{
+	
+	// if (($colclass >= "A") && ($colclass <= "Z"))
+	if (preg_match("/[[:alnum:]]+/",$colclass)) {
 		$num_couleur = grr_sql_query1("SELECT couleur FROM ".TABLE_PREFIX."_type_area WHERE type_letter='".$colclass."'");
 		echo '<td rowspan="'.$step.'" style="background-color:'.$tab_couleur[$num_couleur].';">'.PHP_EOL;
 	}
@@ -1762,16 +2053,27 @@ function tdcell_rowspan($colclass, $step)
 }
 
 //Display the entry-type color key. This has up to 2 rows, up to 10 columns.
-function show_colour_key($area_id)
-{
+/*function show_colour_key2($area_id){
+	
 	echo '<table class="legende"><caption class="titre">Légendes des réservations</caption>'.PHP_EOL;
-	$sql = "SELECT DISTINCT t.id, t.type_name, t.type_letter FROM ".TABLE_PREFIX."_type_area t
-	LEFT JOIN ".TABLE_PREFIX."_j_type_area j on j.id_type=t.id
-	WHERE (j.id_area  IS NULL or j.id_area != '".$area_id."')
-	ORDER BY t.order_display";
+	
+	if (Settings::get("module_multietablissement") == "Oui"){
+    	$idEtablissement = getIdEtablissementCourant();
+	    $sql = "SELECT DISTINCT t.id, t.type_name, t.type_letter FROM ".TABLE_PREFIX."_type_area t
+		    LEFT JOIN ".TABLE_PREFIX."_j_type_area j on j.id_type=t.id
+			LEFT JOIN ".TABLE_PREFIX."_j_etablissement_type_area je on je.id_type_area=t.id
+		    WHERE (j.id_area  IS NULL or j.id_area != '".$area_id."') AND (je.id_etablissement = $idEtablissement OR je.id_etablissement IS NULL)
+		    ORDER BY t.order_display";
+    } else {
+    	$sql = "SELECT DISTINCT t.id, t.type_name, t.type_letter FROM ".TABLE_PREFIX."_type_area t
+    		    LEFT JOIN ".TABLE_PREFIX."_j_type_area j on j.id_type=t.id
+    		    WHERE (j.id_area  IS NULL or j.id_area != '".$area_id."')
+    		    ORDER BY t.order_display";
+    }
+
 	$res = grr_sql_query($sql);
-	if ($res)
-	{
+	if ($res){
+		
 		$nct = -1;
 		for ($i = 0; ($row = grr_sql_row($res, $i)); $i++)
 		{
@@ -1795,6 +2097,68 @@ function show_colour_key($area_id)
 		if ($i % 2 == 1)
 			echo '<td></td>',PHP_EOL,'</tr>'.PHP_EOL;
 		echo '</table>'.PHP_EOL;
+	}
+}*/
+// Retourne la couleur correspondant au type de lettre 
+function colorType($colclass){
+
+	global $tab_couleur;
+	static $ecolors;
+	
+
+	if (preg_match("/[[:alnum:]]+/",$colclass)) {
+
+		$num_couleur = grr_sql_query1("SELECT couleur FROM ".TABLE_PREFIX."_type_area WHERE type_letter='".$colclass."'");
+		
+		if($num_couleur > 0){
+			return $tab_couleur[$num_couleur];
+		}
+	}
+	else
+		return '#000';
+	
+}
+//Display the entry-type color key. This has up to 2 rows, up to 10 columns.
+function show_colour_key($area_id){
+	
+	echo '<ul style="list-style: none;margin-left: -37px;">'.PHP_EOL;
+	
+	if (Settings::get("module_multietablissement") == "Oui"){
+    	$idEtablissement = getIdEtablissementCourant();	   
+	   $sql = "SELECT DISTINCT t.id, t.type_name, t.type_letter FROM ".TABLE_PREFIX."_type_area t
+		    LEFT JOIN ".TABLE_PREFIX."_j_type_area j on j.id_type=t.id
+			LEFT JOIN ".TABLE_PREFIX."_j_etablissement_type_area je on je.id_type_area=t.id
+		    WHERE (j.id_area  IS NULL or j.id_area != '".$area_id."') AND (je.id_etablissement = $idEtablissement OR je.id_etablissement IS NULL)
+		    ORDER BY t.order_display";
+    } else {
+    	$sql = "SELECT DISTINCT t.id, t.type_name, t.type_letter FROM ".TABLE_PREFIX."_type_area t
+    		    LEFT JOIN ".TABLE_PREFIX."_j_type_area j on j.id_type=t.id
+    		    WHERE (j.id_area  IS NULL or j.id_area != '".$area_id."')
+    		    ORDER BY t.order_display";
+    }
+
+	$res = grr_sql_query($sql);
+	if ($res){
+		
+		$nct = -1;
+		for ($i = 0; ($row = grr_sql_row($res, $i)); $i++)
+		{
+			// La requête sql précédente laisse passer les cas où un type est non valide dans le domaine concerné ET au moins dans un autre domaine, d'où le test suivant
+			$test = grr_sql_query1("SELECT id_type FROM ".TABLE_PREFIX."_j_type_area WHERE id_type = '".$row[0]."' and id_area='".$area_id."'");
+			if ($test == -1)
+			{
+				
+				$type_name   = $row[1];
+				$type_letter = $row[2];
+				
+				echo '
+				<li style="text-overflow: ellipsis;white-space: nowrap;overflow: hidden;" title="'.$type_name.'">
+					<span class="glyphicon glyphicon-stop" style="font-size: 16px;color:'.colorType($type_letter).';"></span> '.$type_name.'
+				</li>';
+		
+			}
+		}
+		echo '</ul>'.PHP_EOL;
 	}
 }
 //Round time down to the nearest resolution
@@ -1830,82 +2194,91 @@ function round_t_up($t, $resolution, $am7)
 function make_site_select_html($link, $current_site, $year, $month, $day, $user)
 {
 	global $vocab;
-	$nb_sites_a_afficher = 0;
-	$out_html = '<b><i>'.get_vocab('sites').get_vocab('deux_points').'</i></b><form id="site_001" action="'.$_SERVER['PHP_SELF'].'"><div>';
-	$out_html .= '<select class="form-control" name="site" onchange="site_go()">';
-	if (strncmp("4.1", grr_sql_version(), 3) < 0)
-	{
-		$sql = "SELECT id,sitename
-		FROM ".TABLE_PREFIX."_site
-		WHERE ".TABLE_PREFIX."_site.id IN (SELECT id_site FROM ".TABLE_PREFIX."_j_site_area GROUP BY id_site)
-		ORDER BY id ASC";
-	}
-	else
-	{
-		$sql = "SELECT id, sitename
-		FROM ".TABLE_PREFIX."_site
-		left join ".TABLE_PREFIX."_j_site_area on ".TABLE_PREFIX."_site.id = ".TABLE_PREFIX."_j_site_area.id_site
-		WHERE ".TABLE_PREFIX."_j_site_area.id_site is not null
-		GROUP BY id_site
-		ORDER BY id ASC
-		";
-	}
-	$res = grr_sql_query($sql);
-	if ($res)
-	{
-		for ($i = 0; ($row = grr_sql_row($res, $i)); $i++)
+	if (Settings::get("module_multisite") == "Oui"){
+		$nb_sites_a_afficher = 0;
+		$out_html = '<b><i>'.get_vocab('sites').get_vocab('deux_points').'</i></b><form id="site_001" action="'.$_SERVER['PHP_SELF'].'"><div>';
+		$out_html .= '<select class="form-control" name="site" onchange="site_go()">';
+		/*if (strncmp("4.1", grr_sql_version(), 3) < 0){
+			
+			$sql = "SELECT id,sitename
+			FROM ".TABLE_PREFIX."_site
+			WHERE ".TABLE_PREFIX."_site.id IN (SELECT id_site FROM ".TABLE_PREFIX."_j_site_area GROUP BY id_site)
+			ORDER BY id ASC";
+		
+		}else{*/
+			
+			$sqlSelect = "SELECT S.id, S.sitename ";
+			$sqlFrom = " FROM ".TABLE_PREFIX."_site AS S
+						JOIN ".TABLE_PREFIX."_j_site_area AS SA on S.id = SA.id_site ";
+			$sqlWhere = " WHERE SA.id_site is not null";
+			$sqlOrder = " GROUP BY SA.id_site
+			   ORDER BY S.id ASC";
+
+		
+		if (Settings::get("module_multietablissement") == "Oui"){
+			$idEtablissement = getIdEtablissementCourant();
+			$sqlFrom .= " JOIN ".TABLE_PREFIX."_j_etablissement_site AS ES on S.id = ES.id_site ";
+			$sqlWhere .= " and ES.id_etablissement = $idEtablissement ";
+		}
+		
+		
+		$res = grr_sql_query($sqlSelect.$sqlFrom.$sqlWhere.$sqlOrder);
+		if ($res)
 		{
-			// Pour chaque site, on détermine le premier domaine disponible
-			$sql = "SELECT id_area
-			FROM ".TABLE_PREFIX."_j_site_area
-			WHERE ".TABLE_PREFIX."_j_site_area.id_site='".$row[0]."'";
-			$res2 = grr_sql_query($sql);
-							// A on un résultat ?
-			$default_area = -1;
-			if ($res2 && grr_sql_count($res2) > 0)
+			for ($i = 0; ($row = grr_sql_row($res, $i)); $i++)
 			{
-				for ($j = 0; ($row2 = grr_sql_row($res2, $j)); $j++)
+				// Pour chaque site, on détermine le premier domaine disponible
+				$sql = "SELECT id_area
+				FROM ".TABLE_PREFIX."_j_site_area
+				WHERE ".TABLE_PREFIX."_j_site_area.id_site='".$row[0]."'";
+				$res2 = grr_sql_query($sql);
+								// A on un résultat ?
+				$default_area = -1;
+				if ($res2 && grr_sql_count($res2) > 0)
 				{
-					if (authUserAccesArea($user,$row2[0]) == 1)
+					for ($j = 0; ($row2 = grr_sql_row($res2, $j)); $j++)
 					{
-						// on a trouvé un domaine autorisé
-						$default_area = $row2[0];
-						$j = grr_sql_count($res2) + 1;
-						// On arrête la boucle
+						if (authUserAccesArea($user,$row2[0]) == 1)
+						{
+							// on a trouvé un domaine autorisé
+							$default_area = $row2[0];
+							$j = grr_sql_count($res2) + 1;
+							// On arrête la boucle
+						}
 					}
 				}
-			}
-			// On libère la ressource2
-			grr_sql_free($res2);
-			if ($default_area != -1)
-			{
-				// on affiche le site uniquement si au moins un domaine est visible par l'utilisateur
-				$nb_sites_a_afficher++;
-				$selected = ($row[0] == $current_site) ? 'selected="selected"' : '';
-				$link2 = $link.'?year='.$year.'&amp;month='.$month.'&amp;day='.$day.'&amp;area='.$default_area;
-				$out_html .= '<option '.$selected.' value="'.$link2.'">'.htmlspecialchars($row[1]).'</option>'.PHP_EOL;
+				// On libère la ressource2
+				grr_sql_free($res2);
+				if ($default_area != -1)
+				{
+					// on affiche le site uniquement si au moins un domaine est visible par l'utilisateur
+					$nb_sites_a_afficher++;
+					$selected = ($row[0] == $current_site) ? 'selected="selected"' : '';
+					$link2 = $link.'?year='.$year.'&amp;month='.$month.'&amp;day='.$day.'&amp;area='.$default_area;
+					$out_html .= '<option '.$selected.' value="'.$link2.'">'.htmlspecialchars($row[1]).'</option>'.PHP_EOL;
+				}
 			}
 		}
-	}
-	if ($nb_sites_a_afficher > 1)
-	{
-		$out_html .= "</select>".PHP_EOL;
-		$out_html .= "</div>".PHP_EOL;
-		$out_html .= "<script type=\"text/javascript\">".PHP_EOL;
-		$out_html .= "function site_go()".PHP_EOL;
-		$out_html .= "{".PHP_EOL;
-		$out_html .= "box = document.getElementById(\"site_001\").site;".PHP_EOL;
-		$out_html .= "destination = box.options[box.selectedIndex].value;".PHP_EOL;
-		$out_html .= "if (destination) location.href = destination;".PHP_EOL;
-		$out_html .= "}".PHP_EOL;
-		$out_html .= "</script>".PHP_EOL;
-		$out_html .= "<noscript>".PHP_EOL;
-		$out_html .= "<div>".PHP_EOL;
-		$out_html .= "<input type=\"submit\" value=\"Change\" />".PHP_EOL;
-		$out_html .= "</div>".PHP_EOL;
-		$out_html .= "</noscript>".PHP_EOL;
-		$out_html .= "</form>".PHP_EOL;
-		return $out_html;
+		if ($nb_sites_a_afficher > 1)
+		{
+			$out_html .= "</select>".PHP_EOL;
+			$out_html .= "</div>".PHP_EOL;
+			$out_html .= "<script type=\"text/javascript\">".PHP_EOL;
+			$out_html .= "function site_go()".PHP_EOL;
+			$out_html .= "{".PHP_EOL;
+			$out_html .= "box = document.getElementById(\"site_001\").site;".PHP_EOL;
+			$out_html .= "destination = box.options[box.selectedIndex].value;".PHP_EOL;
+			$out_html .= "if (destination) location.href = destination;".PHP_EOL;
+			$out_html .= "}".PHP_EOL;
+			$out_html .= "</script>".PHP_EOL;
+			$out_html .= "<noscript>".PHP_EOL;
+			$out_html .= "<div>".PHP_EOL;
+			$out_html .= "<input type=\"submit\" value=\"Change\" />".PHP_EOL;
+			$out_html .= "</div>".PHP_EOL;
+			$out_html .= "</noscript>".PHP_EOL;
+			$out_html .= "</form>".PHP_EOL;
+			return $out_html;
+		}
 	}
 }
 
@@ -1928,34 +2301,65 @@ function make_area_select_html( $link, $current_site, $current_area, $year, $mon
 		$use_multi_site = 'y';
 	else
 		$use_multi_site = 'n';
-	if ($use_multi_site == 'y')
-	{
-		// on a activé les sites
-		if ($current_site != -1)
-			$sql = "SELECT a.id, a.area_name,a.access FROM ".TABLE_PREFIX."_area a, ".TABLE_PREFIX."_j_site_area j WHERE a.id=j.id_area and j.id_site=$current_site ORDER BY a.order_display, a.area_name";
-		else
-			$sql = "";
-	}
-	else
-		$sql = "SELECT id, area_name,access FROM ".TABLE_PREFIX."_area ORDER BY order_display, area_name";
+	
+	if (Settings::get("module_multietablissement") == "Oui"){
+		$idEtablissement = getIdEtablissementCourant();
+		if ($current_site!=-1) {
+			$sql = "SELECT a.id, a.area_name,a.access
+					 FROM ".TABLE_PREFIX."_area a, ".TABLE_PREFIX."_j_site_area j
+					 JOIN ".TABLE_PREFIX."_j_etablissement_site ES ON ES.id_site =j.id_site
+					 WHERE a.id=j.id_area and j.id_site=$current_site
+					 AND ES.id_etablissement = $idEtablissement
+					 ORDER BY a.order_display, a.area_name";
+		}else {
+			$sql = "SELECT a.id, a.area_name,a.access
+					 FROM ".TABLE_PREFIX."_area a, ".TABLE_PREFIX."_j_site_area j
+					 JOIN ".TABLE_PREFIX."_j_etablissement_site ES ON ES.id_site =j.id_site
+					 WHERE a.id=j.id_area 
+					 AND ES.id_etablissement = $idEtablissement
+					 ORDER BY a.order_display, a.area_name";
+		}   
+   }else{
+
+		if ($use_multi_site == 'y'){
+			
+			// on a activé les sites
+			if ($current_site != -1){
+				$sql = "SELECT a.id, a.area_name,a.access 
+						FROM ".TABLE_PREFIX."_area a, ".TABLE_PREFIX."_j_site_area j 
+						WHERE a.id=j.id_area and j.id_site=$current_site 
+						ORDER BY a.order_display, a.area_name";
+			}else{
+				$sql = "";
+			}
+		}
+		else{
+			$sql = "SELECT id, area_name,access 
+					FROM ".TABLE_PREFIX."_area 
+					ORDER BY order_display, area_name";
+		}
+   }
+	
 	$out_html = '<b><i>'.get_vocab("areas").'</i></b>'.PHP_EOL;
 	$out_html .= '<form id="area_001" action="'.$_SERVER['PHP_SELF'].'">'.PHP_EOL;
 	$out_html .= '<div><select class="form-control" name="area" ';
 	$out_html .= ' onchange="area_go()" ';
 	$out_html .= '>'.PHP_EOL;
+	
 	$res = grr_sql_query($sql);
-	if ($res)
-	{
-		for ($i = 0; ($row = grr_sql_row($res, $i)); $i++)
-		{
+	if ($res){
+		
+		for ($i = 0; ($row = grr_sql_row($res, $i)); $i++){
+			
 			$selected = ($row[0] == $current_area) ? 'selected="selected"' : "";
 			$link2 = $link.'?year='.$year.'&amp;month='.$month.'&amp;day='.$day.'&amp;area='.$row[0];
-			if (authUserAccesArea($user,$row[0]) == 1)
-			{
+			if (authUserAccesArea($user,$row[0]) == 1){
+				
 				$out_html .= '<option '.$selected.' value="'.$link2.'">'.htmlspecialchars($row[1]).'</option>'.PHP_EOL;
 			}
 		}
 	}
+	
 	$out_html .= '</select>'.PHP_EOL;
 	$out_html .= '</div>'.PHP_EOL;
 	$out_html .= '<script type="text/javascript">'.PHP_EOL;
@@ -1974,6 +2378,7 @@ function make_area_select_html( $link, $current_site, $current_area, $year, $mon
 	$out_html .= '</form>'.PHP_EOL;
 	return $out_html;
 }
+
 /**
  * Menu gauche affichage des room via select
  *
@@ -2042,21 +2447,33 @@ function make_site_list_html($link, $current_site, $year, $month, $day,$user)
 	global $vocab;
 	// On affiche le site
 
-	if (Settings::get("module_multisite") == "Oui")
-	{
+	if (Settings::get("module_multisite") == "Oui"){
 
 		$out_html = '
 		<b><i><span class="bground">'.get_vocab('sites').get_vocab('deux_points').'</span></i></b>
 		<br />';
-		$sql = "SELECT id,sitename
-		FROM ".TABLE_PREFIX."_site
-		ORDER BY sitename";
-		$nb_sites_a_afficher = 0;
+		
+		
+		
+		if (Settings::get("module_multietablissement") == "Oui"){
+			$idEtablissement = getIdEtablissementCourant();
+			$sql = "SELECT S.id,S.sitename
+     	     	     FROM ".TABLE_PREFIX."_site AS S
+     	     	     JOIN ".TABLE_PREFIX."_j_etablissement_site AS J ON S.id = J.id_site
+     	     	     WHERE J.id_etablissement = $idEtablissement
+     	     	     ORDER BY sitename";
+		} else {
+			$sql = "SELECT id,sitename
+					FROM ".TABLE_PREFIX."_site
+					ORDER BY sitename";
+		}
+		$out_html .= $sql;
 		$res = grr_sql_query($sql);
-		if ($res)
-		{
-			for ($i = 0; ($row = grr_sql_row($res, $i)); $i++)
-			{
+		if ($res){
+			$nb_sites_a_afficher = 0;
+			
+			for ($i = 0; ($row = grr_sql_row($res, $i)); $i++){
+				
 				// Pour chaque site, on détermine s'il y a des domaines visibles par l'utilisateur
 				$sql = "SELECT id_area
 				FROM ".TABLE_PREFIX."_j_site_area
@@ -2078,18 +2495,18 @@ function make_site_list_html($link, $current_site, $year, $month, $day,$user)
 				}
 				// On libère la ressource2
 				grr_sql_free($res2);
-				if ($au_moins_un_domaine)
-				{
+				if ($au_moins_un_domaine){
+					
 					// on affiche le site uniquement si au moins un domaine est visible par l'utilisateur
 					$nb_sites_a_afficher++;
-					if ($row[0] == $current_site)
-					{
+					if ($row[0] == $current_site){
+						
 						$out_html .= '
 						<b><a id="liste_select"   href="'.$link.'?year='.$year.'&amp;month='.$month.'&amp;day='.$day.'&amp;id_site='.$row[0].'" title="'.$row[1].'">&gt; '.htmlspecialchars($row[1]).'</a></b>
 						<br />'."\n";
 					}
-					else
-					{
+					else{
+						
 						$out_html .= '
 						<a id="liste"  href="'.$link.'?year='.$year.'&amp;month='.$month.'&amp;day='.$day.'&amp;id_site='.$row[0].'" title="'.$row[1].'">'.htmlspecialchars($row[1]).'</a>
 						<br />'."\n";
@@ -2103,6 +2520,7 @@ function make_site_list_html($link, $current_site, $year, $month, $day,$user)
 			return '';
 	}
 }
+
 /**
  * Affichage des area sous la forme d'une liste
  *
@@ -2118,39 +2536,65 @@ function make_site_list_html($link, $current_site, $year, $month, $day,$user)
 function make_area_list_html($link, $current_site, $current_area, $year, $month, $day, $user)
 {
 	global $vocab;
+	
 	if (Settings::get("module_multisite") == "Oui")
 		$use_multi_site = 'y';
 	else
 		$use_multi_site = 'n';
+	
 	echo "<b><i><span class=\"bground\">".get_vocab("areas")."</span></i></b><br />";
-	if ($use_multi_site == 'y')
-	{
-		// on a activé les sites
-		if ($current_site != -1)
-			$sql = "SELECT a.id, a.area_name,a.access
-		FROM ".TABLE_PREFIX."_area a, ".TABLE_PREFIX."_j_site_area j
-		WHERE a.id=j.id_area and j.id_site=$current_site
-		ORDER BY a.order_display, a.area_name";
-		else
-			$sql = "";
+	$sql ='';
+	
+	if (Settings::get("module_multietablissement") == "Oui"){
+		
+		$idEtablissement = getIdEtablissementCourant(); 
+   		if ($current_site == -1){
+   			$sql = "SELECT a.id, a.area_name,a.access
+   			   		             FROM ".TABLE_PREFIX."_area a, ".TABLE_PREFIX."_j_site_area j
+   			   		             JOIN ".TABLE_PREFIX."_j_etablissement_site ES ON ES.id_site =j.id_site
+   			   		             WHERE a.id=j.id_area 
+   			   		             AND ES.id_etablissement = $idEtablissement
+   			   		             ORDER BY a.order_display, a.area_name";
+   		} else {
+   			$sql = "SELECT a.id, a.area_name,a.access
+   		             FROM ".TABLE_PREFIX."_area a, ".TABLE_PREFIX."_j_site_area j
+   		             JOIN ".TABLE_PREFIX."_j_etablissement_site ES ON ES.id_site =j.id_site
+   		             WHERE a.id=j.id_area and j.id_site=$current_site
+   		             AND ES.id_etablissement = $idEtablissement
+   		             ORDER BY a.order_display, a.area_name";
+   		}   	
+	
+	} else {
+		if ($use_multi_site == 'y'){ // on a activé les sites
+			
+			if ($current_site != -1){
+				$sql = "SELECT a.id, a.area_name,a.access
+						FROM ".TABLE_PREFIX."_area a, ".TABLE_PREFIX."_j_site_area j
+						WHERE a.id=j.id_area and j.id_site=$current_site
+						ORDER BY a.order_display, a.area_name";
+			}
+		} else {
+			$sql = "SELECT id, area_name,access
+					FROM ".TABLE_PREFIX."_area
+					ORDER BY order_display, area_name";
+		}
 	}
-	else
-	{
-		$sql = "SELECT id, area_name,access
-		FROM ".TABLE_PREFIX."_area
-		ORDER BY order_display, area_name";
-	}
+	
 	$res = 0;
-	if (($current_site != -1) || ($use_multi_site == 'n'))
-		$res = grr_sql_query($sql);
-	if ($res)
-	{
-		for ($i = 0; ($row = grr_sql_row($res, $i)); $i++)
-		{
-			if (authUserAccesArea($user,$row[0]) == 1)
-			{
-				if ($row[0] == $current_area)
-				{
+	if($sql != ''){
+		if (($current_site != -1) || ($use_multi_site == 'n'))
+			$res = grr_sql_query($sql);
+	}
+	
+	
+	if ($res){
+		
+		for ($i = 0; ($row = grr_sql_row($res, $i)); $i++){
+			
+			if (authUserAccesArea($user,$row[0]) == 1){
+				
+				if ($row[0] == $current_area){
+					
 					echo "<a id=\"liste_select\" onclick=\"charger();\" href=\"".$link."?year=$year&amp;month=$month&amp;day=$day&amp;area=$row[0]\">&gt; ".htmlspecialchars($row[1])."</a></b><br />\n";
 				} else {
 					echo "<a id=\"liste\" onclick=\"charger();\" href=\"".$link."?year=$year&amp;month=$month&amp;day=$day&amp;area=$row[0]\">&gt; ".htmlspecialchars($row[1])."</a><br />\n";
@@ -2202,77 +2646,98 @@ function make_room_list_html($link,$current_area, $current_room, $year, $month, 
  * @param string $day
  * @return string
  */
-function make_site_item_html($link, $current_site, $year, $month, $day, $user)
-{
+function make_site_item_html($link, $current_site, $year, $month, $day, $user){
+	
 	global $vocab;
-	$nb_sites_a_afficher = 0;
-	$out_html = '<ul class="list-group"><li class="list-group-item">'.get_vocab('sites').get_vocab('deux_points').'</li></ul><form class="ressource" id="site_001" action="'.$_SERVER['PHP_SELF'].'"><div>';
-	$sql = "SELECT id, sitename
-	FROM ".TABLE_PREFIX."_site
-	left join ".TABLE_PREFIX."_j_site_area on ".TABLE_PREFIX."_site.id = ".TABLE_PREFIX."_j_site_area.id_site
-	WHERE ".TABLE_PREFIX."_j_site_area.id_site is not null
-	GROUP BY id_site
-	ORDER BY id ASC
-	";
-	$res = grr_sql_query($sql);
-	if ($res)
-	{
-		for ($i = 0; ($row = grr_sql_row($res, $i)); $i++)
-		{
-			$sql = "SELECT id_area FROM ".TABLE_PREFIX."_j_site_area WHERE ".TABLE_PREFIX."_j_site_area.id_site='".$row[0]."'";
-			$res2 = grr_sql_query($sql);
-			$default_area = -1;
-			if ($res2 && grr_sql_count($res2) > 0)
-			{
-				for ($j = 0; ($row2 = grr_sql_row($res2, $j)); $j++)
+	
+	if (Settings::get("module_multisite") == "Oui"){
+		
+		$nb_sites_a_afficher = 0;
+		$out_html = '<ul class="list-group"><li class="list-group-item">'.get_vocab('sites').get_vocab('deux_points').'</li></ul><form class="ressource" id="site_001" action="'.$_SERVER['PHP_SELF'].'"><div>';
+		/*$sql = "SELECT id, sitename
+		FROM ".TABLE_PREFIX."_site
+		left join ".TABLE_PREFIX."_j_site_area on ".TABLE_PREFIX."_site.id = ".TABLE_PREFIX."_j_site_area.id_site
+		WHERE ".TABLE_PREFIX."_j_site_area.id_site is not null
+		GROUP BY id_site
+		ORDER BY id ASC
+		";*/
+		
+		if (Settings::get("module_multietablissement") == "Oui"){
+			$idEtablissement = getIdEtablissementCourant();
+			$sql = "SELECT S.id,S.sitename
+					 FROM ".TABLE_PREFIX."_site AS S
+					 JOIN ".TABLE_PREFIX."_j_etablissement_site AS J ON S.id = J.id_site
+					 WHERE J.id_etablissement = $idEtablissement
+					 ORDER BY sitename";
+		} else {
+			$sql = "SELECT id,sitename
+					FROM ".TABLE_PREFIX."_site
+					left join ".TABLE_PREFIX."_j_site_area on ".TABLE_PREFIX."_site.id = ".TABLE_PREFIX."_j_site_area.id_site
+					WHERE ".TABLE_PREFIX."_j_site_area.id_site is not null
+					GROUP BY id_site
+					ORDER BY id ASC";
+		}
+		
+		$res = grr_sql_query($sql);
+		if ($res){
+			for ($i = 0; ($row = grr_sql_row($res, $i)); $i++){
+				
+				$sql = "SELECT id_area FROM ".TABLE_PREFIX."_j_site_area WHERE ".TABLE_PREFIX."_j_site_area.id_site='".$row[0]."'";
+				$res2 = grr_sql_query($sql);
+				$default_area = -1;
+				if ($res2 && grr_sql_count($res2) > 0)
 				{
-					if (authUserAccesArea($user,$row2[0]) == 1)
+					for ($j = 0; ($row2 = grr_sql_row($res2, $j)); $j++)
 					{
-						$default_area = $row2[0];
-						$j = grr_sql_count($res2) + 1;
+						if (authUserAccesArea($user,$row2[0]) == 1)
+						{
+							$default_area = $row2[0];
+							$j = grr_sql_count($res2) + 1;
+						}
 					}
 				}
-			}
-			grr_sql_free($res2);
-			if ($default_area != -1)
-			{
-				$nb_sites_a_afficher++;
-				$link2 = $link.'?year='.$year.'&amp;month='.$month.'&amp;day='.$day.'&amp;area='.$default_area;
-				$out_html .="\n";
-			}
-			else
-				$link2 = $link.'?year='.$year.'&amp;month='.$month.'&amp;day='.$day;
-			if ($current_site != null)
-			{
-				if ($current_site == $row[0])
-					$out_html .= "<input id=\"item_select\" type=\"button\" class=\"btn btn-primary btn-xs\" name=\"$row[0]\" value=\"".htmlspecialchars($row[1])."\" onclick=\"location.href='$link2';charger();\" /><br />".PHP_EOL;
+				grr_sql_free($res2);
+				if ($default_area != -1)
+				{
+					$nb_sites_a_afficher++;
+					$link2 = $link.'?year='.$year.'&amp;month='.$month.'&amp;day='.$day.'&amp;area='.$default_area;
+					$out_html .="\n";
+				}
+				else
+					$link2 = $link.'?year='.$year.'&amp;month='.$month.'&amp;day='.$day;
+				if ($current_site != null)
+				{
+					if ($current_site == $row[0])
+						$out_html .= "<input id=\"item_select\" type=\"button\" class=\"btn btn-primary btn-xs\" name=\"$row[0]\" value=\"".htmlspecialchars($row[1])."\" onclick=\"location.href='$link2';charger();\" /><br />".PHP_EOL;
+					else
+						$out_html .= "<input type=\"button\" class=\"btn btn-default btn-xs item\" name=\"$row[0]\" value=\"".htmlspecialchars($row[1])." \" onclick=\"location.href='$link2';charger();\" /><br />".PHP_EOL;
+				}
 				else
 					$out_html .= "<input type=\"button\" class=\"btn btn-default btn-xs item\" name=\"$row[0]\" value=\"".htmlspecialchars($row[1])." \" onclick=\"location.href='$link2';charger();\" /><br />".PHP_EOL;
 			}
-			else
-				$out_html .= "<input type=\"button\" class=\"btn btn-default btn-xs item\" name=\"$row[0]\" value=\"".htmlspecialchars($row[1])." \" onclick=\"location.href='$link2';charger();\" /><br />".PHP_EOL;
 		}
-	}
-	if ($nb_sites_a_afficher > 1)
-	{
-		// s'il y a au moins deux sites à afficher, on met une liste déroulante, sinon, on affiche rien.
-		$out_html .= '</form>'.PHP_EOL;
-		$out_html .= '</div>'.PHP_EOL;
-		$out_html .= '<script type="text/javascript">'.PHP_EOL;
-		$out_html .= 'function site_go()'.PHP_EOL;
-		$out_html .= '{'.PHP_EOL;
-		$out_html .= 'box = document.getElementById("site_001").site;'.PHP_EOL;
-		$out_html .= 'destination = box.options[box.selectedIndex].value;'.PHP_EOL;
-		$out_html .= 'if (destination) location.href = destination;'.PHP_EOL;
-		$out_html .= '}'.PHP_EOL;
-		$out_html .= '</script>'.PHP_EOL;
-		$out_html .= '<noscript>'.PHP_EOL;
-		$out_html .= '<div>'.PHP_EOL;
-		$out_html .= '<input type="submit" value="change" />'.PHP_EOL;
-		$out_html .= '</div>'.PHP_EOL;
-		$out_html .= '</noscript>'.PHP_EOL;
-		$out_html .= '</form>'.PHP_EOL;
-		return $out_html;
+
+		if ($nb_sites_a_afficher > 1)
+		{
+			// s'il y a au moins deux sites à afficher, on met une liste déroulante, sinon, on affiche rien.
+			$out_html .= '</form>'.PHP_EOL;
+			$out_html .= '</div>'.PHP_EOL;
+			$out_html .= '<script type="text/javascript">'.PHP_EOL;
+			$out_html .= 'function site_go()'.PHP_EOL;
+			$out_html .= '{'.PHP_EOL;
+			$out_html .= 'box = document.getElementById("site_001").site;'.PHP_EOL;
+			$out_html .= 'destination = box.options[box.selectedIndex].value;'.PHP_EOL;
+			$out_html .= 'if (destination) location.href = destination;'.PHP_EOL;
+			$out_html .= '}'.PHP_EOL;
+			$out_html .= '</script>'.PHP_EOL;
+			$out_html .= '<noscript>'.PHP_EOL;
+			$out_html .= '<div>'.PHP_EOL;
+			$out_html .= '<input type="submit" value="change" />'.PHP_EOL;
+			$out_html .= '</div>'.PHP_EOL;
+			$out_html .= '</noscript>'.PHP_EOL;
+			$out_html .= '</form>'.PHP_EOL;
+			return $out_html;
+		}
 	}
 }
 /**
@@ -2289,34 +2754,64 @@ function make_site_item_html($link, $current_site, $year, $month, $day, $user)
 function make_area_item_html( $link, $current_site, $current_area, $year, $month, $day, $user)
 {
 	global $vocab;
+	$sql = "";
+	$res = false;
+	
 	if (Settings::get("module_multisite") == "Oui")
 		$use_multi_site = 'y';
 	else
 		$use_multi_site = 'n';
-	if ($use_multi_site == 'y')
-	{
-		// on a activé les sites
-		if ($current_site != -1)
-			$sql = "SELECT a.id, a.area_name,a.access
-		FROM ".TABLE_PREFIX."_area a, ".TABLE_PREFIX."_j_site_area j
-		WHERE a.id=j.id_area and j.id_site=$current_site
-		ORDER BY a.order_display, a.area_name";
-		else
-			$sql = "";
+	
+	$sql ='';
+	
+	if (Settings::get("module_multietablissement") == "Oui"){
+		
+		$idEtablissement = getIdEtablissementCourant(); 
+   		if ($current_site == -1){
+   			$sql = "SELECT a.id, a.area_name,a.access
+   			   		             FROM ".TABLE_PREFIX."_area a, ".TABLE_PREFIX."_j_site_area j
+   			   		             JOIN ".TABLE_PREFIX."_j_etablissement_site ES ON ES.id_site =j.id_site
+   			   		             WHERE a.id=j.id_area 
+   			   		             AND ES.id_etablissement = $idEtablissement
+   			   		             ORDER BY a.order_display, a.area_name";
+   		} else {
+   			$sql = "SELECT a.id, a.area_name,a.access
+   		             FROM ".TABLE_PREFIX."_area a, ".TABLE_PREFIX."_j_site_area j
+   		             JOIN ".TABLE_PREFIX."_j_etablissement_site ES ON ES.id_site =j.id_site
+   		             WHERE a.id=j.id_area and j.id_site=$current_site
+   		             AND ES.id_etablissement = $idEtablissement
+   		             ORDER BY a.order_display, a.area_name";
+   		}   	
+	
+	}else{
+		
+		if ($use_multi_site == 'y'){
+			
+			// on a activé les sites
+			if ($current_site != -1){
+				$sql = "SELECT a.id, a.area_name,a.access
+						FROM ".TABLE_PREFIX."_area a, ".TABLE_PREFIX."_j_site_area j
+						WHERE a.id=j.id_area and j.id_site=$current_site
+						ORDER BY a.order_display, a.area_name";
+			}
+		}
+		else{
+			
+			$sql = "SELECT id, area_name,access
+					FROM ".TABLE_PREFIX."_area
+					ORDER BY order_display, area_name";
+		}
 	}
-	else
-	{
-		$sql = "SELECT id, area_name,access
-		FROM ".TABLE_PREFIX."_area
-		ORDER BY order_display, area_name";
-	}
+	
 	$out_html = '<br />'.PHP_EOL.'<div class="panel panel-default">'.PHP_EOL.'<div class="panel-heading">'.get_vocab("areas").'</div>'.PHP_EOL.'<div class="panel-body">'.PHP_EOL;
 	$out_html .= '<form class="ressource" id="area_001" action="'.$_SERVER['PHP_SELF'].'">'.PHP_EOL;
-	$res = grr_sql_query($sql);
-	if ($res)
-	{
-		for ($i = 0; ($row = grr_sql_row($res, $i)); $i++)
-		{
+	
+	if($sql != '')
+		$res = grr_sql_query($sql);
+	
+	if ($res){
+		for ($i = 0; ($row = grr_sql_row($res, $i)); $i++){
+			
 			$link2 = $link.'?year='.$year.'&amp;month='.$month.'&amp;day='.$day.'&amp;area='.$row[0];
 			if (authUserAccesArea($user, $row[0]) == 1)
 			{
@@ -2336,6 +2831,7 @@ function make_area_item_html( $link, $current_site, $current_area, $year, $month
 	$out_html .= '</form>'.PHP_EOL.'</div>'.PHP_EOL.'</div>'.PHP_EOL;
 	return $out_html;
 }
+
 //end make_area_select_html
 /**
  * Affichage des rooms sous la forme d'un input
@@ -2996,138 +3492,267 @@ function authGetUserLevel($user, $id, $type = 'room')
 	//user level '0': User not logged in, or User value is NULL (getUserName()='')
 	if (!isset($user) || ($user == ''))
 		return 0;
+	
 	// On vient lire le statut de l'utilisateur courant dans la database
-	$sql = "SELECT statut FROM ".TABLE_PREFIX."_utilisateurs WHERE login='".protect_data_sql($user)."' "." AND etat='actif'";
+	$sql = "SELECT statut 
+			FROM ".TABLE_PREFIX."_utilisateurs 
+			WHERE login='".protect_data_sql($user)."' "." AND etat='actif'";
+			
 	$res = grr_sql_query($sql);
 	$nbraw = grr_sql_count($res);
+	
 	//user level '0': User not defined in database
 	if (!$res || $nbraw == 0)
 		return 0;
+	
 	// On vient lire le résultat de la requète
 	$status = grr_sql_row($res,$nbraw-1);
 	//user level '0': Same User defined multiple time in database !!!
 	if ($status === 0)
 		return 0;
+	
 	// Teste si le type concerne la gestion des utilisateurs
-	if ($type === 'user')
-	{
+	if ($type === 'user'){
+		
 		if (strtolower($status[0]) == 'gestionnaire_utilisateur')
 			return 1;
 		else
 			return 0;
 	}
-	switch (strtolower($status[0]))
-	{
+	
+	switch (strtolower($status[0])){
+		
 		case 'visiteur':
 		return 1;
 		case 'administrateur':
-		return 6;
+		return 7;
 		default:
 		break;
 	}
-	if ((strtolower($status[0]) == 'utilisateur') || (strtolower($status[0]) == 'gestionnaire_utilisateur'))
-	{
-		if ($type == 'room')
-		{
-			// On regarde si l'utilisateur est administrateur du site auquel la ressource $id appartient
-			// calcul de l'id du domaine
-			$id_area = grr_sql_query1("SELECT area_id FROM ".TABLE_PREFIX."_room WHERE id='".protect_data_sql($id)."'");
-			// calcul de l'id du site
-			$id_site = grr_sql_query1("SELECT id_site FROM ".TABLE_PREFIX."_j_site_area  WHERE id_area='".protect_data_sql($id_area)."'");
-			if (Settings::get("module_multisite") == "Oui")
-			{
-				$res3 = grr_sql_query("SELECT login FROM ".TABLE_PREFIX."_j_useradmin_site j WHERE j.id_site='".protect_data_sql($id_site)."' AND j.login='".protect_data_sql($user)."'");
-				if (grr_sql_count($res3) > 0)
-				{
-					grr_sql_free($res3);
-					return 5;
-				}
-			}
-			// On regarde si l'utilisateur est administrateur du domaine auquel la ressource $id appartient
-			$res3 = grr_sql_query("SELECT u.login
-				FROM ".TABLE_PREFIX."_utilisateurs u, ".TABLE_PREFIX."_j_useradmin_area j
-				WHERE (u.login=j.login AND j.id_area='".protect_data_sql($id_area)."' AND u.login='".protect_data_sql($user)."')");
-			if (grr_sql_count($res3) > 0)
-				return 4;
-			// On regarde si l'utilisateur est gestionnaire des réservations pour une ressource
-			$str_res2 = "SELECT *
-			FROM ".TABLE_PREFIX."_utilisateurs u, ".TABLE_PREFIX."_j_user_room j
-			WHERE u.login=j.login and u.login='".protect_data_sql($user)."' ";
-			if ($id!=-1)
-				$str_res2.="AND j.id_room='".protect_data_sql($id)."'";
-			$res2 = grr_sql_query($str_res2);
-			if (grr_sql_count($res2) > 0)
-				return 3;
-			// Sinon il s'agit d'un simple utilisateur
-			return 2;
+	
+	if ((strtolower($status[0]) == 'utilisateur') || (strtolower($status[0]) == 'gestionnaire_utilisateur')){
+		
+		if ($id == -1){
+    		
+			return authGetUserLevelGlobal($user);
+    	} 
+		
+		// On regarde si l'utilisateur est administrateur du site auquel la ressource appartient
+		if ($type == 'room'){
+			
+			return authGetUserLevelRoom($user,$id);
 		}
+		
 		// On regarde si l'utilisateur est administrateur d'un domaine
-		if ($type == 'area')
-		{
-			if ($id == '-1')
-			{
-				if (Settings::get("module_multisite") == "Oui")
-				{
-				//On regarde si l'utilisateur est administrateur d'un site quelconque
-					$res2 = grr_sql_query("SELECT u.login
-						FROM ".TABLE_PREFIX."_utilisateurs u, ".TABLE_PREFIX."_j_useradmin_site j
-						WHERE (u.login=j.login and u.login='".protect_data_sql($user)."')");
-					if (grr_sql_count($res2) > 0)
-						return 5;
-				}
-				//On regarde si l'utilisateur est administrateur d'un domaine quelconque
-				$res2 = grr_sql_query("SELECT u.login
-					FROM ".TABLE_PREFIX."_utilisateurs u, ".TABLE_PREFIX."_j_useradmin_area j
-					WHERE (u.login=j.login and u.login='".protect_data_sql($user)."')");
-				if (grr_sql_count($res2) > 0)
-					return 4;
-			}
-			else
-			{
-				if (Settings::get("module_multisite") == "Oui")
-				{
-				// On regarde si l'utilisateur est administrateur du site auquel le domaine $id appartient
-					$id_site = grr_sql_query1("SELECT id_site FROM ".TABLE_PREFIX."_j_site_area  WHERE id_area='".protect_data_sql($id)."'");
-					$res3 = grr_sql_query("SELECT login FROM ".TABLE_PREFIX."_j_useradmin_site j WHERE j.id_site='".protect_data_sql($id_site)."' AND j.login='".protect_data_sql($user)."'");
-					if (grr_sql_count($res3) > 0)
-						return 5;
-				}
-				//On regarde si l'utilisateur est administrateur du domaine dont l'id est $id
-				$res3 = grr_sql_query("SELECT u.login
-					FROM ".TABLE_PREFIX."_utilisateurs u, ".TABLE_PREFIX."_j_useradmin_area j
-					WHERE (u.login=j.login and j.id_area='".protect_data_sql($id)."' and u.login='".protect_data_sql($user)."')");
-				if (grr_sql_count($res3) > 0)
-					return 4;
-			}
-			// Sinon il s'agit d'un simple utilisateur
-			return 2;
+		if ($type == 'area'){
+			
+			return authGetUserLevelArea($user,$id);
 		}
+		
 		// On regarde si l'utilisateur est administrateur d'un site
-		if (($type == 'site') and (Settings::get("module_multisite") == "Oui"))
+		if (($type == 'site') and ((Settings::get("module_multisite") == "Oui") or (Settings::get("module_multietablissement") == "Oui")))
 		{
-			if ($id == '-1')
-			{
-				//On regarde si l'utilisateur est administrateur d'un site quelconque
-				$res2 = grr_sql_query("SELECT u.login
-					FROM ".TABLE_PREFIX."_utilisateurs u, ".TABLE_PREFIX."_j_useradmin_site j
-					WHERE (u.login=j.login and u.login='".protect_data_sql($user)."')");
-				if (grr_sql_count($res2) > 0)
-					return 5;
-			}
-			else
-			{
-				//On regarde si l'utilisateur est administrateur du domaine dont l'id est $id
-				$res3 = grr_sql_query("SELECT u.login
-					FROM ".TABLE_PREFIX."_utilisateurs u, ".TABLE_PREFIX."_j_useradmin_site j
-					WHERE (u.login=j.login and j.id_site='".protect_data_sql($id)."' and u.login='".protect_data_sql($user)."')");
-				if (grr_sql_count($res3) > 0)
-					return 5;
-			}
-			// Sinon il s'agit d'un simple utilisateur
-			return 2;
+    		return authGetUserLevelSite($user,$id);
+    	}
+		
+		// On regarde si l'utilisateur est administrateur d'un établissement
+		if (($type == 'etab') and (Settings::get("module_multietablissement") == "Oui"))
+    	{
+    		return authGetUserLevelEtablissement($user,$id);
+    	}
+		
+	}
+	return 0;
+}
+
+function authGetUserLevelGlobal($user){
+	if (Settings::get("module_multietablissement") == "Oui") {
+		$res3 = grr_sql_query("SELECT login FROM ".TABLE_PREFIX."_j_useradmin_etablissement j WHERE j.login='".protect_data_sql($user)."'");
+		if (grr_sql_count($res3) > 0) {
+			grr_sql_free($res3);
+			return 6;
 		}
 	}
+	
+	if (Settings::get("module_multisite") == "Oui") {
+		$res3 = grr_sql_query("SELECT login FROM ".TABLE_PREFIX."_j_useradmin_site j WHERE j.login='".protect_data_sql($user)."'");
+		if (grr_sql_count($res3) > 0) {
+			grr_sql_free($res3);
+			return 5;
+		}
+	}
+	
+	$res3 = grr_sql_query("SELECT u.login
+						            FROM ".TABLE_PREFIX."_utilisateurs u, ".TABLE_PREFIX."_j_useradmin_area j
+						            WHERE (u.login=j.login AND u.login='".protect_data_sql($user)."')");
+	if (grr_sql_count($res3) > 0)
+		return 4;
+	
+	// On regarde si l'utilisateur est gestionnaire des réservations pour une ressource
+	$str_res2 = "SELECT *
+		          FROM ".TABLE_PREFIX."_utilisateurs u, ".TABLE_PREFIX."_j_user_room j
+		     WHERE u.login=j.login and u.login='".protect_data_sql($user)."' ";
+	$res2 = grr_sql_query($str_res2);
+	if (grr_sql_count($res2) > 0)
+		return 3;
+	// Sinon il s'agit d'un simple utilisateur
+	return 2;
 }
+
+
+function authGetUserLevelEtablissement($user,$id){
+	
+	//On regarde si l'utilisateur est administrateur du domaine dont l'id est $id
+	$res3 = grr_sql_query("SELECT j.login
+                     FROM ".TABLE_PREFIX."_j_useradmin_etablissement j
+                           WHERE (j.login='".protect_data_sql($user)."' and j.id_etablissement='".protect_data_sql($id)."')");
+       
+	if (grr_sql_count($res3) > 0)
+		return 6;
+	// Sinon il s'agit d'un simple utilisateur
+	return 2;
+}
+
+
+function authGetUserLevelSite($user,$id){
+    
+	//Calcul de l'id de l'établissment	
+    $id_etablissement = getIdEtablissementCourant();
+       	
+	if (Settings::get("module_multietablissement") == "Oui") {
+		$res3 = grr_sql_query("SELECT login FROM ".TABLE_PREFIX."_j_useradmin_etablissement j WHERE j.id_etablissement='".protect_data_sql($id_etablissement)."' AND j.login='".protect_data_sql($user)."'");
+		if (grr_sql_count($res3) > 0)
+		return 6;
+	}
+
+	//On regarde si l'utilisateur est administrateur du site dont l'id est $id
+	$res3 = grr_sql_query("SELECT j.login
+                     FROM ".TABLE_PREFIX."_j_useradmin_site j
+                           WHERE (j.login='".protect_data_sql($user)."' and j.id_area='".protect_data_sql($id)."')");
+   
+	if (grr_sql_count($res3) > 0)
+		return 5;
+	// Sinon il s'agit d'un simple utilisateur
+	return 2;
+}
+
+
+function authGetUserLevelArea($user,$id){
+	
+	$id_site = grr_sql_query1("SELECT id_site FROM ".TABLE_PREFIX."_j_site_area  WHERE id_area='".protect_data_sql($id)."'");
+    
+	//Calcul de l'id de l'établissment    
+    $id_etablissement = getIdEtablissementCourant();
+        
+	if (Settings::get("module_multietablissement") == "Oui") {
+		$res3 = grr_sql_query("SELECT login FROM ".TABLE_PREFIX."_j_useradmin_etablissement j WHERE j.id_etablissement='".protect_data_sql($id_etablissement)."' AND j.login='".protect_data_sql($user)."'");
+		if (grr_sql_count($res3) > 0)
+			return 6;
+	}
+		
+	if (Settings::get("module_multisite") == "Oui") {
+		// On regarde si l'utilisateur est administrateur du site auquel le domaine $id appartient
+		$res3 = grr_sql_query("SELECT login FROM ".TABLE_PREFIX."_j_useradmin_site j WHERE j.id_site='".protect_data_sql($id_site)."' AND j.login='".protect_data_sql($user)."'");
+		if (grr_sql_count($res3) > 0)
+			return 5;
+	}
+	
+	//On regarde si l'utilisateur est administrateur du domaine dont l'id est $id
+	$res3 = grr_sql_query("SELECT j.login
+				  FROM ".TABLE_PREFIX."_j_useradmin_area j
+						WHERE (j.login='".protect_data_sql($user)."' and j.id_area='".protect_data_sql($id)."')");
+		
+	if (grr_sql_count($res3) > 0)
+		return 4;
+	
+	// Sinon il s'agit d'un simple utilisateur
+	return 2;
+}
+
+
+function authGetUserLevelRoom($user,$id){
+	
+	// On regarde si l'utilisateur est administrateur du site auquel la ressource $id appartient
+	// calcul de l'id du domaine
+	$id_area = grr_sql_query1("SELECT area_id FROM ".TABLE_PREFIX."_room WHERE id='".protect_data_sql($id)."'");
+	// calcul de l'id du site
+	$id_site = grr_sql_query1("SELECT id_site FROM ".TABLE_PREFIX."_j_site_area  WHERE id_area='".protect_data_sql($id_area)."'");
+	
+	//Calcul de l'id de l'établissment
+    $id_etablissement = getIdEtablissementCourant();
+    
+	
+	if (Settings::get("module_multietablissement") == "Oui") {
+		$res3 = grr_sql_query("SELECT login FROM ".TABLE_PREFIX."_j_useradmin_etablissement j WHERE j.id_etablissement='".protect_data_sql($id_etablissement)."' AND j.login='".protect_data_sql($user)."'");
+		if (grr_sql_count($res3) > 0) {
+			grr_sql_free($res3);
+			return 6;
+		}		 
+	}
+	
+	if (Settings::get("module_multisite") == "Oui") {
+		$res3 = grr_sql_query("SELECT login FROM ".TABLE_PREFIX."_j_useradmin_site j WHERE j.id_site='".protect_data_sql($id_site)."' AND j.login='".protect_data_sql($user)."'");
+		if (grr_sql_count($res3) > 0) {
+			grr_sql_free($res3);
+			return 5;
+		}
+	}
+	
+	// On regarde si l'utilisateur est administrateur du domaine auquel la ressource $id appartient
+	$res3 = grr_sql_query("SELECT j.login
+                     FROM ".TABLE_PREFIX."_j_useradmin_area j
+                           WHERE (j.login='".protect_data_sql($user)."' and j.id_area='".protect_data_sql($id)."')");
+
+	if (grr_sql_count($res3) > 0)
+		return 4;
+	
+	// On regarde si l'utilisateur est gestionnaire des réservations pour une ressource
+	$res2 = grr_sql_query("SELECT j.login
+                     FROM ".TABLE_PREFIX."_j_user_room j
+                           WHERE (j.login='".protect_data_sql($user)."' and j.id_room='".protect_data_sql($id)."')");
+      
+	if (grr_sql_count($res2) > 0)
+		return 3;
+	
+	// Sinon il s'agit d'un simple utilisateur
+	return 2;
+
+}
+
+
+
+/* authUserAccesEtab($user,$id)
+ *
+ * Determines if the user access etab
+ *
+ * $user - The user name
+ * $id -   Which etab are we checking
+ *
+ */
+function authUserAccesEtab($user,$id)
+{
+	if ($id=='') {
+		return 0;
+		die();
+	}
+
+	$sql = "SELECT login FROM ".TABLE_PREFIX."_utilisateurs WHERE (login = '".protect_data_sql($user)."' and statut='administrateur')";
+	$res = grr_sql_query($sql);
+	if (grr_sql_count($res) != "0") return 1;
+
+	$sql = "SELECT login FROM ".TABLE_PREFIX."_j_useradmin_etablissement j WHERE j.id_etablissement='".$id."' AND j.login='".protect_data_sql($user)."'";
+	$res = grr_sql_query($sql);
+	if (grr_sql_count($res) != "0") return 1;
+	
+	$sql = "SELECT login FROM ".TABLE_PREFIX."_j_user_etablissement j WHERE j.id_etablissement='".$id."' AND j.login='".protect_data_sql($user)."'";
+	$res = grr_sql_query($sql);
+	if (grr_sql_count($res) != "0") return 1;
+	
+	return 0;
+
+}
+
+
 /* authUserAccesArea($user,$id)
  *
  * Determines if the user access area
@@ -3144,21 +3769,33 @@ function authUserAccesArea($user,$id)
 	$res = grr_sql_query($sql);
 	if (grr_sql_count($res) != "0")
 		return 1;
-	if (Settings::get("module_multisite") == "Oui")
-	{
+	
+	if (Settings::get("module_multietablissement") == "Oui") {
+
+        $id_etablissement = getIdEtablissementCourant();
+        $sql = "SELECT login FROM ".TABLE_PREFIX."_j_useradmin_etablissement j WHERE j.id_etablissement='".$id_etablissement."' AND j.login='".protect_data_sql($user)."'";
+        $res = grr_sql_query($sql);
+        if (grr_sql_count($res) != "0") return 1;
+    }
+	
+	if (Settings::get("module_multisite") == "Oui"){
+		
 		$id_site = mrbsGetAreaSite($id);
 		$sql = "SELECT login FROM ".TABLE_PREFIX."_j_useradmin_site j WHERE j.id_site='".$id_site."' AND j.login='".protect_data_sql($user)."'";
 		$res = grr_sql_query($sql);
 		if (grr_sql_count($res) != "0")
 			return 1;
 	}
+	
 	$sql = "SELECT id FROM ".TABLE_PREFIX."_area WHERE (id = '".protect_data_sql($id)."' and access='r')";
+	
 	$res = grr_sql_query($sql);
 	$test = grr_sql_count($res);
+	
 	if ($test == "0")
 		return 1;
-	else
-	{
+	else{
+		
 		$sql2 = "SELECT login FROM ".TABLE_PREFIX."_j_user_area WHERE (login = '".protect_data_sql($user)."' and id_area = '".protect_data_sql($id)."')";
 		$res2 = grr_sql_query($sql2);
 		$test2 = grr_sql_count($res2);
@@ -3168,6 +3805,7 @@ function authUserAccesArea($user,$id)
 			return 0;
 	}
 }
+
 // function UserRoomMaxBooking
 // Cette fonction teste si l'utilisateur a la possibilité d'effectuer une réservation, compte tenu
 // des limitations éventuelles de la ressources et du nombre de réservations déjà effectuées.
@@ -3878,7 +4516,8 @@ function verify_retard_reservation()
 	$date_now = mktime(0, 0, 0, $month, $day, $year);
 	if (((Settings::get("date_verify_reservation2") == "") || (Settings::get("date_verify_reservation2") < $date_now )) && (Settings::get("automatic_mail") == 'yes'))
 	{
-		$res = grr_sql_query("SELECT id FROM ".TABLE_PREFIX."_room");
+		
+		/*$res = grr_sql_query("SELECT id FROM ".TABLE_PREFIX."_room");
 		if (! $res)
 		{
 			include "trailer.inc.php";
@@ -3900,7 +4539,25 @@ function verify_retard_reservation()
 						$_SESSION['session_message_error'] = send_mail($row2[0], 7, $dformat);
 				}
 			}
+		}*/
+		/* requete d'optimisation (pour éviter erreur timeout php) */
+		$sql = "SELECT e.id 
+				FROM ".TABLE_PREFIX."_entry e
+				LEFT JOIN ".TABLE_PREFIX."_room r ON r.id = e.room_id
+				WHERE e.statut_entry='e' AND e.end_time < '".$date_now."' ";
+	
+		$res2 = grr_sql_query($sql);
+		if (!$res2)
+		{
+			include "trailer.inc.php";
+			exit;
 		}
+		else
+		{
+			for ($j = 0; ($row2 = grr_sql_row($res2, $j)); $j++)
+				$_SESSION['session_message_error'] = send_mail($row2[0], 7, $dformat);
+		}
+	
 		if (!Settings::set("date_verify_reservation2", $date_now))
 		{
 			echo "Erreur lors de l'enregistrement de date_verify_reservation2 !<br />";
@@ -3908,15 +4565,23 @@ function verify_retard_reservation()
 		}
 	}
 }
+
 /**
  * @param integer $time
  */
-function est_hors_reservation($time,$area="-1")
-{
+function est_hors_reservation($time,$area="-1"){
+	
 	// Premier test : s'agit-il d'un jour du calendrier "hors réservation" ?
-	$test = grr_sql_query1("SELECT DAY FROM ".TABLE_PREFIX."_calendar where DAY = '".$time."'");
+	if (Settings::get("module_multietablissement")== "Oui"){
+		$id_etablissement = getIdEtablissementCourant();
+		$test = grr_sql_query1("select DAY from ".TABLE_PREFIX."_j_etablissement_calendar where DAY = '".$time."' AND id_etablissement = $id_etablissement");
+	} else {
+		$test = grr_sql_query1("select DAY from ".TABLE_PREFIX."_calendar where DAY = '".$time."'");
+	}
+	
 	if ($test != -1)
 		return true;
+	
 	// 2ème test : s'agit-il d'une journée qui n'est pas affichée pour le domaine considéré ?
 	if ($area!=-1)
 	{
@@ -3928,18 +4593,27 @@ function est_hors_reservation($time,$area="-1")
 	}
 	return false;
 }
-function resa_est_hors_reservation($start_time,$end_time)
-{
+
+function resa_est_hors_reservation($start_time,$end_time){
+	
 	// On teste si la réservation est dans le calendrier "hors réservations"
-	$test = grr_sql_query1("select DAY from ".TABLE_PREFIX."_calendar where DAY = '".$start_time."' or DAY = '".$end_time."'");
+	
+	if (Settings::get("module_multietablissement")== "Oui"){
+		$id_etablissement = getIdEtablissementCourant();
+		$sql = "select DAY from ".TABLE_PREFIX."_j_etablissement_calendar where (DAY = '".$start_time."' or DAY = '".$end_time."' ) AND id_etablissement = $id_etablissement";
+	} else {
+		$sql = "select DAY from ".TABLE_PREFIX."_calendar where DAY = '".$start_time."' or DAY = '".$end_time."'";
+	}
+	
+	$test = grr_sql_query1($sql);
 	if ($test != -1)
 		return true;
 	else
 		return false;
 }
-function resa_est_hors_reservation2($start_time,$end_time,$area)
-{
-	// S'agit-il d'une journée qui n'est pas affichée pour le domaine considéré ?
+function resa_est_hors_reservation2($start_time,$end_time,$area){
+	
+	// S'agit-il d'une journée qui n'est pas affichée pour le domaine considéré ?	
 	$sql = "SELECT display_days FROM ".TABLE_PREFIX."_area WHERE id = '".protect_data_sql($area)."'";
 	$result = grr_sql_query1($sql);
 	$jour_semaine = date("w",$start_time);
@@ -3950,6 +4624,7 @@ function resa_est_hors_reservation2($start_time,$end_time,$area)
 		return true;
 	return false;
 }
+
 // trouve les utilisateurs gestionnaires de ressource
 function find_user_room ($id_room)
 {
@@ -4093,8 +4768,13 @@ function traite_grr_url($grr_script_name = "", $force_use_grr_url = "n")
 			$ad_signe = "";
 		return Settings::get("grr_url").$ad_signe.$grr_script_name;
 	}
-	else
-		return $_SERVER['PHP_SELF'];
+		
+	return getGrrUrl() . $grr_script_name;
+	
+	// GIP RECIA | DEBUT | 2012-10-12
+	//else
+		//return $_SERVER['PHP_SELF'];
+	// GIP RECIA | FIN
 }
 // Pour les Jours/Cycles
 //Crée le calendrier Jours/Cycles
@@ -4361,82 +5041,62 @@ function affiche_nom_prenom_email($_beneficiaire, $_beneficiaire_ext, $type = "n
  		return $_statut;
  }
 
-	function jQuery_DatePicker($typeDate){
+ function jQuery_DatePicker($typeDate)
+ {
 
-		if (@file_exists('../include/connect.inc.php')){
-			$racine = "../";
-		} else{
-			$racine = "./";
-		}
+	 if (@file_exists('../include/connect.inc.php')){
+		$racine = "../";
+	}else{
+		$racine = "./";
+	}
 
-		if ($typeDate == 'rep_end' && isset($_GET['id'])){
-			$res = grr_sql_query("SELECT repeat_id FROM ".TABLE_PREFIX."_entry WHERE id=".$_GET['id'].";");
-			if (!$res){
-				fatal_error(0, grr_sql_error());
-			}
-			$repeat_id = implode('', grr_sql_row($res, 0));
-			$res = grr_sql_query("SELECT rep_type, end_date, rep_opt, rep_num_weeks, start_time, end_time FROM ".TABLE_PREFIX."_repeat WHERE id=$repeat_id");
-			if (!$res){
-				fatal_error(0, grr_sql_error());
-			}
-			if (grr_sql_count($res) == 1){
-				$row6 = grr_sql_row($res, 0);
-				$date = date_parse(date("Y-m-d H:i:s",$row6[1]));
-				$day = $date['day'];
-				$month = $date['month'];
-				$year = $date['year'];
-			} else{
-				if (isset ($_GET['day']))
-					$day = $_GET['day'];
-				else
-					$day = date("d");
-				if (isset ($_GET['month']))
-					$month = $_GET['month'];
-				else
-					$month = date("m");
-				if (isset ($_GET['year']))
-					$year = $_GET['year'];
-				else
-					$year = date("Y");
-			}
-		} else{
-			global $start_day, $start_month, $start_year, $end_day, $end_month, $end_year;
-
-			if (isset ($_GET['day'])){
-				$day = $_GET['day'];
-			} else{
-				$day = date("d");
-			}
-
-			if (isset($start_day) && $typeDate=='start'){
-				$day = $start_day;
-			} elseif (isset($end_day) && $typeDate=='end'){
-				$day = $end_day;
-			}
-
-			if (isset ($_GET['month'])){
-				$month = $_GET['month'];
-			} else{
-				$month = date("m");
-			}
-
-			if (isset($start_month) && $typeDate=='start'){
-				$month = $start_month;
-			} elseif (isset($end_month) && $typeDate=='end'){
-				$month = $end_month;
-			}
-
-			if(isset ($_GET['year'])){
-				$year = $_GET['year'];
-			} else{
-				$year = date("Y");
-			}
-
-			if (isset($start_year) && $typeDate=='start'){
-				$year = $start_year;
-			} elseif (isset($end_year) && $typeDate=='end'){
-				$year = $end_year;
-			}
+ 	if ($typeDate == 'rep_end' && isset($_GET['id']))
+ 	{
+ 		$res = grr_sql_query("SELECT repeat_id FROM ".TABLE_PREFIX."_entry WHERE id=".$_GET['id'].";");
+ 		if (!$res)
+ 			fatal_error(0, grr_sql_error());
+ 		$repeat_id = implode('', grr_sql_row($res, 0));
+ 		$res = grr_sql_query("SELECT rep_type, end_date, rep_opt, rep_num_weeks, start_time, end_time FROM ".TABLE_PREFIX."_repeat WHERE id=$repeat_id");
+ 		if (!$res)
+ 			fatal_error(0, grr_sql_error());
+ 		if (grr_sql_count($res) == 1)
+ 		{
+ 			$row6 = grr_sql_row($res, 0);
+ 			$date = date_parse(date("Y-m-d H:i:s",$row6[1]));
+ 			$day = $date['day'];
+ 			$month = $date['month'];
+ 			$year = $date['year'];
+ 		}
+ 		else
+ 		{
+ 			if (isset ($_GET['day']))
+ 				$day = $_GET['day'];
+ 			else
+ 				$day = date("d");
+ 			if (isset ($_GET['month']))
+ 				$month = $_GET['month'];
+ 			else
+ 				$month = date("m");
+ 			if (isset ($_GET['year']))
+ 				$year = $_GET['year'];
+ 			else
+ 				$year = date("Y");
+ 		}
+ 	}
+ 	else
+ 	{
+ 		if (isset ($_GET['day']))
+ 			$day = $_GET['day'];
+ 		else
+ 			$day = date("d");
+ 		if (isset ($_GET['month']))
+ 			$month = $_GET['month'];
+ 		else
+ 			$month = date("m");
+ 		if (isset ($_GET['year']))
+ 			$year = $_GET['year'];
+ 		else
+ 			$year = date("Y");
  	}
  	genDateSelector("".$typeDate."_", "$day", "$month", "$year","");
  	echo '<input type="hidden" disabled="disabled" id="mydate_' .$typeDate. '">'.PHP_EOL;
@@ -4522,7 +5182,7 @@ function jQuery_TimePicker($typeTime, $start_hour, $start_min,$dureepardefaultse
 	if ($minute == 0)
 		$minute = '00';
 	// MAJ
-	echo '<div class="input-group clockpicker">
+	echo '<div class="input-group clockpicker col-xs-6">
 	<input name="' .$typeTime. '" type="text" class="form-control" value="' .$hour. ':' .$minute. '">
 	<span class="input-group-addon">
 		<span class="glyphicon glyphicon-time"></span>
@@ -4768,6 +5428,415 @@ function supprimerReservationsUtilisateursEXT($avec_resa,$avec_privileges)
 		echo "<p class='avertissement'>".get_vocab("table_utilisateurs").get_vocab("deux_points").$n.get_vocab("entres_supprimees")."</p>\n";
 	}
 }
+
+
+
+/** supprimerReservationsUtilisateursEXTParEtab()
+*
+* Supprime les réservations des membres qui proviennent d'une source "EXT"
+* $avec_resa supprime les reservations
+* $avec_privileges supprime les privileges des utilisateur
+*
+* Returns:
+*   0        - An error occured
+*   non-zero - The entries were deleted
+*/
+function supprimerReservationsUtilisateursEXTParEtab($avec_resa,$avec_privileges)
+{
+	// Récupération de tous les utilisateurs de la source EXT
+	$id_etablissement = getIdEtablissementCourant();
+	
+	$requete_users_ext = "SELECT U.login FROM ".TABLE_PREFIX."_utilisateurs AS U 
+						  JOIN ".TABLE_PREFIX."_j_user_etablissement AS UE 
+						  WHERE U.source='ext' and U.statut<>'administrateur'
+						  AND UE.id_etablissement = $id_etablissement";
+	
+	$sqlRoomEtab = "SELECT R.id FROM ".TABLE_PREFIX."_room AS R
+							JOIN ".TABLE_PREFIX."_site_area AS SA ON SA.id_area = R.area_id
+							JOIN ".TABLE_PREFIX."_etablissement_site AS ES ON ES.id_site = SA.id_site
+							WHERE SA.id_etablissement = $id_etablissement" ;
+	$sqlAreaEtab = "SELECT SA.id_area FROM ".TABLE_PREFIX."_site_area AS SA 
+							JOIN ".TABLE_PREFIX."_etablissement_site AS ES ON ES.id_site = SA.id_site
+							WHERE SA.id_etablissement = $id_etablissement" ;
+	$sqlSiteEtab = "SELECT ES.id_site FROM ".TABLE_PREFIX."_etablissement_site AS ES 
+								WHERE ES.id_etablissement = $id_etablissement" ;
+	
+	$res = grr_sql_query($requete_users_ext);
+	$loginsMulti = array();
+	$logins = array();
+	$logins_liaison  = array();
+	if ($res) for ($i = 0; ($row = grr_sql_row($res, $i)); $i++) {
+
+		$requete_users_ext_multi = "SELECT * FROM ".TABLE_PREFIX."_j_user_etablissement 
+								  WHERE U.login='$row[0]' and U.id_etablissement != $id_etablissement ";
+		$res2 = grr_sql_query($requete_users_ext_multi);
+		if ($res2 && grr_sql_count($res2) > 0 ){
+			$loginsMulti[]=$row[0];
+		} else {
+			$logins[]=$row[0];			
+		}
+	}
+
+	// Construction des requêtes de suppression à partir des différents utilisateurs à supprimer
+	if ($avec_resa=='y') {
+		//Les utilisateurs mono-établissement 
+		
+		// Pour chaque utilisateur, on supprime les réservations qu'il a créées et celles dont il est bénéficiaire
+		// Table grr_entry
+		$req_suppr_table_entry = "DELETE FROM ".TABLE_PREFIX."_entry WHERE create_by = ";
+		$first=1; // 1er tour
+		foreach($logins as $log) {
+			if ($first == 1) {
+				// pas de OR devant le login
+				$req_suppr_table_entry .= "'$log' OR beneficiaire='$log'";
+				$first=0;
+			}
+			else {
+				$req_suppr_table_entry .= " OR create_by = '$log' OR beneficiaire = '$log' ";
+			}
+		}
+
+		// Pour chaque utilisateur, on supprime les réservations périodiques qu'il a créées et celles dont il est bénéficiaire
+		// Table grr_repeat
+		$req_suppr_table_repeat = "DELETE FROM ".TABLE_PREFIX."_repeat WHERE create_by = ";
+		$first=1; // 1er tour
+		foreach($logins as $log) {
+			if ($first == 1) {
+				// pas de OR devant le login
+				$req_suppr_table_repeat .= "'$log' OR beneficiaire='$log'";
+				$first=0;
+			}
+			else {
+				$req_suppr_table_repeat .= " OR create_by = '$log' OR beneficiaire = '$log' ";
+			}
+		}
+		// Pour chaque utilisateur, on supprime les réservations périodiques qu'il a créées et celles dont il est bénéficiaire
+		// Table grr_entry_moderate
+		$req_suppr_table_entry_moderate = "DELETE FROM ".TABLE_PREFIX."_entry_moderate WHERE create_by = ";
+		$first=1; // 1er tour
+		foreach($logins as $log) {
+			if ($first == 1) {
+				// pas de OR devant le login
+				$req_suppr_table_entry_moderate .= "'$log' OR beneficiaire='$log'";
+				$first=0;
+			}
+			else {
+				$req_suppr_table_entry_moderate .= " OR create_by = '$log' OR beneficiaire = '$log' ";
+			}
+		}
+		
+		//les utilisateurs multi-etablissement
+		
+		// Pour chaque utilisateur, on supprime les réservations qu'il a créées et celles dont il est bénéficiaire
+		// Table grr_entry
+
+		$req_suppr_table_entry_multi = "DELETE FROM ".TABLE_PREFIX."_entry WHERE room_id IN (".$sqlRoomEtab.") AND create_by = ";
+		$first=1; // 1er tour
+		foreach($loginsMulti as $log) {
+			if ($first == 1) {
+				// pas de OR devant le login
+				$req_suppr_table_entry_multi .= "'$log' OR beneficiaire='$log'";
+				$first=0;
+			}
+			else {
+				$req_suppr_table_entry_multi .= " OR create_by = '$log' OR beneficiaire = '$log' ";
+			}
+		}
+		
+		// Pour chaque utilisateur, on supprime les réservations périodiques qu'il a créées et celles dont il est bénéficiaire
+		// Table grr_repeat
+		$req_suppr_table_repeat_multi = "DELETE FROM ".TABLE_PREFIX."_repeat WHERE room_id IN (".$sqlRoomEtab.") AND create_by = ";
+		$first=1; // 1er tour
+		foreach($loginsMulti as $log) {
+			if ($first == 1) {
+				// pas de OR devant le login
+				$req_suppr_table_repeat_multi .= "'$log' OR beneficiaire='$log'";
+				$first=0;
+			}
+			else {
+				$req_suppr_table_repeat_multi .= " OR create_by = '$log' OR beneficiaire = '$log' ";
+			}
+		}
+		// Pour chaque utilisateur, on supprime les réservations périodiques qu'il a créées et celles dont il est bénéficiaire
+		// Table grr_entry_moderate
+		$req_suppr_table_entry_moderate_multi = "DELETE FROM ".TABLE_PREFIX."_entry_moderate WHERE room_id IN (".$sqlRoomEtab.") AND create_by = ";
+		$first=1; // 1er tour
+		foreach($loginsMulti as $log) {
+			if ($first == 1) {
+				// pas de OR devant le login
+				$req_suppr_table_entry_moderate_multi .= "'$log' OR beneficiaire='$log'";
+				$first=0;
+			}
+			else {
+				$req_suppr_table_entry_moderate_multi .= " OR create_by = '$log' OR beneficiaire = '$log' ";
+			}
+		}
+	}
+	
+	echo "<hr />\n";
+	if ($avec_resa=='y') {
+		$nb=0;
+		$s = grr_sql_command ($req_suppr_table_entry);
+		if ($s != -1) $nb +=$s;
+		$s = grr_sql_command (	$req_suppr_table_repeat);
+		if ($s != -1) $nb +=$s;
+		$s = grr_sql_command (	$req_suppr_table_entry_moderate);
+		if ($s != -1) $nb +=$s;
+		$s = grr_sql_command ($req_suppr_table_entry_multi);
+		if ($s != -1) $nb +=$s;
+		$s = grr_sql_command (	$req_suppr_table_repeat_multi);
+		if ($s != -1) $nb +=$s;
+		$s = grr_sql_command (	$req_suppr_table_entry_moderate_multi);
+		if ($s != -1) $nb +=$s;
+		echo "<p class='avertissement'>".get_vocab("tables_reservations").get_vocab("deux_points").$nb.get_vocab("entres_supprimees")."</p>\n";
+	}
+
+	
+	$nb=0;
+	$req_j_mailuser_room = "DELETE FROM ".TABLE_PREFIX."_j_mailuser_room WHERE ";
+	$req_j_mailuser_room_empty = true;
+	$req_j_user_area = "DELETE FROM ".TABLE_PREFIX."_j_user_area WHERE ";
+	$req_j_user_area_empty = true;
+	$req_j_user_room = "DELETE FROM ".TABLE_PREFIX."_j_user_room WHERE ";
+	$req_j_user_room_empty = true;
+	$req_j_useradmin_area = "DELETE FROM ".TABLE_PREFIX."_j_useradmin_area WHERE ";
+	$req_j_useradmin_area_empty = true;
+	$req_j_useradmin_site = "DELETE FROM ".TABLE_PREFIX."_j_useradmin_site WHERE ";
+	$req_j_useradmin_site_empty = true;
+	
+	foreach($logins as $log) {
+		// Table grr_j_mailuser_room
+		$test = grr_sql_query1("select count(login) from ".TABLE_PREFIX."_j_mailuser_room WHERE login='".$log."'");
+		if ($test >=1 ) {
+			if ($avec_privileges=="y") {
+				if ($req_j_mailuser_room_empty) {
+					// pas de OR devant le login
+					$req_j_mailuser_room .= " login='".$log."'";
+					$req_j_mailuser_room_empty = false;
+				} else {
+					$req_j_mailuser_room .= " OR login = '".$log."'";
+				}
+			} else {
+				$logins_liaison[]=strtolower($log);
+			}
+		}
+		// Table grr_j_user_area
+		$test = grr_sql_query1("select count(login) from ".TABLE_PREFIX."_j_user_area WHERE login='".$log."'");
+		if ($test >=1 ) {
+			if ($avec_privileges=="y") {
+				if ($req_j_user_area_empty) {
+					// pas de OR devant le login
+					$req_j_user_area = " login='".$log."'";
+					$req_j_user_area_empty = false;
+				} else {
+					$req_j_user_area .= " OR login = '".$log."'";
+				}
+			} else {
+				$logins_liaison[]=strtolower($log);
+			}
+		}
+		// Table grr_j_user_room
+		$test = grr_sql_query1("select count(login) from ".TABLE_PREFIX."_j_user_room WHERE login='".$log."'");
+		if ($test >=1 ) {
+			if ($avec_privileges=="y") {
+				if ($req_j_user_room_empty) {
+					// pas de OR devant le login
+					$req_j_user_room = " login='".$log."'" ;
+					$req_j_user_room_empty = false;
+				} else {
+					$req_j_user_room .= " OR login = '".$log."'";
+				}
+			} else {
+				$logins_liaison[]=strtolower($log);
+			}
+		}
+		// Table grr_j_useradmin_area
+		$test = grr_sql_query1("select count(login) from ".TABLE_PREFIX."_j_useradmin_area WHERE login='".$log."'");
+		if ($test >=1 ) {
+			if ($avec_privileges=="y") {
+				if ($req_j_useradmin_area_empty) {
+					// pas de OR devant le login
+					$req_j_useradmin_area = " login='".$log."'";
+					$req_j_useradmin_area_empty = false;
+				} else {
+					$req_j_useradmin_area .= " OR login = '".$log."'";
+				}
+			} else {
+				$logins_liaison[]=strtolower($log);
+			}
+		}
+		// Table grr_j_useradmin_site
+		$test = grr_sql_query1("select count(login) from ".TABLE_PREFIX."_j_useradmin_site WHERE login='".$log."'");
+		if ($test >=1 ) {
+			if ($avec_privileges=="y") {
+				if ($req_j_useradmin_site_empty) {
+					// pas de OR devant le login
+					$req_j_useradmin_site = " login='".$log."'";
+					$$req_j_useradmin_site_empty = false;
+				} else {
+					$req_j_useradmin_site .= " OR login = '".$log."'";
+				}
+			} else {
+				$logins_liaison[]=strtolower($log);
+			}
+		}
+	}
+	// Suppression effective
+	if ($avec_privileges=="y") {
+		if ($req_j_mailuser_room != "") {
+			$s = grr_sql_command ($req_j_mailuser_room);
+			if ($s != -1) $nb +=$s;
+		}
+		if ($req_j_user_area != "") {
+			$s = grr_sql_command ($req_j_user_area);
+			if ($s != -1) $nb +=$s;
+		}
+		if ($req_j_user_room != "") {
+			$s = grr_sql_command ($req_j_user_room);
+			if ($s != -1) $nb +=$s;
+		}
+		if ($req_j_useradmin_area != "") {
+			$s = grr_sql_command ($req_j_useradmin_area);
+			if ($s != -1) $nb +=$s;
+		}
+		if ($req_j_useradmin_site != "") {
+			$s = grr_sql_command ($req_j_useradmin_site);
+			if ($s != -1) $nb +=$s;
+		}
+	}
+	//Idem pour les utilisateurs multi
+	$req_j_mailuser_room = "DELETE FROM ".TABLE_PREFIX."_j_mailuser_room WHERE id_room IN (".$sqlRoomEtab.") AND ";
+	$req_j_mailuser_room_empty = true;
+	$req_j_user_area = "DELETE FROM ".TABLE_PREFIX."_j_user_area WHERE id_area IN (".$sqlAreaEtab.") AND ";
+	$req_j_user_area_empty = true;
+	$req_j_user_room = "DELETE FROM ".TABLE_PREFIX."_j_user_room WHERE id_room IN (".$sqlRoomEtab.") AND  ";
+	$req_j_user_room_empty = true;
+	$req_j_useradmin_area = "DELETE FROM ".TABLE_PREFIX."_j_useradmin_area WHERE id_area IN (".$sqlAreaEtab.") AND ";
+	$req_j_useradmin_area_empty = true;
+	$req_j_useradmin_site = "DELETE FROM ".TABLE_PREFIX."_j_useradmin_site WHERE id_area IN (".$sqlSiteEtab.") AND ";
+	$req_j_useradmin_site_empty = true;
+	
+	foreach($loginsMulti as $log) {
+		// Table grr_j_mailuser_room
+		$test = grr_sql_query1("select count(login) from ".TABLE_PREFIX."_j_mailuser_room WHERE login='".$log."'");
+		if ($test >=1 ) {
+			if ($avec_privileges=="y") {
+				if ($req_j_mailuser_room_empty) {
+					// pas de OR devant le login
+					$req_j_mailuser_room .= " login='".$log."'";
+					$req_j_mailuser_room_empty = false;
+				} else {
+					$req_j_mailuser_room .= " OR login = '".$log."'";
+				}
+			} else {
+				$logins_liaison[]=strtolower($log);
+			}
+		}
+		// Table grr_j_user_area
+		$test = grr_sql_query1("select count(login) from ".TABLE_PREFIX."_j_user_area WHERE login='".$log."'");
+		if ($test >=1 ) {
+			if ($avec_privileges=="y") {
+				if ($req_j_user_area_empty) {
+					// pas de OR devant le login
+					$req_j_user_area = " login='".$log."'";
+					$req_j_user_area_empty = false;
+				} else {
+					$req_j_user_area .= " OR login = '".$log."'";
+				}
+			} else {
+				$logins_liaison[]=strtolower($log);
+			}
+		}
+		// Table grr_j_user_room
+		$test = grr_sql_query1("select count(login) from ".TABLE_PREFIX."_j_user_room WHERE login='".$log."'");
+		if ($test >=1 ) {
+			if ($avec_privileges=="y") {
+				if ($req_j_user_room_empty) {
+					// pas de OR devant le login
+					$req_j_user_room = " login='".$log."'" ;
+					$req_j_user_room_empty = false;
+				} else {
+					$req_j_user_room .= " OR login = '".$log."'";
+				}
+			} else {
+				$logins_liaison[]=strtolower($log);
+			}
+		}
+		// Table grr_j_useradmin_area
+		$test = grr_sql_query1("select count(login) from ".TABLE_PREFIX."_j_useradmin_area WHERE login='".$log."'");
+		if ($test >=1 ) {
+			if ($avec_privileges=="y") {
+				if ($req_j_useradmin_area_empty) {
+					// pas de OR devant le login
+					$req_j_useradmin_area = " login='".$log."'";
+					$req_j_useradmin_area_empty = false;
+				} else {
+					$req_j_useradmin_area .= " OR login = '".$log."'";
+				}
+			} else {
+				$logins_liaison[]=strtolower($log);
+			}
+		}
+		// Table grr_j_useradmin_site
+		$test = grr_sql_query1("select count(login) from ".TABLE_PREFIX."_j_useradmin_site WHERE login='".$log."'");
+		if ($test >=1 ) {
+			if ($avec_privileges=="y") {
+				if ($req_j_useradmin_site_empty) {
+					// pas de OR devant le login
+					$req_j_useradmin_site = " login='".$log."'";
+					$$req_j_useradmin_site_empty = false;
+				} else {
+					$req_j_useradmin_site .= " OR login = '".$log."'";
+				}
+			} else {
+				$logins_liaison[]=strtolower($log);
+			}
+		}
+	}
+	// Suppression effective
+	if ($avec_privileges=="y") {
+		if ($req_j_mailuser_room != "") {
+			$s = grr_sql_command ($req_j_mailuser_room);
+			if ($s != -1) $nb +=$s;
+		}
+		if ($req_j_user_area != "") {
+			$s = grr_sql_command ($req_j_user_area);
+			if ($s != -1) $nb +=$s;
+		}
+		if ($req_j_user_room != "") {
+			$s = grr_sql_command ($req_j_user_room);
+			if ($s != -1) $nb +=$s;
+		}
+		if ($req_j_useradmin_area != "") {
+			$s = grr_sql_command ($req_j_useradmin_area);
+			if ($s != -1) $nb +=$s;
+		}
+		if ($req_j_useradmin_site != "") {
+			$s = grr_sql_command ($req_j_useradmin_site);
+			if ($s != -1) $nb +=$s;
+		}
+	}
+	echo "<p class='avertissement'>".get_vocab("tables_liaison").get_vocab("deux_points").$nb.get_vocab("entres_supprimees")."</p>\n";
+
+	if ($avec_privileges=="y") {
+		// Enfin, suppression des utilisateurs de la source EXT qui ne sont pas administrateur
+		$requete_suppr_users_ext = "DELETE FROM ".TABLE_PREFIX."_utilisateurs WHERE source='ext' and statut<>'administrateur'";
+		$s = grr_sql_command($requete_suppr_users_ext);
+		if ($s == -1) $s = 0;
+		echo "<p class='avertissement'>".get_vocab("table_utilisateurs").get_vocab("deux_points").$s.get_vocab("entres_supprimees")."</p>\n";
+	} else {
+		$n=0;
+		foreach($logins as $log) {
+			if (!in_array(strtolower($log),$logins_liaison)) {
+				grr_sql_command("DELETE FROM ".TABLE_PREFIX."_utilisateurs WHERE login='".$log."'");
+				$n++;
+			}
+		}
+		echo "<p class='avertissement'>".get_vocab("table_utilisateurs").get_vocab("deux_points").$n.get_vocab("entres_supprimees")."</p>\n";
+	}
+}
+
+
 /** NettoyerTablesJointure()
  *
  * Supprime les lignes inutiles dans les tables de liaison
@@ -4845,6 +5914,14 @@ function NettoyerTablesJointure()
 	echo "<hr />\n";
 	echo "<p class='avertissement'>".get_vocab("tables_liaison").get_vocab("deux_points").$nb.get_vocab("entres_supprimees")."</p>\n";
 }
+
+function supprimer_numero($_texte) {
+	return preg_replace(
+	",^[[:space:]]*([0-9]+)([.)]|".chr(194).'?'.chr(176).")[[:space:]]+,S",
+	"", $_texte);
+}
+
+
 if (!function_exists('htmlspecialchars_decode'))
 {
 	function htmlspecialchars_decode($text)
@@ -4852,6 +5929,384 @@ if (!function_exists('htmlspecialchars_decode'))
 		return strtr($text, array_flip(get_html_translation_table(HTML_SPECIALCHARS)));
 	}
 }
+
+
+///////////////////////////////////////////////////
+// DEBUT FONCTION MULTI-ETAB
+///////////////////////////////////////////////////
+
+
+/**
+* MULTI-ETAB  : Fonction remplacant la variable company dans grr_settings en mode multi etab
+*/
+function getCompanyName(){
+	if (Settings::get("module_multietablissement") == "Oui"){
+		$idEtablissementCourant = getIdEtablissementCourant();
+		$req = "SELECT shortname FROM ".TABLE_PREFIX."_etablissement
+		       WHERE id = $idEtablissementCourant ";
+		$res = grr_sql_query($req);
+		$row = grr_sql_row($res,0);
+		return $row[0];
+	} else {
+		$req = "SELECT value FROM ".TABLE_PREFIX."_setting
+				       WHERE name='company' ";
+		$res = grr_sql_query($req);
+		$row = grr_sql_row($res,0);
+		return $row[0];
+	}
+}
+
+// MULTI-ETAB  : Appeller uniquement en mode mono-etablissement
+function saveCompanyName($companyName){
+		$sql = "UPDATE ".TABLE_PREFIX."_setting SET value='".$companyName."'
+	      WHERE name='company'";
+	$res = grr_sql_query($sql);
+	if ( ! $res)
+		return (false);
+	return true;
+}
+
+// MULTI-ETAB 
+function getCompanyNameForBandeau(){
+	
+	global $desactive_changement_etablissement_preselectionne;
+	
+	$showListDeroulante = (Settings::get("module_multietablissement") == "Oui") && 
+		(!isset($desactive_changement_etablissement_preselectionne) || $desactive_changement_etablissement_preselectionne == 0 );
+	
+	if ($showListDeroulante){
+		
+		$sqlListeEtab = "";
+		
+		$codeEtablissementCourant = $_SESSION['current_etablisement'];
+		
+		if (Settings::get("etablissement_open") == 1 ) {
+			//Mode établissement ouvert, on recherche tous les établissements.
+			$sqlListeEtab = "SELECT E.code, E.shortname FROM ".TABLE_PREFIX."_etablissement as E order by E.shortname";
+		} else {
+			$username = getUserName();
+			if (isset($username ) && $username != NULL && $username != ''){
+				$sqlStatutUser = "SELECT statut FROM ".TABLE_PREFIX."_utilisateurs WHERE login = '$username'";
+				$res = grr_sql_query($sqlStatutUser);
+				if ($res){
+					$row = grr_sql_row($res,0);
+					$statut = $row[0];
+					
+					if ($statut == "administrateur"){
+						//Tous les établisements pour l'administrateur de GRR
+						$sqlListeEtab = "SELECT E.code, E.shortname FROM ".TABLE_PREFIX."_etablissement as E order by E.shortname";
+					} else {
+						//Pour un utilisateurs non administrateur, on selectionne les établissement où il est inscrit en tant qu'utilisateur ou bien administrateur.
+						$sqlListeEtab = "SELECT DISTINCT E.code, E.shortname FROM ".TABLE_PREFIX."_etablissement as E ";
+						$sqlListeEtab .= "LEFT JOIN ".TABLE_PREFIX."_j_user_etablissement as J ON J.id_etablissement = E.id ";
+						$sqlListeEtab .= "LEFT JOIN ".TABLE_PREFIX."_j_useradmin_etablissement as JA ON JA.id_etablissement = E.id ";
+						$sqlListeEtab .= "WHERE (J.login='$username' OR JA.login = '$username') order by E.shortname";
+					}
+				}
+			}
+		}
+		
+		if ($sqlListeEtab ==""){
+			return get_vocab("no_etab_to_select");
+		}
+		
+		$res = grr_sql_query($sqlListeEtab);
+		if (! $res){
+			return get_vocab("no_etab_to_select");
+		} else {
+			$nb = grr_sql_count($res);
+			if ($nb == 1){
+				$row = grr_sql_row($res,0);
+				return $row[1];
+			}
+			
+			// redirection
+			if (@file_exists('changeEtablissement.php')){ // on est dans la vue public
+				$chemin = '';
+			}else{ // on est dans l'administration
+				$chemin = '../';
+			}
+			
+			$out_html = "<form id=\"selectionEtablissement\" action=\"".$chemin."changeEtablissement.php\" method=\"post\" style=\"display: inline\">\n";
+			$out_html .= "<select class=\"form-control\" name=\"etablissement\" onchange=\"select_etablissement()\">";
+			for ($i = 0; ($row = grr_sql_row($res, $i)); $i++)
+			{
+				$selected = ($row[0] == $codeEtablissementCourant) ? "selected = \"selected\"" : "";
+			    $link = $chemin."changeEtablissement.php?code_etablissement=$row[0]";
+				$out_html .= "\n<option $selected value=\"$link\">" . htmlspecialchars($row[1])."</option>";
+			}
+
+			$out_html .= "</select>
+			<script  type=\"text/javascript\" >
+			<!--
+			    function select_etablissement()
+			    {
+			    box = document.getElementById('selectionEtablissement').etablissement;
+			    destination = box.options[box.selectedIndex].value;
+			    if (destination) location.href = destination;
+			    }
+			// -->
+			</script>
+			<noscript>
+			    <input type=\"submit\" value=\"Change\" />
+			</noscript>
+			</form>";
+			return $out_html;
+		}
+		
+	} else {
+		return getCompanyName();
+	}
+}
+
+
+/**
+ * Valide que le site appartient à l'établissement.
+ * @param  $idSite l'id du site.
+ * @param  $idEtablissement l'id de l'établissement.
+ * @return boolean vrai sss le site appartient à l'établissement.
+ */
+function isSiteInEtablissement($idSite, $idEtablissement){
+	$sql = "SELECT 1 FROM ".TABLE_PREFIX."_j_etablissement_site WHERE id_etablissement= $idEtablissement AND id_site = $idSite";
+	$res = grr_sql_query($sql);
+	return $res && grr_sql_count($res) > 0 ;
+}
+
+/**
+* Valide que le domaine appartient au site.
+* @param  $idArea l'id du domaine.
+* @param  $idSite l'id du site.
+* @return boolean vrai sss le domaine appartient au site.
+*/
+function isAreaInSite($idArea, $idSite){
+	$sql = "SELECT 1 FROM ".TABLE_PREFIX."_j_site_area WHERE id_area= $idArea AND id_site = $idSite";
+	$res = grr_sql_query($sql);
+	return $res && grr_sql_count($res) > 0 ;
+}
+
+/**
+* Valide que la salle appartient au domaine.
+* @param  $idRomm l'id de la salle.
+* @param  $idArea l'id du domaine.
+* @return boolean vrai sss la salle appartient au domaine.
+*/
+function isRoomInArea($idRoom, $idArea){
+	$sql = "SELECT 1 FROM ".TABLE_PREFIX."_room WHERE area_id= $idArea AND id = $idRoom";
+	$res = grr_sql_query($sql);
+	return $res && grr_sql_count($res) > 0 ;
+}
+
+/**
+ * Recherche le premier id de site disponible pour l'établissement.
+ * @param $idEtablissement l'id de l'établissement.
+ * @return integer le premier id de site disponible dans l'établissement. 
+ */
+function findFirstIdSiteInEtablissement($idEtablissement){
+	$sql = "SELECT id_site FROM ".TABLE_PREFIX."_j_etablissement_site WHERE id_etablissement= $idEtablissement";
+	$res = grr_sql_query($sql);
+	if ($res && grr_sql_count($res) > 0 ){
+		$row = grr_sql_row($res,0);
+		return $row[0];
+	} else {
+		return -1;		
+	}
+}
+
+/**
+* Recherche le premier id de domaine disponible pour le site.
+* @param $idSite l'id du site.
+* @return integer le premier id de domaine disponible dans le site.
+*/
+function findFirstIdAreaInSite($idSite){
+	$sql = "SELECT id_area FROM ".TABLE_PREFIX."_j_site_area WHERE id_site= $idSite";
+	$res = grr_sql_query($sql);
+	if ($res && grr_sql_count($res) > 0 ){
+		$row = grr_sql_row($res,0);
+		return $row[0];
+	} else {
+		return -1;
+	}
+}
+
+/**
+* Recherche le premier id de salle disponible pour le domaine.
+* @param $idArea l'id du domaine.
+* @return integer le premier id de salle disponible dans le domaine.
+*/
+function findFirstIdRoomInArea($idArea){
+	$sql = "SELECT id FROM ".TABLE_PREFIX."_room WHERE id_area= $idArea";
+	$res = grr_sql_query($sql);
+	if ($res && grr_sql_count($res) > 0 ){
+		$row = grr_sql_row($res,0);
+		return $row[0];
+	} else {
+		return -1;
+	}
+}
+
+/**
+ * Retourne le code établissement à partir de son ID.
+ * @param unknown_type $idEtablissement l'id de l'établissement.
+ * 
+ */
+function getCodeEtablissementFromId($idEtablissement){
+	$sql = "SELECT code FROM ".TABLE_PREFIX."_etablissement WHERE id = '$idEtablissement'";
+	$res = grr_sql_query($sql);
+	if ($res && grr_sql_count($res) == 1 ){
+		$row = grr_sql_row($res,0);
+		return $row[0];
+	}
+}
+
+function getNomCourtEtablissementFromId($idEtablissement){
+	$sql = "SELECT shortname FROM ".TABLE_PREFIX."_etablissement WHERE id = '$idEtablissement'";
+	$res = grr_sql_query($sql);
+	if ($res && grr_sql_count($res) == 1 ){
+		$row = grr_sql_row($res,0);
+		return $row[0];
+	}
+}
+
+//Note l a ne appeller que si on est sur qu'on est en multiétablissement.
+function getIdEtablissementCourant(){
+	
+	if(! isset($_SESSION['current_etablisement'])){
+		setEtablissementInSession();
+	}
+	$codeEtablissementCourant = $_SESSION['current_etablisement'];
+	$sql = "SELECT id FROM ".TABLE_PREFIX."_etablissement WHERE code = '$codeEtablissementCourant'"; 
+	$res = grr_sql_query($sql);
+	if ($res && grr_sql_count($res) == 1 ){
+		$row = grr_sql_row($res,0);
+		return $row[0];
+	}
+}
+
+/**
+ * Teste si l'utilisateur qui cherche à reserver une salle à bien accès à l'établissement.
+ * @param unknown_type $room
+ * @return boolean|number
+ */
+function auth_user_reserv_room_etab($room){
+	if (Settings::get("module_multietablissement") != "Oui") {
+		return true;
+	} else {
+		$user = getUserName();
+		
+		$res = grr_sql_query("SELECT 1 FROM ".TABLE_PREFIX."_utilisateurs  WHERE login='".protect_data_sql($user)."' AND statut = 'administrateur' AND etat='actif'");
+		if (grr_sql_count($res) > 0) {
+			grr_sql_free($res);
+			return true;
+		}
+		
+		//Calcul de l'id de l'établissment
+	    $id_etablissement = getIdEtablissementCourant();
+
+		$res = grr_sql_query("SELECT login FROM ".TABLE_PREFIX."_j_useradmin_etablissement j WHERE j.id_etablissement='".protect_data_sql($id_etablissement)."' AND j.login='".protect_data_sql($user)."'");
+		if (grr_sql_count($res) > 0) {
+			grr_sql_free($res);
+			return true;
+		}
+		
+		$res = grr_sql_query("SELECT login FROM ".TABLE_PREFIX."_j_user_etablissement j WHERE j.id_etablissement='".protect_data_sql($id_etablissement)."' AND j.login='".protect_data_sql($user)."'");
+		if (grr_sql_count($res) > 0) {
+			grr_sql_free($res);
+			return true;
+		}
+
+		return false;
+	}
+
+}
+
+function canAccesAdmin(){
+	if (authGetUserLevel(getUserName(),-1,'user') == 1){
+		return true;
+	}
+	
+	if (Settings::get("module_multietablissement")=="Oui"){
+		//On valide en premie rlieu le cas le plus simple (admin central ou établissement).
+		if (authGetUserLevel(getUserName(),getIdEtablissementCourant(),'etab') >= 6){
+			return true;
+		}
+
+		//On recherche tous les domaines de l'établissement pour voir si l'utilisateur a bien un droit d'administration au sein de l'établissement
+		$sql = "SELECT id_area FROM ".TABLE_PREFIX."_j_site_area AS SA
+				JOIN ".TABLE_PREFIX."_j_etablissement_site AS ES ON ES.id_site = SA.is_site
+				WHERE ES.id_etablissement = $idEtablissement ";
+		
+		$res = grr_sql_query($sql);
+		if ($res) {
+			for ($i = 0; ($row = grr_sql_row($res, $i)); $i++) {
+				authGetUserLevel(getUserName(), $row[0], 'area') >= 4;				
+			}
+		}
+		return false;
+	} else {
+		return (authGetUserLevel(getUserName(),-1,'area') >= 4) ;		
+	}
+
+}
+
+///////////////////////////////////////////////////
+// FIN FONCTION MULTI-ETAB
+///////////////////////////////////////////////////
+
+
+
+// GIP RECIA : Fonction permettant d'ajouter une note au message
+// 				passe en parametre.
+// 				Cette note indique a l'utilisateur qu'il est
+// 				preferable pour lui de s'authentifier sur le
+// 				portail.
+// 				Cette note n'est ajoutee que si GRR est CASifie.
+function ajoutNoteAuthentificationPortail($message) {
+  
+  global $vocab; // Utilisation du vocabulaire defini dans les fichiers de langues
+  // Ajout de la note si nécessaire
+  if ((Settings::get('sso_statut') == 'cas_visiteur') or (Settings::get('sso_statut') == 'cas_utilisateur')) {
+    $message = $message."\n"."\n".$vocab["authentification_portail"]." ".getServeurUrl();
+  }
+  return $message;
+}
+
+// GIP RECIA : Fonction permettant de recuperer l'URL de GRR.
+function getGrrUrl() {
+  
+  
+  $grr_url = Settings::get("grr_url"); // Recuperation de l'URL de GRR dans les settings
+
+  // Si l'URL a ete definie dans les settings
+  if($grr_url != null and $grr_url != "") {
+    return $grr_url;
+  }
+
+  $server_url = getServeurUrl(); // Recuperation du l'URL du serveur
+
+  // Recuperation du path et suppression du nom du fichier
+  $grr_path = $_SERVER['SCRIPT_NAME'];
+  $grr_path = preg_replace('/([[:alnum:]]|[[:space:]]|\.|_)*\.php/', "", $grr_path);
+
+  
+  return $server_url . $grr_path; // Recuperation de l'URL via la requete
+}
+
+
+// GIP RECIA : Fonction permettant de recuperer l'URL du serveur
+function getServeurUrl() {
+
+  $server_protocol = (isset($_SERVER['HTTPS'])? $_SERVER['HTTPS'] : 'off'); // Recuperation du protocole
+  if(isset($server_protocol) and $server_protocol != "" and $server_protocol != "off") {
+    $grr_protocol = "https";
+  } else {
+    $grr_protocol = "http";
+  }
+
+  return $grr_protocol . "://" . $_SERVER['HTTP_HOST']; // Recuperation de l'URL via la requete
+}
+
+
+
 // Les lignes suivantes permettent la compatibilité de GRR avec la variables register_global à off
 unset($day);
 if (isset($_GET["day"]))

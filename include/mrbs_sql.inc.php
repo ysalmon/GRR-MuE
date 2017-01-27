@@ -716,16 +716,32 @@ function mrbsGetRoomArea($id)
 		return 0;
 	return $id;
 }
-function mrbsGetAreaSite($id)
-{
-	if (Settings::get("module_multisite") == "Oui")
-	{
+function mrbsGetAreaSite($id){
+	
+	if (Settings::get("module_multisite") == "Oui" || Settings::get("module_multietablissement") == "Oui") {
+		
 		$id = grr_sql_query1("SELECT id_site FROM ".TABLE_PREFIX."_j_site_area WHERE (id_area = '".$id."')");
 		return $id;
 	}
-	else
+	else{
 		return -1;
+	}
 }
+
+function mrbsGetAreaEtablissement($id){
+	
+	if (Settings::get("module_multietablissement") == "Oui") {
+		$id = grr_sql_query1("SELECT ES.id_etablissement ".
+				"FROM ".TABLE_PREFIX."_j_etablissement_site AS ES ".
+				"JOIN ".TABLE_PREFIX."_j_site_area AS SA ON SA.id_site = ES.id_site ".
+				" WHERE (SA.id_area = '".$id."')");
+		return $id;
+	} else {
+		return -1;
+	}
+}
+
+
 /**
  * @param integer $_id
  * @param integer $_moderate

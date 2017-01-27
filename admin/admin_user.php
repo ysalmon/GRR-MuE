@@ -27,12 +27,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 include "../include/admin.inc.php";
+
 $grr_script_name = "admin_user.php";
+
 $back = '';
 if (isset($_SERVER['HTTP_REFERER']))
 	$back = htmlspecialchars($_SERVER['HTTP_REFERER']);
 $display = isset($_GET["display"]) ? $_GET["display"] : NULL;
 $order_by = isset($_GET["order_by"]) ? $_GET["order_by"] : NULL;
+$id_etablissement_recherche = isset($_GET["id_etablissement_recherche"]) ? $_GET["id_etablissement_recherche"] : NULL;
+
 $msg = '';
 if ((authGetUserLevel(getUserName(), -1) < 6) && (authGetUserLevel(getUserName(), -1,'user') != 1))
 {
@@ -45,6 +49,7 @@ if ((isset($_GET['action_del'])) && ($_GET['js_confirmed'] == 1))
 }
 print_header("", "", "", $type="with_session");
 include "admin_col_gauche.php";
+
 // Enregistrement de allow_users_modify_profil
 // Un gestionnaire d'utilisateurs ne peut pas Autoriser ou non la modification par un utilisateur de ses informations personnelles
 if ((isset($_GET['action'])) && ($_GET['action'] == "modif_profil") && (authGetUserLevel(getUserName(), -1, 'user') !=  1))
@@ -223,6 +228,30 @@ if ((isset($_GET['action_del'])) and ($_GET['js_confirmed'] == 1))
 		if (($test_statut == "gestionnaire_utilisateur") || ($test_statut == "administrateur"))
 			$can_delete = "no";
 	}
+	
+	
+	// un administrateur établissement ne supprime pas definitivement un utilisateur de tous les établissements
+    if(Settings::get("module_multietablissement") == "Oui" && (authGetUserLevel(getUserName(),-1) < 7)){
+    	$loginToDel = $_GET['user_del'];
+    	$idEtablissement = getIdEtablissementCourant();
+    	$sql ="SELECT count(*) FROM ".TABLE_PREFIX."_j_user_etablissement WHERE id_etablissement = $idEtablissement AND login = '$loginToDel'";
+    	$res = grr_sql_query($sql);
+    	$count = grr_sql_row($res, 0);
+    	if (count > 1){
+    		$can_delete = "no";
+    	}  else {
+    		$sql = "DELETE FROM ".TABLE_PREFIX."_j_user_etablissement WHERE id_etablissement = $idEtablissement AND login = '$loginToDel'";
+    		if (grr_sql_command($sql) < 0) {
+    			fatal_error(1, "<p>" . grr_sql_error());
+    		}  else {
+    			$msg=get_vocab("del_user_succeed");
+    		}	
+    	}
+    }
+	
+	
+	
+	
 	if (($temp != getUserName()) && ($can_delete == "yes"))
 	{
 		$temp = str_replace('\\', '\\\\', $temp);
@@ -238,12 +267,15 @@ if ((isset($_GET['action_del'])) and ($_GET['js_confirmed'] == 1))
 			grr_sql_command("DELETE FROM ".TABLE_PREFIX."_j_user_room WHERE login='$temp'");
 			grr_sql_command("DELETE FROM ".TABLE_PREFIX."_j_useradmin_area WHERE login='$temp'");
 			grr_sql_command("DELETE FROM ".TABLE_PREFIX."_j_useradmin_site WHERE login='$temp'");
+			grr_sql_command("DELETE FROM ".TABLE_PREFIX."_j_useradmin_etablissement WHERE login='$temp'");
+            grr_sql_command("DELETE FROM ".TABLE_PREFIX."_j_user_etablissement WHERE login='$temp'");
 			$msg=get_vocab("del_user_succeed");
 		}
 	}
 }
 if (isset($mess) and ($mess != ""))
 	echo "<p>".$mess."</p>";
+
 echo "<h2>".get_vocab('admin_user.php')."</h2>";
 if (empty($display))
 {
@@ -253,6 +285,8 @@ if (empty($order_by))
 {
 	$order_by = 'nom,prenom';
 }
+
+	
 ?>
 | <a href="admin_user_modify.php?display=<?php echo $display; ?>"><?php echo get_vocab("display_add_user"); ?></a> |
 <a href="admin_import_users_csv.php"><?php echo get_vocab("display_add_user_list_csv"); ?></a> |
@@ -357,18 +391,80 @@ echo " /></td>";
 	</tr>
 </table>
 <div><input type="hidden" name="order_by" value="<?php echo $order_by;?>" /></div>
+
+<?php if (Settings::get("module_multietablissement") == "Oui"  && (authGetUserLevel(getUserName(),-1) > 6 || authGetUserLevel(getUserName(),-1,'user') == 1)) { 
+		if (! isset($id_etablissement_recherche)){
+			$id_etablissement_recherche = getIdEtablissementCourant();
+		}
+		$sql = "SELECT E.id, E.shortname FROM ".TABLE_PREFIX."_etablissement E ORDER BY E.shortname";
+		$res = grr_sql_query($sql);
+		if ($res) {
+			for ($i = 0; ($row = grr_sql_row($res, $i)); $i++)
+			{
+				$listeEtab[] = $row;
+			}
+		}
+?>
+	
+
+	<table border="1" style="margin-top: 6px;">
+		<tr>
+			<td>Restriction de la recherche </td>
+			<td>
+				<select name="id_etablissement_recherche" size="1">
+					<option value ='0' <?php if ($id_etablissement_recherche == 0){ echo "selected=\"selected\"" ; }?> >Tous</option>
+					<option value ='-1' <?php if ($id_etablissement_recherche == -1){ echo "selected=\"selected\"" ;}?> >Sans établissement</option>
+					<?php 
+					foreach($listeEtab as $etab){
+						if ($id_etablissement_recherche == $etab[0]){
+							echo "<option selected=\"selected\" value ='$etab[0]'>$etab[1]</option>";
+						} else {
+							echo "<option value ='$etab[0]'>$etab[1]</option>";
+						}
+					}
+					?>
+				</select>
+			</td>
+			<td><input type="submit" value="<?php echo get_vocab("OK");?>" /></td>
+		</tr>
+	</table>
+
+
 </form>
 <?php
+}
 // Affichage du tableau
-echo "<table class=\"table table-striped table-bordered\">";
-echo "<tr><td><b><a href='admin_user.php?order_by=login&amp;display=$display'>".get_vocab("login_name")."</a></b></td>";
-echo "<td><b><a href='admin_user.php?order_by=nom,prenom&amp;display=$display'>".get_vocab("names")."</a></b></td>";
-echo "<td><b>".get_vocab("privileges")."</b></td>";
-echo "<td><b><a href='admin_user.php?order_by=statut,nom,prenom&amp;display=$display'>".get_vocab("statut")."</a></b></td>";
-echo "<td><b><a href='admin_user.php?order_by=source,nom,prenom&amp;display=$display'>".get_vocab("authentification")."</a></b></td>";
-echo "<td><b>".get_vocab("delete")."</b></td>";
+echo "<table class=\"table table-hover table-bordered\">";
+echo "<tr><th><b><a href='admin_user.php?order_by=login&amp;display=$display'>".get_vocab("login_name")."</a></b></th>";
+echo "<th><b><a href='admin_user.php?order_by=nom,prenom&amp;display=$display'>".get_vocab("names")."</a></b></th>";
+echo "<th><b>".get_vocab("privileges")."</b></th>";
+echo "<th><b><a href='admin_user.php?order_by=statut,nom,prenom&amp;display=$display'>".get_vocab("statut")."</a></b></th>";
+echo "<th><b><a href='admin_user.php?order_by=source,nom,prenom&amp;display=$display'>".get_vocab("authentification")."</a></b></th>";
+echo "<th><b>".get_vocab("delete")."</b></th>";
 echo "</tr>";
-$sql = "SELECT nom, prenom, statut, login, etat, source FROM ".TABLE_PREFIX."_utilisateurs ORDER BY $order_by";
+
+
+$sql = "SELECT U.nom, U.prenom, U.statut, U.login, U.etat, U.source FROM ".TABLE_PREFIX."_utilisateurs AS U ";
+if (Settings::get("module_multietablissement") == "Oui"  ){
+	if (authGetUserLevel(getUserName(),-1) > 6 || authGetUserLevel(getUserName(),-1,'user') == 1) {
+		if ($id_etablissement_recherche == -1){
+			//SANS ETAB
+			$sql .= "LEFT JOIN ".TABLE_PREFIX."_j_user_etablissement AS UE ON UE.login = U.login
+					WHERE UE.id_etablissement IS NULL";
+		} else if ($id_etablissement_recherche > 0 ){
+			//Un etab
+			$sql .= "JOIN ".TABLE_PREFIX."_j_user_etablissement AS UE ON UE.login = U.login
+								WHERE UE.id_etablissement = $id_etablissement_recherche";
+		}
+	} else {
+		$id_etablissement = getIdEtablissementCourant();
+		$sql .= "JOIN ".TABLE_PREFIX."_j_user_etablissement AS UE ON UE.login = U.login 
+		WHERE UE.id_etablissement = $id_etablissement ";
+		
+	}
+}
+$sql .= " ORDER BY $order_by";
+
 $res = grr_sql_query($sql);
 if ($res)
 {
@@ -393,6 +489,12 @@ if ($res)
 			$col[$i][2] = "$user_nom $user_prenom";
 		// Affichage des ressources gérées
 			$col[$i][3] = "";
+			if (Settings::get("module_multietablissement") == "Oui") {
+				// On teste si l'utilisateur administre un site
+				$test_admin_etab = grr_sql_query1("select count(j.id_etablissement) from ".TABLE_PREFIX."_j_useradmin_etablissement j 
+				  where j.login = '".$user_login."'");
+				if (($test_admin_etab > 0) or ($user_statut== 'administrateur')) $col[$i][3] = "<span class=\"style_privilege\">E</span>"; else $col[$i][3] .= "";
+			}
 			if (Settings::get("module_multisite") == "Oui")
 			{
 			// On teste si l'utilisateur administre un site

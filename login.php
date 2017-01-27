@@ -36,103 +36,99 @@ include "include/functions.inc.php";
 include "include/$dbsys.inc.php";
 // Settings
 require_once("./include/settings.class.php");
+
 //Chargement des valeurs de la table settingS
 if (!Settings::load())
 	die("Erreur chargement settings");
+
 // Paramètres langage
 include "include/language.inc.php";
+
 // Session related functions
 require_once("./include/session.inc.php");
+
 // Vérification du numéro de version et renvoi automatique vers la page de mise à jour
-if (verif_version())
-{
+if (verif_version()){
 	header("Location: ./admin/admin_maj.php");
 	exit();
 }
+
 // User wants to be authentified
-if (isset($_POST['login']) && isset($_POST['password']))
-{
+if (isset($_POST['login']) && isset($_POST['password'])){
+	
 	// Détruit toutes les variables de session au cas où une session existait auparavant
 	$_SESSION = array();
 	$result = grr_opensession($_POST['login'], unslashes($_POST['password']));
+	
 	// On écrit les données de session et ferme la session
 	session_write_close();
-	if ($result=="2")
-	{
+	if ($result=="2"){
 		$message = get_vocab("echec_connexion_GRR");
 		$message .= " ".get_vocab("wrong_pwd");
 	}
-	else if ($result == "3")
-	{
+	else if ($result == "3"){
 		$message = get_vocab("echec_connexion_GRR");
 		$message .= "<br />". get_vocab("importation_impossible");
 	}
-	else if ($result == "4")
-	{
+	else if ($result == "4"){
 		//$message = get_vocab("importation_impossible");
 		$message = get_vocab("echec_connexion_GRR");
 		$message .= " ".get_vocab("causes_possibles");
 		$message .= "<br />- ".get_vocab("wrong_pwd");
 		$message .= "<br />- ". get_vocab("echec_authentification_ldap");
 	}
-	else if ($result == "5")
-	{
+	else if ($result == "5"){
 		$message = get_vocab("echec_connexion_GRR");
 		$message .= "<br />". get_vocab("connexion_a_grr_non_autorisee");
 	}
-	else if ($result == "6")
-	{
+	else if ($result == "6"){
 		$message = get_vocab("echec_connexion_GRR");
 		$message .= "<br />". get_vocab("connexion_a_grr_non_autorisee");
 		$message .= "<br />". get_vocab("format identifiant incorrect");
 	}
-	else if ($result == "7")
-	{
+	else if ($result == "7"){
 		$message = get_vocab("echec_connexion_GRR");
 		$message .= "<br />". get_vocab("connexion_a_grr_non_autorisee");
 		$message .= "<br />". get_vocab("echec_authentification_ldap");
 		$message .= "<br />". get_vocab("ldap_chemin_invalide");
 	}
-	else if ($result == "8")
-	{
+	else if ($result == "8"){
 		$message = get_vocab("echec_connexion_GRR");
 		$message .= "<br />". get_vocab("connexion_a_grr_non_autorisee");
 		$message .= "<br />". get_vocab("echec_authentification_ldap");
 		$message .= "<br />". get_vocab("ldap_recherche_identifiant_aucun_resultats");
 	}
-	else if ($result == "9")
-	{
+	else if ($result == "9"){
 		$message = get_vocab("echec_connexion_GRR");
 		$message .= "<br />". get_vocab("connexion_a_grr_non_autorisee");
 		$message .= "<br />". get_vocab("echec_authentification_ldap");
 		$message .= "<br />". get_vocab("ldap_doublon_identifiant");
 	}
-	else if ($result == "10")
-	{
+	else if ($result == "10"){
 		$message = get_vocab("echec_connexion_GRR");
 		$message .= "<br />". get_vocab("connexion_a_grr_non_autorisee");
 		$message .= "<br />". get_vocab("echec_authentification_imap");
 	}
-	else
-	{
-		if (isset($_POST['url']))
-		{
+	else{
+		if (isset($_POST['url'])){
 			$url=rawurldecode($_POST['url']);
 			header("Location: ".$url);
 			die();
 		}
-		else
-		{
+		else{
 			header("Location: ./".htmlspecialchars_decode(page_accueil())."");
 			die();
 		}
 	}
 }
+
 // Dans le cas d'une démo, on met à jour la base une fois par jour.
 MajMysqlModeDemo();
+
 //si on a interdit l'acces a la page login
 if ((Settings::get("Url_cacher_page_login") != "") && ((!isset($sso_super_admin)) || ($sso_super_admin == false)) && (!isset($_GET["local"])))
 	header("Location: ./index.php");
+
 echo begin_page(get_vocab("mrbs").get_vocab("deux_points").Settings::get("company"),"no_session");
 ?>
 <script type="text/javascript" src="js/functions.js" ></script>
@@ -208,7 +204,7 @@ echo begin_page(get_vocab("mrbs").get_vocab("deux_points").Settings::get("compan
 				echo "<input type=\"hidden\" name=\"url\" value=\"".$url."\" />\n";
 			}
 			?>
-			<input type="submit" name="submit" value="<?php echo get_vocab("OK"); ?>" style="font-variant: small-caps;" />
+			<input class="btn btn-primary" type="submit" name="submit" value="<?php echo get_vocab("OK"); ?>" style="font-variant: small-caps;" />
 		</fieldset>
 	</form>
 	<script type="text/javascript">

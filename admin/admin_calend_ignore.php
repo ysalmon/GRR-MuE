@@ -30,67 +30,161 @@
 
 include "../include/admin.inc.php";
 $grr_script_name = "admin_calend_ignore.php";
+
 $back = '';
 if (isset($_SERVER['HTTP_REFERER']))
 	$back = htmlspecialchars($_SERVER['HTTP_REFERER']);
+
+// Module multiétablissement
+$module_multietablissement = false;
+if (Settings::get("module_multietablissement") == "Oui"){
+	$module_multietablissement = true;
+	$id_etablissement = getIdEtablissementCourant();
+}
+
 check_access(6, $back);
+
+
+
+function calEtab($month, $year)
+{
+    global $weekstarts,$id_etablissement,$module_multietablissement;
+    if (!isset($weekstarts)) $weekstarts = 0;
+    $s = "";
+    $daysInMonth = getDaysInMonth($month, $year);
+    $date = mktime(12, 0, 0, $month, 1, $year);
+    $first = (strftime("%w",$date) + 7 - $weekstarts) % 7;
+    $monthName = utf8_strftime("%B",$date);
+    $s .= "<table class=\"calendar2\" border=\"1\" cellspacing=\"3\">\n";
+    $s .= "<tr>\n";
+    $s .= "<td class=\"calendarHeader2\" colspan=\"8\">$monthName&nbsp;$year</td>\n";
+    $s .= "</tr>\n";
+    $d = 1 - $first;
+    $is_ligne1 = 'y';
+    while ($d <= $daysInMonth)
+    {
+        $s .= "<tr>\n";
+        for ($i = 0; $i < 7; $i++)
+        {
+            $basetime = mktime(12,0,0,6,11+$weekstarts,2000);
+            $show = $basetime + ($i * 24 * 60 * 60);
+            $nameday = utf8_strftime('%A',$show);
+            $temp = mktime(0,0,0,$month,$d,$year);
+            if ($i==0) $s .= "<td class=\"calendar2\" style=\"vertical-align:bottom;\"><b>S".getWeekNumber($temp)."</b></td>\n";
+            $s .= "<td class=\"calendar2\" align=\"center\" valign=\"top\">";
+            if ($is_ligne1 == 'y') $s .=  '<b>'.ucfirst(substr($nameday,0,1)).'</b><br />';
+            if ($d > 0 && $d <= $daysInMonth)
+            {
+                $s .= $d;
+                if ($module_multietablissement){
+                	$day = grr_sql_query1("SELECT day FROM ".TABLE_PREFIX."_j_etablissement_calendar WHERE day='$temp' AND id_etablissement = ". $id_etablissement);
+                } else {
+                	$day = grr_sql_query1("SELECT day FROM ".TABLE_PREFIX."_calendar WHERE day='$temp'");
+                }
+                $s .= "<br /><input type=\"checkbox\" name=\"$temp\" value=\"$nameday\" ";
+                if (!($day < 0)) $s .= "checked=\"checked\" ";
+                $s .= " />";
+            } else {
+                $s .= "&nbsp;";
+            }
+            $s .= "</td>\n";
+            $d++;
+        }
+        $s .= "</tr>\n";
+        $is_ligne1 = 'n';
+    }
+    $s .= "</table>\n";
+    return $s;
+}
+
 # print the page header
 print_header("", "", "", $type="with_session");
+
 // Affichage de la colonne de gauche
 include "admin_col_gauche.php";
+
 echo "<h2>".get_vocab('calendrier_des_jours_hors_reservation')."</h2>\n";
-if (isset($_POST['record']) && ($_POST['record'] == 'yes'))
-{
-	// On met de côté toutes les dates
+
+if (isset($_POST['record']) && ($_POST['record'] == 'yes')){
+	
+	// Init
 	$day_old = array();
-	$res_old = grr_sql_query("SELECT day FROM ".TABLE_PREFIX."_calendar");
-	if ($res_old)
-	{
-		for ($i = 0; ($row_old = grr_sql_row($res_old, $i)); $i++)
-			$day_old[$i] = $row_old[0];
-	}
-	// On vide la table ".TABLE_PREFIX."_calendar
-	$sql = "truncate table ".TABLE_PREFIX."_calendar";
-	if (grr_sql_command($sql) < 0)
-		fatal_error(0, "<p>" . grr_sql_error());
-	$result = 0;
 	$end_bookings = Settings::get("end_bookings");
 	$n = Settings::get("begin_bookings");
 	$month = strftime("%m", Settings::get("begin_bookings"));
 	$year = strftime("%Y", Settings::get("begin_bookings"));
 	$day = 1;
+	
+	// On met de côté toutes les dates
+	if ($module_multietablissement){
+		// On met de côté toutes les dates
+		$res_old = grr_sql_query("SELECT day FROM ".TABLE_PREFIX."_j_etablissement_calendar WHERE id_etablissement = $id_etablissement");
+	} else {
+		$res_old = grr_sql_query("SELECT day FROM ".TABLE_PREFIX."_calendar");
+	}
+	if ($res_old){
+		for ($i = 0; ($row_old = grr_sql_row($res_old, $i)); $i++) {
+			$day_old[$i] = $row_old[0];
+		}
+	}
+	
+	
+	// On vide la table ".TABLE_PREFIX."_calendar
+	if ($module_multietablissement){
+		$sql = "DELETE FROM ".TABLE_PREFIX."_j_etablissement_calendar WHERE id_etablissement = $id_etablissement";
+	} else {
+		$sql = "DELETE FROM ".TABLE_PREFIX."_calendar";
+	}
+	if (grr_sql_command($sql) < 0) 
+		fatal_error(0, "<p>" . grr_sql_error());
+	$result = 0;
+	
+	
 	while ($n <= $end_bookings)
 	{
 		$daysInMonth = getDaysInMonth($month, $year);
 		$day = 1;
-		while ($day <= $daysInMonth)
-		{
+		while ($day <= $daysInMonth){
+			
 			$n = mktime(0, 0, 0, $month, $day, $year);
-			if (isset($_POST[$n]))
-			{
+			if (isset($_POST[$n])){
+				
 				 // Le jour a été selectionné dans le calendrier
 				$starttime = mktime($morningstarts, 0, 0, $month, $day  , $year);
 				$endtime   = mktime($eveningends, 0, $resolution, $month, $day, $year);
+				
 				 // Pour toutes les dates bon précédement enregistrées, on efface toutes les résa en conflit
-				if (!in_array($n,$day_old))
-				{
-					$sql = "select id from ".TABLE_PREFIX."_room";
+				if (!in_array($n,$day_old)){
+					
+					if ($module_multietablissement){
+						$sql = "SELECT R.id FROM ".TABLE_PREFIX."_room AS R
+															JOIN ".TABLE_PREFIX."_j_site_area AS SA ON SA.id_area = R.area_id
+															JOIN ".TABLE_PREFIX."_j_etablissement_site AS ES ON ES.id_site = SA.id_site
+															WHERE ES.id_etablissement = $id_etablissement ";
+					} else {
+						$sql = "SELECT id FROM ".TABLE_PREFIX."_room";
+					}
 					$res = grr_sql_query($sql);
-					if ($res)
-					{
+					if ($res){
+						
 						for ($i = 0; ($row = grr_sql_row($res, $i)); $i++)
 							$result += grrDelEntryInConflict($row[0], $starttime, $endtime, 0, 0, 1);
 					}
 				}
-				 	// On enregistre la valeur dans ".TABLE_PREFIX."_calendar
-				$sql = "INSERT INTO ".TABLE_PREFIX."_calendar set DAY='".$n."'";
+				
+				// On enregistre la valeur dans ".TABLE_PREFIX."_calendar
+				if ($module_multietablissement){
+					$sql = "INSERT INTO ".TABLE_PREFIX."_j_etablissement_calendar set DAY='".$n."', id_etablissement = $id_etablissement";
+				} else {
+					$sql = "INSERT INTO ".TABLE_PREFIX."_calendar set DAY='".$n."'";
+				}
 				if (grr_sql_command($sql) < 0)
 					fatal_error(0, "<p>" . grr_sql_error());
 			}
 			$day++;
 		}
 		$month++;
-		if ($month == 13) {
+		if ($month == 13){
 			$year++;
 			$month = 1;
 		}
@@ -129,7 +223,7 @@ while ($n <= $end_bookings)
 	}
 	$inc++;
 	echo "<td>\n";
-	echo cal($month, $year);
+	echo calEtab($month, $year);
 	echo "</td>";
 	if ($inc == 3)
 	{

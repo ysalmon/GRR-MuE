@@ -69,26 +69,34 @@ $liste_tables = array(
 
 # Liste des feuilles de style
 $liste_themes = array(
-	"default",
+	/*"default31",
 	"vert",
 	"violet",
 	"orange",
 	"bleu",
 	"rouge",
 	"rose",
-	"fluo"
+	"fluo",*/
+	"default",
+	"agricole",
+	"netocentre",
+	"tourraine"
 	);
 
 # Liste des noms des styles
 $liste_name_themes = array(
-	"Grand bleu",
+	/*"Grand bleu",
 	"Verdoyant",
 	"Violeta",
 	"Orange Talmont",
 	"Bleu Talmont",
 	"Rouge Feu",
 	"Roseline",
-	"Jaune Fluo"
+	"Jaune Fluo",*/
+	"Sans thème",
+	"Agricole",
+	"NetO’Centre",
+	"Touraine E-School"
 	);
 
 # Liste des langues
@@ -160,4 +168,40 @@ $id_room_autorise = array();
 # Mettre ci-dessous $desactive_bandeau_sup = 1;  pour désactiver le bandeau supérieur pour les simples visiteurs.
 # Mettre ci-dessous $desactive_bandeau_sup = 0;  pour ne pas désactiver le bandeau supérieur pour les simples visiteurs.
 $desactive_bandeau_sup = 0;
+
+
+# Desactivation de la possibilité d'éditer le code de l'établissement.
+# Mettre ci-dessous $desactive_edition_code_etablissement = 1;  pour désactiver l'édition du code établissement.
+# Mettre ci-dessous $desactive_edition_code_etablissement = 0;  pour activer l'édition du code établissement.
+$desactive_edition_code_etablissement = 1;
+
+# Desactivation de la possibilité de changer les utilisateurs d'établissement. (uniquement administrateur global).
+# Mettre ci-dessous $desactive_changement_etablissement_user = 1;  pour désactiver le lien vers l'édition
+# Mettre ci-dessous $desactive_changement_etablissement_user = 0;  pour permettre l'édition des utilisateurs dans les établissements.
+$desactive_changement_etablissement_user = 0;
+
+# Desactivation de la possibilité pour un utilisateur de changer l'établissement présélectionné dans le bandeau.
+# Mettre ci-dessous $desactive_changement_etablissement_preselectionne = 1;  pour désactiver la liste déroulante.
+# Mettre ci-dessous $desactive_changement_etablissement_preselectionne = 0;  pour activer la liste déroulante.
+$desactive_changement_etablissement_preselectionne = 0;
+
+# Desactivation de la possibilité pour un utilisateur de changer l'établissement par defaut dans la gestion des comptes.
+# Mettre ci-dessous $desactive_gestion_compte_etablissement = 1;  pour désactiver la liste déroulante.
+# Mettre ci-dessous $desactive_gestion_compte_etablissement = 0;  pour activer la liste déroulante.
+$desactive_gestion_compte_etablissement = 0;
+
+#Le niveau minimu de l'utilisateur pour créer un profil donné
+$niveau_minimum_creer_visiteur=6;
+$niveau_minimum_creer_utilisateur=6;
+$niveau_minimum_creer_gestionnaire=7;
+$niveau_minimum_creer_administrateur=7;
+
+#Le niveau minimu du gestionnaire d'utilisateur pour créer un profil donné
+$niveau_minimum_usager_creer_visiteur=1;
+$niveau_minimum_usager_creer_utilisateur=1;
+$niveau_minimum_usager_creer_gestionnaire=2;
+$niveau_minimum_usager_creer_administrateur=2;
+
+
+
 ?>

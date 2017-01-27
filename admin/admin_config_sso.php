@@ -33,18 +33,18 @@ $grr_script_name = "admin_config_sso.php";
 $back = '';
 if (isset($_SERVER['HTTP_REFERER']))
 	$back = htmlspecialchars($_SERVER['HTTP_REFERER']);
-if ((isset($sso_restrictions)) && ($sso_restrictions==true))
-{
+
+if ((isset($sso_restrictions)) && ($sso_restrictions==true)){
 	showAccessDenied($back);
 	exit();
 }
-if (authGetUserLevel(getUserName(), -1) < 6)
-{
+
+if (authGetUserLevel(getUserName(), -1) < 6){
 	showAccessDenied($back);
 	exit();
 }
-if (isset($_POST['valid']))
-{
+if (isset($_POST['valid'])){
+	
 	VerifyModeDemo();
 	if (!isset($_POST['cacher_lien_deconnecter']))
 		$cacher_lien_deconnecter = "n";
@@ -52,18 +52,18 @@ if (isset($_POST['valid']))
 		$cacher_lien_deconnecter = "y";
 	if (!Settings::set("cacher_lien_deconnecter", $cacher_lien_deconnecter))
 		echo "Erreur lors de l'enregistrement de cacher_lien_deconnecter !<br />";
-	if (isset($_POST['Url_portail_sso']))
-	{
+	if (isset($_POST['Url_portail_sso'])){
+		
 		if (!Settings::set("Url_portail_sso", $_POST['Url_portail_sso']))
 			echo "Erreur lors de l'enregistrement de Url_portail_sso ! <br />";
 	}
-	if ($_POST['sso_statut'] == "no_sso")
-	{
+	
+	if ($_POST['sso_statut'] == "no_sso"){
 		$req = grr_sql_query("delete from ".TABLE_PREFIX."_setting where NAME = 'sso_statut'");
 		$grrSettings['sso_statut'] = '';
 	}
-	else
-	{
+	else{
+		
 		if (!Settings::set("sso_statut", $_POST['sso_statut']))
 			echo "Erreur lors de l'enregistrement de sso_statut !<br />";
 		$grrSettings['sso_statut'] = $_POST['sso_statut'];
@@ -113,6 +113,26 @@ if (isset($_POST['valid']))
 		$sso_IsNotAllowedModify = "y";
 	if (!Settings::set("sso_IsNotAllowedModify", $sso_IsNotAllowedModify))
 		echo "Erreur lors de l'enregistrement de sso_IsNotAllowedModify !<br />";
+	
+	// Ajout de sso_IsNotAllowedImportUsers - GIP RECIA
+    if (!isset($_POST['sso_IsNotAllowedImportUsers'])) 
+		$sso_IsNotAllowedImportUsers = "n"; 
+	else 
+		$sso_IsNotAllowedImportUsers = "y";
+	if (!Settings::set("sso_IsNotAllowedImportUsers", $sso_IsNotAllowedImportUsers)) {
+	  echo "Erreur lors de l'enregistrement de sso_IsNotAllowedImportUser !<br />";
+	}
+	
+	// Ajout de sso_IsNotAllowedAddUsers - GIP RECIA
+	if (!isset($_POST['sso_IsNotAllowedAddUser'])) 
+		$sso_IsNotAllowedAddUser = "n"; 
+	else 
+		$sso_IsNotAllowedAddUser = "y";
+    if (!Settings::set("sso_IsNotAllowedAddUser", $sso_IsNotAllowedAddUser)) {
+        echo "Erreur lors de l'enregistrement de sso_IsNotAllowedAddUser !<br />";
+    }
+
+	
 	if (($_POST['sso_statut'] != "cas_visiteur") && ($_POST['sso_statut'] != "cas_utilisateur"))
 		$sso_active_correspondance_profil_statut = "n";
 	else
@@ -144,41 +164,62 @@ if ((authGetUserLevel(getUserName(), -1) < 6) && ($valid != 'yes'))
 	showAccessDenied($back);
 	exit();
 }
+
 # print the page header
 print_header("", "", "", $type="with_session");
+
 // Affichage de la colonne de gauche
 include "admin_col_gauche.php";
+
 echo "<form action=\"admin_config_sso.php\" method=\"post\">\n";
 echo "<h2>".get_vocab("admin_config_sso.php")."</h2>\n";
+
 echo "<div>\n<input type=\"radio\" name=\"sso_statut\" value=\"no_sso\" ";
+
 if (Settings::get("sso_statut") == '')
 	echo " checked=\"checked\" ";
+
 echo "/>".get_vocab("Ne_pas_activer_Service_sso")."<br />\n";
-if (Settings::get("sso_statut") != '')
-{
+
+if (Settings::get("sso_statut") != ''){
+	
 	echo "<h2>".get_vocab("autres parametres sso")."</h2>\n";
 	echo "<input type=\"checkbox\" name=\"cacher_lien_deconnecter\" value=\"y\" ";
 	if (Settings::get("cacher_lien_deconnecter") == "y")
 		echo " checked=\"checked\"";
-	echo " />";
+	echo " /> ";
 	echo get_vocab("sso_actif_cacher_lien_deconnecter");
+	
 	// Ajout Check Box empecher les utilisateurs externes de modifier leurs nom prenom et email
 	echo "<br /><br /><input type=\"checkbox\" name=\"sso_IsNotAllowedModify\" value=\"y\" ";
 	if (Settings::get("sso_IsNotAllowedModify") == "y")
 		echo " checked=\"checked\"";
-	echo " />";
+	echo " /> ";
 	echo get_vocab("sso_IsNotAllowedModify")."\n";
+	
+	// Ajout Check Box empecher l'import d'utilisateurs
+    echo "<br /><br /><input type=\"checkbox\" name=\"sso_IsNotAllowedImportUsers\" value=\"y\" ";
+    if (Settings::get("sso_IsNotAllowedImportUsers")=="y") echo " checked=\"checked\"";
+    echo " /> ";
+    echo get_vocab("sso_IsNotAllowedImportUsers")."\n";
+	
+	 // Ajout Check Box empecher l'ajout d'un utilisateur avec l'interface
+    echo "<br /><br /><input type=\"checkbox\" name=\"sso_IsNotAllowedAddUser\" value=\"y\" ";
+    if (Settings::get("sso_IsNotAllowedAddUser")=="y") echo " checked=\"checked\"";
+    echo " /> ";
+    echo get_vocab("sso_IsNotAllowedAddUser")."\n";
+	
 	// URL pour empecher l'acces a la page login.php
 	echo "<br /><br />".get_vocab("cacher_page_login")."\n";
 	$value_url = Settings::get("Url_cacher_page_login");
 	echo "<br /><input type=\"text\" name=\"Url_cacher_page_login\" size=\"40\" value =\"$value_url\"/>\n";
-	/*
-	 Url "Portail
-	*/
-	 echo "<br /><br />".get_vocab("Url_portail_sso_explain")."\n";
-	 $value_url = Settings::get("Url_portail_sso");
-	 echo "<br /><input type=\"text\" name=\"Url_portail_sso\" size=\"40\" value =\"$value_url\"/>\n";
+
+	//Url "Portail
+	echo "<br /><br />".get_vocab("Url_portail_sso_explain")."\n";
+	$value_url = Settings::get("Url_portail_sso");
+	echo "<br /><input type=\"text\" name=\"Url_portail_sso\" size=\"40\" value =\"$value_url\"/>\n";
 }
+
 echo "</div><hr />\n";
 // Configuration cas
 echo "<h2>".get_vocab("config_cas_title")."</h2>\n";
@@ -332,8 +373,18 @@ if (Settings::get("http_sso_statut_domain") == 'utilisateur')
 	echo " checked=\"checked\" ";
 echo "/>".get_vocab("statut_user")."<br /></div>\n";
 echo "<hr />\n";
-echo "<div style=\"text-align:centrer;\"><input type=\"submit\" name=\"Valider\"value=\"".get_vocab("save")."\" />\n</div>\n";
-echo "</form>\n";
+//echo "<div style=\"text-align:centrer;\"><input  type=\"submit\" name=\"Valider\"value=\"".get_vocab("save")."\" />\n</div>\n";
+//echo "</form>\n";
+
+// Nouveau code Bootstrap (bouton bleu flottant)
+echo '<br />'.PHP_EOL;
+echo '<br />'.PHP_EOL;
+echo '</p>'.PHP_EOL;
+echo '<div id="fixe" style="text-align:center;">'.PHP_EOL;
+echo '<input class="btn btn-primary" type="submit" name="Valider" value="'.get_vocab('save').'" style="font-variant: small-caps;"/>'.PHP_EOL;
+echo '</div>';
+echo '</form>';
+
 // fin de l'affichage de la colonne de droite
 echo "</td></tr></table>\n";
 ?>
