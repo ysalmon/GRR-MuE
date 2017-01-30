@@ -1,0 +1,61 @@
+a{color:#6FAB22;text-decoration:none}
+.text-primary{color:#6FAB22}
+.bg-primary{color:#fff;background-color:#6FAB22}
+.btn-primary{color:#fff;background-color:#6FAB22;border-color:#6FAB22}
+.btn-primary.disabled,
+.btn-primary[disabled],
+fieldset[disabled] .btn-primary,
+.btn-primary.disabled:hover,
+.btn-primary[disabled]:hover,
+fieldset[disabled] .btn-primary:hover,
+.btn-primary.disabled:focus,
+.btn-primary[disabled]:focus,
+fieldset[disabled] .btn-primary:focus,
+.btn-primary.disabled.focus,
+.btn-primary[disabled].focus,
+fieldset[disabled] .btn-primary.focus,
+.btn-primary.disabled:active,
+.btn-primary[disabled]:active,
+fieldset[disabled] .btn-primary:active,
+.btn-primary.disabled.active,
+.btn-primary[disabled].active,
+fieldset[disabled] .btn-primary.active{background-color:#6FAB22;border-color:#6FAB22}
+.btn-primary .badge{color:#6FAB22;background-color:#fff}
+.btn-link{color:#6FAB22;font-weight:normal;border-radius:0}
+.panel-primary>.panel-heading .badge{color:#6FAB22;background-color:#fff}
+.panel-primary>.panel-footer+.panel-collapse>.panel-body{border-bottom-color:#6FAB22}
+caption{text-align: center}
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: #68A020;
+  background-position: 0 -15px;
+  border-color:#6FAB22
+}
+.btn-primary:active,
+.btn-primary.active {
+  background-color: #68A020;
+  border-color: #2b669a;
+  border-color:#6FAB22
+}
+.btn-primary:disabled,
+.btn-primary[disabled] {
+  background-color: #68A020;
+  background-image: none;
+  border-color:#6FAB22
+}
+.btn-danger {
+	color:#fff !important;
+	background-color:#E085AB !important;
+	border-color:#D17FA1 !important;
+	font-weight: normal !important;
+}
+.btn-danger:hover,.btn-danger:focus,.btn-danger.focus,.btn-danger:active,.btn-danger.active,.open>.dropdown-toggle.btn-danger {
+	color:#fff !important;
+	background-color:#CC789B !important;
+	border-color:#BF7090 !important;
+	font-weight: normal !important;
+}
+.btn-danger:active,.btn-danger.active,.open>.dropdown-toggle.btn-danger {
+	background-image:none
+}
+
