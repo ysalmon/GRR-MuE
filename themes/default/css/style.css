@@ -210,6 +210,30 @@ a:hover, a:focus {color: #4B4B4B !important;}
 	box-shadow: 0 1px 6px 0 rgba(0, 0, 0, 0.12), 0 1px 6px 0 rgba(0, 0, 0, 0.12);
 }
 
+
+.titre_planning .titre button{
+	color:white;
+}
+.titre_planning_week .titre button{
+	color:white;
+}
+
+.boutons {
+	text-align:right;
+	margin-top:15px;
+}
+
+
+/* rajout glyphicon */
+.glyphicon-option-horizontal:before {
+  content: "\e234";
+}
+.glyphicon-option-vertical:before {
+  content: "\e235";
+}
+
+
+
 /* Nouvelle entete atos */
 
 .logo{float: left;height: 50px;}
@@ -222,7 +246,7 @@ a:hover, a:focus {color: #4B4B4B !important;}
 	padding: 12px 4px;
 	font-size: 18px;
 	line-height: 20px;
-	width:25%
+/* Supprimé - CD 20170309	width:25%*/
 }
 
 .messageAccueil{
@@ -276,6 +300,7 @@ a:hover, a:focus {color: #4B4B4B !important;}
 .navbarcollapse.collapse.in {
     display: block !important;
   	overflow-y: auto !important;
+	border-bottom:2px solid #4B4B4B !important;
 }
 
 .navbar-nav {
@@ -296,12 +321,60 @@ a:hover, a:focus {color: #4B4B4B !important;}
     border-color: #f3f3f3 !important;
 }
 
+.navbar-static-top {
+	position:absolute !important;
+	width:100% !important;
+	margin:0;
+}
+
+.testnavbar + div {
+	margin-top:68px !important;
+}
+
+.containerGrr{
+	padding-top:60px;
+}
+
 /* fin nouvelle entete */
 
 .colPadding{
     padding: 10px 15px 10px 15px !important;
 }
 
+.lienPlanningMobile{
+	display:none !important;
+}
+
+.loader {
+	position : fixed;
+	z-index: 9999;
+	background : url('../../../images/loading.gif') 50% 50% no-repeat;
+	background-color:#EEEEEE;
+	top : 0px;
+	left : 0px;
+	height : 100%;
+	width : 100%;
+	cursor : wait;
+	opacity:0.4;
+}
+
+
+/* Ajout CD - 20170309 */
+.container-fluid.containerGrr {padding-left:0;padding-right:0;}
+.containerGrr .form-control{padding:6px 0;}
+.containerGrr h3{font-size: 18px;font-weight: 700;}
+.containerGrr h2{font-size: 20px;font-weight: 700;}
+.containerGrr td{vertical-align:middle;padding:1px 0;} /*voir s'il ne faut pas le mettre pour tous les forms et non seulement pour la form "gestion de mon compte"*/
+td.coldroite_admin{vertical-align:top;}   /* à fusionner avec ligne 101 si OK */
+td.colgauche_admin{vertical-align:top;padding:10px 0;}   /* à fusionner avec ligne 101 si OK */
+.week td {padding:0;}
+.navbar-header{background-color:#ffffff;}  /* à fusionner avec ligne 287 si OK */ 
+.navbar .navbar-header .navbar-toggle{border: none;} /* à fusionner avec ligne 292 si OK et si possible */ 
+.navbar .navbar-header .navbar-toggle:focus{background-color:inherit;} /* à fusionner avec autres attributs si OK et si possible */ 
+.containerGrr .titre_planningDate{display:inline-flex;}
+.containerGrr .titre_planningDate .btn-link{color:#ffffff;}
+.containerGrr .titre_planningRessource{color:#ffffff;}
+/* Fin ajouts CD
 
 /* Police Roboto */
 body, button{font-family:"Roboto" !important}
@@ -322,6 +395,8 @@ h1,h2,h3,h4,h5>a{font-family:"Roboto Slab" !important}
 	.menuAdmin{display:none !important;} /* Suppression menu admin quand on passe en responsive */
 	.legende-mg{display:none !important;} /* on cache la legende dans le menu de gauche */
 	.legende-bas{display:block !important;} /* on affiche la legende sous le planning */
+	.lienPlanningMobile{display:block !important;}
+	.lienPlanningDesktop{display:none !important;}
 }
 
 @media only screen and (max-width:800px) { 
@@ -342,4 +417,9 @@ h1,h2,h3,h4,h5>a{font-family:"Roboto Slab" !important}
 	FLOAT:LEFT;
 	}
 	.listEtablissement{width:66%}
+	.navbar-right{float:right!important;}
+/*Ajouté CD - 20170309 : */
+	.containerGrr .titre, .containerGrr .titre_planningRessource{font-size:95%;}
+	.containerGrr >h2{font-size:18px;}
+	.containerGrr .titre_planningDate .glyphicon-refresh{display:none;}
 }
