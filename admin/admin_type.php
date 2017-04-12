@@ -90,7 +90,8 @@ $res = grr_sql_query($sql);
 $nb_lignes = grr_sql_count($res);
 if ($nb_lignes == 0){
 	// fin de l'affichage de la colonne de droite
-	echo "</td></tr></table>";
+	//echo "</td></tr></table>";
+	echo "</div></div>';
 	echo "</body></html>";
 	die();
 }
@@ -163,7 +164,8 @@ if ($res)
 	}
 }
 // fin de l'affichage de la colonne de droite
-echo "</td></tr></table>";
+//echo "</td></tr></table>";
+echo '</div></div>';
 ?>
 </body>
 </html>

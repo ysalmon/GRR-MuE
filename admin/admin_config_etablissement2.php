@@ -257,5 +257,6 @@ echo '</div>';
 echo '</form>';
 
 // fin de l'affichage de la colonne de droite
-echo "</td></tr></table>\n";
+//echo "</td></tr></table>\n";
+echo '</div></div>';
 ?>

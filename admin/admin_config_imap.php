@@ -223,7 +223,8 @@ else if ($etape ==0)
 {
 	if (!(function_exists("imap_open")))
 	{
-		echo encode_message_utf8("<p class=\"avertissement\"><b>Attention </b> : les fonctions liées à l'authentification <b>IMAP/POP</b> ne sont pas activées sur votre serveur PHP.<br />La configuration IMAP/POP est donc actuellement impossible.</p></td></tr></table></body></html>");
+		//echo encode_message_utf8("<p class=\"avertissement\"><b>Attention </b> : les fonctions liées à l'authentification <b>IMAP/POP</b> ne sont pas activées sur votre serveur PHP.<br />La configuration IMAP/POP est donc actuellement impossible.</p></td></tr></table></body></html>");
+		echo encode_message_utf8("<p class=\"avertissement\"><b>Attention </b> : les fonctions liées à l'authentification <b>IMAP/POP</b> ne sont pas activées sur votre serveur PHP.<br />La configuration IMAP/POP est donc actuellement impossible.</p></div></div></body></html>");
 		die();
 	}
 	if (Settings::get("imap_statut") != '')
@@ -321,7 +322,8 @@ else if ($etape ==0)
 }
 // fin de l'affichage de la colonne de droite
 if ($valid == 'no')
-	echo "</td></tr></table>";
+//	echo "</td></tr></table>";
+	echo '</div></div>';
 ?>
 </body>
 </html>

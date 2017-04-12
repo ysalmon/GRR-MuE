@@ -167,7 +167,8 @@ if (authGetUserLevel(getUserName(),-1) >= 7){
 					}
 				}
  // fin de l'affichage de la colonne de droite
-				echo "</td></tr></table>\n";
+				//echo "</td></tr></table>\n";
+				echo '</div></div>';
 // Affichage d'un pop-up
 				affiche_pop_up($msg,"admin");
 				?>

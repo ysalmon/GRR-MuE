@@ -152,7 +152,8 @@ echo "<div id=\"fixe\" style=\"text-align:center;\"><input type=\"submit\" oncli
 echo "<div><input type=\"hidden\" name=\"record\" value=\"yes\" /></div>\n";
 echo "</form>";
 // fin de l'affichage de la colonne de droite
-echo "</td></tr></table>";
+//echo "</td></tr></table>";
+echo '</div></div>';
 ?>
 </body>
 </html>

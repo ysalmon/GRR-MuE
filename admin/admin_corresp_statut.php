@@ -159,7 +159,8 @@ echo "<option value=\"administrateur\">".get_vocab("statut_administrator")."</op
 echo "</select><br /><br />\n";
 echo "<input type=\"submit\" value=\"".get_vocab("OK")."\" /></div></form></div>\n";
 // fin de l'affichage de la colonne de droite
-echo "</td></tr></table>\n";
+//echo "</td></tr></table>\n";
+echo '</div></div>';
 // Affichage d'un pop-up
 affiche_pop_up($msg,"admin");
 ?>

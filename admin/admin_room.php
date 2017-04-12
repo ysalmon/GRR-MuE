@@ -255,7 +255,8 @@ if (Settings::get("module_multisite") == "Oui" || Settings::get("module_multieta
 			
 			echo "</table>\n";
 			// fin de l'affichage de la colonne de droite et fin de la page
-			echo "</td>\n</tr>\n</table>\n</body>\n</html>";
+			//echo "</td>\n</tr>\n</table>\n</body>\n</html>";
+			echo '</div></div>\n</body>\n</html>';
 			die();
 		}
 		
@@ -360,7 +361,8 @@ if (Settings::get("module_multisite") == "Oui" || Settings::get("module_multieta
 	}
 	echo  "</table>\n";
 	// fin de l'affichage de la colonne de droite
-	echo "</td></tr></table>\n";
+	//echo "</td></tr></table>\n";
+	echo '</div></div>';
 	?>
 </body>
 </html>

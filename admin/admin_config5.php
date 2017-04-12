@@ -257,5 +257,6 @@ echo "\n<div id=\"fixe\" style=\"text-align:center;\"><input class=\"btn btn-pri
 echo "<input type=\"hidden\" value=\"5\" name=\"page_config\" /></div>\n";
 echo "</form>";
 // fin de l'affichage de la colonne de droite
-echo "</td></tr></table>";
+//echo "</td></tr></table>";
+echo '</div></div>';
 ?>

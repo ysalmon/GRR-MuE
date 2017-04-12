@@ -399,7 +399,8 @@ if ($id_area <= 0)
 {
 	echo "<h1>".get_vocab("no_area")."</h1>";
 	// fin de l'affichage de la colonne de droite
-	echo "</td></tr></table></body></html>";
+	//echo "</td></tr></table></body></html>";
+	echo '</div></div></body></html>';
 	exit;
 }
 //Show area and room:
@@ -600,7 +601,8 @@ if ($res) for ($i = 0; ($row = grr_sql_row($res, $i)); $i++) {
 		}
 		echo "</table>";
 // fin de l'affichage de la colonne de droite
-		echo "</td></tr></table>";
+		//echo "</td></tr></table>";
+		echo '</div></div>';
 		?>
 	</body>
 	</html>

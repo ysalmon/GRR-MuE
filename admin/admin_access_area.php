@@ -310,8 +310,9 @@ if ($id_area != -1)
 					else
 						echo "<h3>".get_vocab("no_area")."</h3>";
 				}
-				echo "</td></tr>";
-				echo "</table>";
+				//echo "</td></tr>";
+				//echo "</table>";
+				echo '</div></div>';
 				?>
 			</body>
 			</html>

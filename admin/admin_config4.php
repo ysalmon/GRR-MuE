@@ -175,5 +175,6 @@ echo "\n<p><input type=\"hidden\" name=\"page_config\" value=\"4\" />";
 echo "\n<br /></p><div id=\"fixe\" style=\"text-align:center;\"><input class=\"btn btn-primary\" type=\"submit\" name=\"ok\" value=\"".get_vocab("save")."\" style=\"font-variant: small-caps;\"/></div>";
 echo "\n</form>";
 // fin de l'affichage de la colonne de droite
-echo "\n</td></tr></table>";
+//echo "\n</td></tr></table>";
+echo '</div></div>';
 ?>

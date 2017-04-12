@@ -56,8 +56,10 @@ include "admin_col_gauche.php";
 		</td>
 	</tr>
 </table>
-</td>
+<!-- </td>
 </tr>
-</table>
+</table> -->
+</div>
+</div>
 </body>
 </html>

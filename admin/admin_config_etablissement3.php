@@ -134,5 +134,6 @@ echo '</div>';
 echo '</form>';
 
 // fin de l'affichage de la colonne de droite
-echo "\n</td></tr></table>";
+//echo "\n</td></tr></table>";
+echo '</div></div>';
 ?>

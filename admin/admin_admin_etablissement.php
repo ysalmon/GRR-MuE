@@ -240,9 +240,11 @@ if ($listeUser) foreach ($listeUser as $row ) {
     }
     echo "</table>";
 ?>
- </td></tr>
+<!-- </td></tr>
  
  
-</table>
+</table> -->
+</div>
+</div>
 </body>
 </html>

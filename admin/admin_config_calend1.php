@@ -106,6 +106,7 @@ echo "<div id=\"fixe\" style=\"text-align:center;\"><input type=\"submit\" value
 echo "<div><input type=\"hidden\" value=\"1\" name=\"page_calend\" /></div>\n";
 echo "</form>";
 // fin de l'affichage de la colonne de droite
-echo "</td></tr></table></body>
-</html>";
+//echo "</td></tr></table></body></html>";
+echo '</div></div>';
+echo '</body></html>';
 ?>

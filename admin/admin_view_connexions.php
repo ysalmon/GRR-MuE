@@ -235,7 +235,8 @@ if (!isset($_POST['cleanDay']))
 	</form>
 </div>
 <?php
-echo "</td></tr></table>";
+//echo "</td></tr></table>";
+echo '</div></div>';
 ?>
 </body>
 </html>

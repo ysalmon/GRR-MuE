@@ -327,7 +327,8 @@ else
 </table>
 <?php
 // fin de l'affichage de la colonne de droite
-echo "</td></tr></table>";
+//echo "</td></tr></table>";
+echo '</div></div>';
 ?>
 </body>
 </html>

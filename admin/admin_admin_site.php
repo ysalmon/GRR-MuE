@@ -261,9 +261,11 @@ echo "<b>".$this_site_name."</b>";
     }
     echo "</table>";
 ?>
-</td></tr>
+<!-- </td></tr>
 		
-		</table>
+		</table> -->
+</div>
+</div>
 
 	</body>
 	</html>

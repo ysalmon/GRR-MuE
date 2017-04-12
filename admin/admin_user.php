@@ -288,9 +288,15 @@ if (empty($order_by))
 
 	
 ?>
-| <a href="admin_user_modify.php?display=<?php echo $display; ?>"><?php echo get_vocab("display_add_user"); ?></a> |
-<a href="admin_import_users_csv.php"><?php echo get_vocab("display_add_user_list_csv"); ?></a> |
+<!-- | <a href="admin_user_modify.php?display=<?php echo $display; ?>"><?php //echo get_vocab("display_add_user"); ?></a> | 
+<a href="admin_import_users_csv.php"><?php //echo get_vocab("display_add_user_list_csv"); ?></a> |-->
 <?php
+if (sso_IsAllowedAddUser()) {
+	echo '<a href="admin_user_modify.php?display='.$display.'">'.get_vocab("display_add_user").'</a> | ';
+} 
+if (sso_IsAllowedImportUsers()) {
+	echo '<a href="admin_import_users_csv.php">'.get_vocab("display_add_user_list_csv").'</a> |';
+}
 // On propose de supprimer les utilisateurs ext de GRR qui ne sont plus présents dans la base LCS
 if (Settings::get("sso_statut") == "lcs")
 {
@@ -603,7 +609,8 @@ if ($res)
 }
 echo "</table>";
 // fin de l'affichage de la colonne de droite
-echo "</td></tr></table>";
+//echo "</td></tr></table>";
+echo '</div></div>';
 // Affichage d'un pop-up
 affiche_pop_up($msg,"admin");
 ?>

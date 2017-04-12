@@ -254,8 +254,9 @@ if ($id != -1) {
     }
 }
 
-echo "</td></tr>";
-echo "</table>";
+//echo "</td></tr>";
+//echo "</table>";
+echo '</div></div>';
 ?>
 </body>
 </html>

@@ -74,11 +74,15 @@ function affichetableau($liste,$titre=''){
 	}
 }
 
-echo "<table class=\" container-fluid table_adm4\">";
+//CD - 20170412
+//echo "<table class=\" container-fluid table_adm4\">";
+echo '<div class="row">';
+
 // Affichage de la colonne de gauche
 ?>
-<tr>
-	<td class="colgauche_admin">
+<!--<tr>
+	<td class="colgauche_admin"> -->
+<div class="col-md-2 col-md-12 col-xs-12">
 		<?php
 		if (get_request_uri() != '')
 		{
@@ -160,12 +164,14 @@ echo "<table class=\" container-fluid table_adm4\">";
 				$liste[] = 'admin_access_area.php';
 			if (authGetUserLevel(getUserName(), -1, 'area') >= 4)
 				$liste[] = 'admin_right.php' ;
+/* Fonction de purge des utilisateurs et des réservations retirée en attendant de savoir pourquoi elle a pu supprimer tous les comptes de tous les établissements
+17/11/2016 - CD
 			if ((Settings::get("ldap_statut") != "") || (Settings::get("sso_statut") != "") || (Settings::get("imap_statut") != ""))
 			{
 				if (authGetUserLevel(getUserName(), -1, 'area') >= 6)
 					$liste[] = 'admin_purge_accounts.php';
 		
-			}
+			}*/
 			
 			affichetableau($liste,get_vocab("admin_menu_user"));
 			$liste = array();
@@ -201,5 +207,8 @@ echo "<table class=\" container-fluid table_adm4\">";
 		// début affichage de la colonne de gauche
 			echo "</div></div>\n";
 			?>
-		</td>
-		<td class="coldroite_admin blocBlanc">
+<!--		</td>
+		<td class="coldroite_admin blocBlanc"> -->
+</div>
+<div class="col-md-10 col-md-12 col-xs-12 coldroite_admin blocBlanc colPadding">
+

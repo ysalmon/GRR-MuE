@@ -47,7 +47,8 @@ function count_sites()
 		{
 			echo '      <p>Une erreur est survenue pendant le comptage des sites.</p>';
 			// fin de l'affichage de la colonne de droite
-			echo "</td></tr></table>\n</body>\n</html>\n";
+			//echo "</td></tr></table>\n</body>\n</html>\n";
+			echo '</div></div>\n</body>\n</html>\n';
 			die();
 		}
 	}
@@ -55,7 +56,8 @@ function count_sites()
 	{
 		echo '      <p>Une erreur est survenue pendant la préparation de la requète de comptage des sites.</p>';
 		// fin de l'affichage de la colonne de droite
-		echo "</td></tr></table>\n</body>\n</html>\n";
+		//echo "</td></tr></table>\n</body>\n</html>\n";
+		echo '</div></div>\n</body>\n</html>\n';
 		die();
 	}
 }
@@ -221,11 +223,13 @@ function read_sites()
 		{
 			echo '      <p>Une erreur est survenue pendant la préparation de la requète de lecture des sites.</p>';
 			// fin de l'affichage de la colonne de droite
-			echo "</td></tr></table>\n</body>\n</html>\n";
+			//echo "</td></tr></table>\n</body>\n</html>\n";
+			echo '</div></div>\n</body>\n</html>\n';
 			die();
 		}
 		// fin de l'affichage de la colonne de droite
-		echo "</td></tr></table>\n</body>\n</html>\n";
+		//echo "</td></tr></table>\n</body>\n</html>\n";
+		echo '</div></div>\n</body>\n</html>\n';
 		die();
 	}
 }
@@ -302,7 +306,8 @@ function read_sites()
          <input type="submit" name="back" value="'.get_vocab('back').'" />
          </form>';
     // fin de l'affichage de la colonne de droite
-    echo "</td></tr></table>\n</body>\n</html>\n";
+    //echo "</td></tr></table>\n</body>\n</html>\n";
+    echo '</div></div>\n</body>\n</html>\n';
 //   	die();
    
 }
@@ -420,7 +425,8 @@ function share_site($id_site,$id_etab){
 			shared_sites();
 		} 
 		// fin de l'affichage de la colonne de droite
-		echo "</td></tr></table>\n";
+		//echo "</td></tr></table>\n";
+		echo '</div></div>';
 		echo "</body>";
 		echo "</html>";
 	}
@@ -677,7 +683,8 @@ function update_site($id)
 		break;
 	}
 	// fin de l'affichage de la colonne de droite
-	echo "</td></tr></table>\n";
+	//echo "</td></tr></table>\n";
+	echo '</div></div>';
 	?>
 </body>
 </html>
