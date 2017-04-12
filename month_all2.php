@@ -110,41 +110,49 @@ $ty = date("Y",$i);
 $tm = date("n",$i);
 include("menu_gauche.php");
 include "chargement.php";
-echo "<div id=\"planningMonthAll2\">";
-echo "<div class=\"titre_planning\"><table class=\"table-header\">";
-if ((!isset($_GET['pview'])) or ($_GET['pview'] != 1))
-{
-	echo "\n
-	<tr>
-		<td class=\"left\">
-			<input type=\"button\" class=\"btn btn-default btn-xs\" onclick=\"charger();javascript: location.href='month_all2.php?year=$yy&amp;month=$ym&amp;area=$area';\" value=\"&lt;&lt; ".get_vocab("monthbefore")." \"/>
-		</td>";
 
-		echo " <td>";
-		include "include/trailer.inc.php";
-		echo "</td>
-
-		<td class=\"right\">
-			<input type=\"button\" class=\"btn btn-default btn-xs\" onclick=\"charger();javascript: location.href='month_all2.php?year=$ty&amp;month=$tm&amp;area=$area';\" value=\" ".get_vocab('monthafter')."  &gt;&gt;\"/>
-		</td>
-	</tr>";
-
-	echo "<tr>";
-	echo "<td class=\"left\"> ";
+if ((!isset($_GET['pview'])) or ($_GET['pview'] != 1)){
+	
+	include "include/trailer.inc.php";
+	
+	// Bouton "Afficher le menu à gauche"
 	$month_all2 = 1;
-	echo "<input type=\"button\" class=\"btn btn-default btn-xs\" id=\"voir\" value=\"Afficher le menu à gauche.\" onClick=\"divaffiche($month_all2)\" style=\"display:inline;\" /> ";
-	echo "</td>";
+	echo "<input type=\"button\" class=\"btn btn-default btn-xs\" id=\"voir\" value=\"Afficher le menu à gauche.\" onClick=\"divaffiche($month_all2)\" style=\"display:inline;\" />";
+	
 }
-echo " <td>";
-echo "<h4 class=\"titre\">" . ucfirst(utf8_strftime("%B %Y", $month_start)). " ".ucfirst($this_area_name)." - ".get_vocab("all_areas")."</h4>";
+
+
+echo "<div id=\"planningMonthAll2\">";
+
+// AFFICHAGE DU TITRE DU PLANNING 
+echo '<div class="titre_planning">';
+
+echo '<div class="titre_planningDate">'.PHP_EOL;
+// Flèche Précédente pour réculer d'un mois
+echo '<button class="btn btn-link" onclick="charger();javascript: location.href=\'month_all2.php?year='.$yy.'&amp;month='.$ym.'&amp;area='.$area.'\';"><span class="glyphicon glyphicon-chevron-left"></span></button>';
+
+echo '<h4 class="titre">';
+
+// Affichage du mois	
+echo ucfirst(utf8_strftime("%B %Y", $month_start));
+
+echo '</h4>'.PHP_EOL;
+// Flèche Suivante pour avancer d'un mois
+echo '<button class="btn btn-link" onclick="charger();javascript: location.href=\'month_all2.php?year='.$ty.'&amp;month='.$tm.'&amp;area='.$area.'\';"><span class="glyphicon glyphicon-chevron-right"></span></button>';
 if ($_GET['pview'] != 1)
-	echo " <a href=\"month_all.php?year=$year&amp;month=$month&amp;area=$area\"><img src=\"img_grr/change_view.png\" alt=\"".get_vocab("change_view")."\" title=\"".get_vocab("change_view")."\" class=\"image\" /></a>";
-echo " </td>";
-echo " </tr>";
-echo "</table>";
-echo "</div>\n";
-if ($_GET['pview'] == 1 && $_GET['precedent'] == 1)
-{
+	echo " <a href=\"month_all.php?year=$year&amp;month=$month&amp;area=$area\"><span class='glyphicon glyphicon-refresh glyphcolor' alt=\"".get_vocab("change_view")."\" title=\"".get_vocab("change_view")."\" ></span></a>";
+	
+echo '</div>'.PHP_EOL;
+
+//echo "<br/>";
+
+// Affichage du domaine
+echo '<div class="titre_planningRessource">' .ucfirst($this_area_name)." - ".get_vocab("all_areas"). '</div>'.PHP_EOL;
+//echo "</h4>";
+
+echo '</div>';
+
+if ($_GET['pview'] == 1 && $_GET['precedent'] == 1){
 	echo "<span id=\"lienPrecedent\">
 	<button class=\"btn btn-default btn-xs\" onclick=\"charger();javascript:history.back();\">Précedent</button>
 </span>";
@@ -403,9 +411,10 @@ for ($ir = 0; ($row = grr_sql_row($res, $ir)); $ir++)
 }
 echo "</table>";
 
-if ($_GET['pview'] != 1)
+/*if ($_GET['pview'] != 1)
 	echo "<div id=\"toTop\"> ^ Haut de la page";
-bouton_retour_haut ();
+bouton_retour_haut ();*/
+
 echo " </div>";
 echo " </div>";
 echo " </div>";

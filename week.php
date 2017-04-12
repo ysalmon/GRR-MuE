@@ -137,12 +137,17 @@ if ($_GET['pview'] != 1){
 }else{
 	echo '<div id="print_planning">'.PHP_EOL;}
 include "chargement.php";
+
+// AFFICHAGE DU TITRE DU PLANNING 	
 echo '<div class="titre_planning_week">'.PHP_EOL;
-if (($this_room_name_des) && ($this_room_name_des != "-1"))
+
+if (($this_room_name_des) && ($this_room_name_des != "-1")){
 	$this_room_name_des = " (".$this_room_name_des.")";
-else
+}else{
 	$this_room_name_des = "";
-switch ($dateformat) {
+}
+
+switch ($dateformat){
 	case "en":
 	$dformat = "%A, %b %d";
 	break;
@@ -150,54 +155,82 @@ switch ($dateformat) {
 	$dformat = "%A %d %b";
 	break;
 }
+
 $i = mktime(0, 0, 0, $month_week,$day_week - 7, $year_week);
 $yy = date("Y", $i);
 $ym = date("m", $i);
 $yd = date("d", $i);
+
 $i = mktime(0, 0, 0, $month_week, $day_week + 7, $year_week);
 $ty = date("Y", $i);
 $tm = date("m", $i);
 $td = date("d", $i);
-if (verif_display_fiche_ressource(getUserName(), $room) && $_GET['pview'] != 1)
-{
-	echo '<a href="javascript:centrerpopup(\'view_room.php?id_room=',$room,'\',600,480,\'scrollbars=yes,statusbar=no,resizable=yes\')" title="',
-	get_vocab("fiche_ressource"),'"><span class="glyphcolor glyphalign glyphicon glyphicon-search"></span></a>',PHP_EOL;
-}
-if (authGetUserLevel(getUserName(),$room) > 2 && $_GET['pview'] != 1)
-{
-	echo "<a href='./admin/admin_edit_room.php?room=$room'><span class=\"glyphcolor glyphalign glyphicon glyphicon-cog\"></span></a>";
-}
-affiche_ressource_empruntee($room);
-if ($this_statut_room == "0" && $_GET['pview'] != 1)
-{
-	echo '<br><span class="texte_ress_tempo_indispo">',get_vocab("ressource_temporairement_indisponible"),'</span>',PHP_EOL;
-}
-if ($this_moderate_room == "1" && $_GET['pview'] != 1)
-{
-	echo '<br><span class="texte_ress_moderee">',get_vocab("reservations_moderees"),'</span>',PHP_EOL;
-}
-if (isset($this_room_warning) && $this_room_warning!='' && $this_room_warning!='-1')
-    echo "<br /><span class='avertissement'>".htmlspecialchars($this_room_warning)."</span>";
 
-if ($this_area_show_comment == "y" && $_GET['pview'] != 1 && ($this_area_comment != "") && ($this_area_comment != -1))
-{
-	echo '<span style="text-align:center;">',$this_area_comment,'</span>',PHP_EOL;
-}
-if ((!isset($_GET['pview'])) || ($_GET['pview'] != 1))
-{
-	echo '<table class="table-header">',PHP_EOL,'<tr>',PHP_EOL,'<td class="left">',PHP_EOL,
+
+
+if ((!isset($_GET['pview'])) || ($_GET['pview'] != 1)){
+	
+	include "include/trailer.inc.php";
+	
+	/*echo '<table class="table-header">',PHP_EOL,'<tr>',PHP_EOL,'<td class="left">',PHP_EOL,
 	'<button class="btn btn-default btn-xs" onclick="charger();javascript: location.href=\'week.php?year=',$yy,'&amp;month=',$ym,'&amp;day=',$yd,'&amp;room=',$room,
 	'\';"><span class="glyphicon glyphicon-backward"></span>',get_vocab("weekbefore"),'</button>',PHP_EOL,'</td>',PHP_EOL,'<td>',PHP_EOL;
-	include "include/trailer.inc.php";
 	echo '</td>',PHP_EOL,'<td class="right">',PHP_EOL,'<button class="btn btn-default btn-xs" onclick="charger();javascript: location.href=\'week.php?year=',$ty,
 	'&amp;month=',$tm,'&amp;day=',$td,'&amp;room=',$room,'\';">',get_vocab('weekafter'),'<span class="glyphicon glyphicon-forward"></span></button>',PHP_EOL,
-	'</td>',PHP_EOL,'</tr>',PHP_EOL,'</table>',PHP_EOL;
+	'</td>',PHP_EOL,'</tr>',PHP_EOL,'</table>',PHP_EOL;*/
 }
+
 $setting = Settings::get("menu_gauche");
-echo '<h4 class="titre">'.ucfirst($this_area_name).' - '.$this_room_name.' '.$this_room_name_des;
-echo '<br>'.get_vocab("week").get_vocab("deux_points").utf8_strftime($dformat, $week_start).' - '.utf8_strftime($dformat, $week_end).'</h4>'.PHP_EOL;
+
+	echo '<div class="titre_planningDate">'.PHP_EOL;
+	// Flèche Précédente pour réculer d'une semaine
+	echo '<button class="btn btn-link" onclick="charger();javascript: location.href=\'week.php?year='.$yy.'&amp;month='.$ym.'&amp;day='.$yd.'&amp;room='.$room.'\';"><span class="glyphicon glyphicon-chevron-left"></span></button>';
+	
+	echo '<h4 class="titre">';
+
+	// Affichage de la semaine
+	echo get_vocab("week").get_vocab("deux_points").utf8_strftime($dformat, $week_start).' - '.utf8_strftime($dformat, $week_end);
+
+	echo '</h4>'.PHP_EOL;
+	// Flèche Suivante pour avancer d'une semaine
+	echo '<button class="btn btn-link" onclick="charger();javascript: location.href=\'week.php?year='.$ty.'&amp;month='.$tm.'&amp;day='.$td.'&amp;room='.$room.'\';"><span class="glyphicon glyphicon-chevron-right"></span></button>';
+	
+	//echo '<br>';
+	echo '</div>'.PHP_EOL;
+
+	// Affichage du domaine et de la ressource
+	echo '<div class="titre_planningRessource">' .ucfirst($this_area_name).' - '.$this_room_name.' '.$this_room_name_des. '</div>'.PHP_EOL;
+	
+//echo '</h4>';
+
+if (verif_display_fiche_ressource(getUserName(), $room) && $_GET['pview'] != 1){
+	
+	echo '<a href="javascript:centrerpopup(\'view_room.php?id_room=',$room,'\',600,480,\'scrollbars=yes,statusbar=no,resizable=yes\')" title="',
+	get_vocab("fiche_ressource"),'"><span class="glyphcolor glyphicon glyphicon-search"></span></a>',PHP_EOL;
+}
+if (authGetUserLevel(getUserName(),$room) > 2 && $_GET['pview'] != 1){
+	
+	echo "<a href='./admin/admin_edit_room.php?room=$room'><span class=\"glyphcolor glyphicon glyphicon-cog\"></span></a>";
+}
+affiche_ressource_empruntee($room);
+if ($this_statut_room == "0" && $_GET['pview'] != 1){
+	
+	echo '<br><span class="texte_ress_tempo_indispo">',get_vocab("ressource_temporairement_indisponible"),'</span>',PHP_EOL;
+}
+if ($this_moderate_room == "1" && $_GET['pview'] != 1){
+	
+	echo '<br><span class="texte_ress_moderee">',get_vocab("reservations_moderees"),'</span>',PHP_EOL;
+}
+if (isset($this_room_warning) && $this_room_warning!='' && $this_room_warning!='-1'){
+    echo "<br /><span class='avertissement'>".htmlspecialchars($this_room_warning)."</span>";
+}
+
+if ($this_area_show_comment == "y" && $_GET['pview'] != 1 && ($this_area_comment != "") && ($this_area_comment != -1)){
+	echo '<span style="text-align:center;">',$this_area_comment,'</span>',PHP_EOL;
+}
 
 echo '</div>'.PHP_EOL;
+
 if (isset($_GET['precedent']))
 {
 	if ($_GET['pview'] == 1 AND $_GET['precedent'] == 1){
@@ -604,11 +637,11 @@ for ($t = $week_start; $t <= $week_end; $t += 86400)
 		$t += $resolution;
 	}
 	echo '</table>',PHP_EOL;
-	if ($_GET['pview'] != 1){
+	/*if ($_GET['pview'] != 1){
 		echo '<div id="toTop">',PHP_EOL,'<b>',get_vocab("top_of_page"),'</b>',PHP_EOL;
 		bouton_retour_haut ();
 		echo '</div>',PHP_EOL;
-	}
+	}*/
 	affiche_pop_up(get_vocab("message_records"),"user");
 	?>
 	<script type="text/javascript">

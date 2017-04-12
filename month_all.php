@@ -158,35 +158,38 @@ else
 		//}
 		echo '<div id="planning">'.PHP_EOL;
 	}else{
-		echo '<div id="print_planning">'.PHP_EOL;}
-	echo '<div class="titre_planning">'.PHP_EOL.'<table class="table-header">'.PHP_EOL;
-	//Test si le format est imprimable
-	if ((!isset($_GET['pview'])) || ($_GET['pview'] != 1))
-	{
-		#Show Go to week before and after links
-		echo '<tr>'.PHP_EOL;
-		echo '<td class="left">'.PHP_EOL;
-		echo '<button class="btn btn-default btn-xs" onclick="charger();javascript: location.href=\'month_all.php?year='.$yy.'&amp;month='.$ym.'&amp;area='.$area.'\';"><span class="glyphicon glyphicon-backward"></span> '.get_vocab("monthbefore").'</button>'.PHP_EOL;
-		echo '</td>'.PHP_EOL;
-		echo '<td>'.PHP_EOL;
-		include "include/trailer.inc.php";
-		echo '</td>'.PHP_EOL;
-		echo '<td class="right">'.PHP_EOL;
-		echo '<button class="btn btn-default btn-xs" onclick="charger();javascript: location.href=\'month_all.php?year='.$ty.'&amp;month='.$tm.'&amp;area='.$area.'\';">'.get_vocab('monthafter').'  <span class="glyphicon glyphicon-forward"></span></button>'.PHP_EOL;
-		echo '</td>'.PHP_EOL;
-		echo '</tr>'.PHP_EOL;
-			echo "<tr>";
-	echo "<td class=\"left\"> ";
-	$month_all2 = 1;
-	// Bouton inutile puisque le menu de gauche est inséré par défaut 
-	//echo "<input type=\"button\" class=\"btn btn-default btn-xs\" id=\"voir\" value=\"Afficher le menu à gauche.\" onClick=\"divaffiche($month_all2)\" style=\"display:inline;\" /> ";
-	echo "</td>";
-		echo '</table>'.PHP_EOL;
+		echo '<div id="print_planning">'.PHP_EOL;
 	}
-
-	echo '<h4 class="titre">'.ucfirst($this_area_name).' - '.get_vocab("all_areas").'<br>'.ucfirst(utf8_strftime("%B %Y", $month_start)).' </h4>'.PHP_EOL;
+	
+	
+	
+	// AFFICHAGE DU TITRE DU PLANNING 	
+	echo '<div class="titre_planning">';
+	
+	include "include/trailer.inc.php";
+	
+	echo '<div class="titre_planningDate">'.PHP_EOL;
+	// Flèche Précédente pour réculer d'un mois
+	echo '<button class="btn btn-link" onclick="charger();javascript: location.href=\'month_all.php?year='.$yy.'&amp;month='.$ym.'&amp;area='.$area.'\';"><span class="glyphicon glyphicon-chevron-left"></span></button>';
+	
+	echo '<h4 class="titre">';
+	
+	// Affichage du mois
+	echo ucfirst(utf8_strftime("%B %Y", $month_start));
+	
+	//echo '<br>';
+	echo '</h4>';
+	
+	// Flèche Suivante pour avancer d'un mois
+	echo '<button class="btn btn-link" onclick="charger();javascript: location.href=\'month_all.php?year='.$ty.'&amp;month='.$tm.'&amp;area='.$area.'\';"><span class="glyphicon glyphicon-chevron-right"></span></button>';
 	if ($_GET['pview'] != 1)
-		echo ' <a href="month_all2.php?year='.$year.'&amp;month='.$month.'&amp;area='.$area.'"><img src="img_grr/change_view.png" alt="'.get_vocab("change_view").'" title="'.get_vocab("change_view").'" class="image" /></a>'.PHP_EOL;
+		echo ' <a href="month_all2.php?year='.$year.'&amp;month='.$month.'&amp;area='.$area.'"><span class="glyphicon glyphicon-refresh glyphcolor" alt="'.get_vocab("change_view").'" title="'.get_vocab("change_view").'" ></span></a>';	
+		
+	echo '</div>'.PHP_EOL;
+	
+	// Affichage du nom du domaine
+	echo '<div class="titre_planningRessource">' .ucfirst($this_area_name).' - '.get_vocab("all_areas"). '</div>'.PHP_EOL;
+	
 	echo '</div>'.PHP_EOL;
 	if (isset($_GET['precedent']))
 	{
@@ -470,11 +473,11 @@ else
 	//Fermeture du div contenu_Planning
 	echo '</div>',PHP_EOL;
 		
-	if ($_GET['pview'] != 1){
+	/*if ($_GET['pview'] != 1){
 		echo '<div id="toTop">',PHP_EOL,'<b>',get_vocab("top_of_page"),'</b>',PHP_EOL;
 		bouton_retour_haut ();
 		echo '</div>',PHP_EOL;
-	}
+	}*/
 
 	//Fermeture DIV Panning
 	//echo "</div>".PHP_EOL;

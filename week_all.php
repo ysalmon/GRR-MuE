@@ -291,27 +291,38 @@ else
 		echo '<div id="planning">'.PHP_EOL;
 		}
 	else{
-		echo '<div id="print_planning">'.PHP_EOL;}
+		echo '<div id="print_planning">'.PHP_EOL;
+	}
+	
 	echo '<div class="row">'.PHP_EOL;
 	include "chargement.php";
+	
+	// AFFICHAGE DU TITRE DU PLANNING 	
 	echo '<div class="titre_planning">'.PHP_EOL;
-	echo '<table class="table-header">'.PHP_EOL;
-	if ((!isset($_GET['pview'])) || ($_GET['pview'] != 1))
-	{
-		echo '<tr>'.PHP_EOL;
-		echo '<td class="left">'.PHP_EOL;
-		echo '<button class="btn btn-default btn-xs" onclick="charger();javascript: location.href=\'week_all.php?year='.$yy.'&amp;month='.$ym.'&amp;day='.$yd.'&amp;area='.$area.'\';"><span class="glyphicon glyphicon-backward"></span> '.get_vocab("weekbefore").' </button>'.PHP_EOL;
-		echo '</td>'.PHP_EOL;
-		echo '<td>'.PHP_EOL;
-		include "include/trailer.inc.php";
-		echo '</td>'.PHP_EOL;
-		echo '<td class="right">'.PHP_EOL;
-		echo '<button class="btn btn-default btn-xs" onclick="charger();javascript: location.href=\'week_all.php?year='.$ty.'&amp;month='.$tm.'&amp;day='.$td.'&amp;area='.$area.'\';"> '.get_vocab('weekafter').'  <span class="glyphicon glyphicon-forward"></span></button>'.PHP_EOL;
-		echo '</td>'.PHP_EOL;
-		echo '</tr>'.PHP_EOL;
-		echo '</table>'.PHP_EOL;
-	}
-	echo '<h4 class="titre">'.$this_area_name.' - '.get_vocab("all_rooms").'<br> Du '.utf8_strftime($dformat, $date_start).' au '. utf8_strftime($dformat, $date_end). '</h4>'.PHP_EOL;
+	
+	include "include/trailer.inc.php";
+
+	echo '<div class="titre_planningDate">'.PHP_EOL;
+	// Flèche Précédente pour réculer d'une semaine
+	echo '<button class="btn btn-link" onclick="charger();javascript: location.href=\'week_all.php?year='.$yy.'&amp;month='.$ym.'&amp;day='.$yd.'&amp;area='.$area.'\';"><span class="glyphicon glyphicon-chevron-left"></span></button>';
+	
+	echo '<h4 class="titre">';
+	
+	// Affichage de la semaine
+	echo 'Du '.utf8_strftime($dformat, $date_start).' au '. utf8_strftime($dformat, $date_end);
+	
+	//echo '<br/>';
+	echo '</h4>'.PHP_EOL;
+	
+	// Flèche Suivante pour avancer d'une semaine
+	echo '<button class="btn btn-link" onclick="charger();javascript: location.href=\'week_all.php?year='.$ty.'&amp;month='.$tm.'&amp;day='.$td.'&amp;area='.$area.'\';"><span class="glyphicon glyphicon-chevron-right"></span></button>';
+	echo '</div>'.PHP_EOL;
+	
+	// Affichage du domaine
+	//echo $this_area_name.' - '.get_vocab("all_rooms");
+	echo '<div class="titre_planningRessource">' .$this_area_name.' - '.get_vocab("all_rooms"). '</div>'.PHP_EOL;
+	//echo '</h4>'.PHP_EOL;
+	
 	echo '</div>'.PHP_EOL;
 	echo '</div>'.PHP_EOL;
 	echo '<div class="row">'.PHP_EOL;
@@ -365,7 +376,8 @@ else
 					$class .= "ferie ";
 			}
 			echo '<th class="jour_sem">'.PHP_EOL;
-			echo '<a class="lienPlanning '.$class.'" href="day.php?year='.$temp_year.'&amp;month='.$temp_month.'&amp;day='.$num_day.'&amp;area='.$area.'" title="'.$title.'">'  . day_name(($weekcol + $weekstarts) % 7) . ' '.$num_day.' '.$temp_month2.'</a>'.PHP_EOL;
+			echo '<a class="lienPlanning lienPlanningDesktop'.$class.'" href="day.php?year='.$temp_year.'&amp;month='.$temp_month.'&amp;day='.$num_day.'&amp;area='.$area.'" title="'.$title.'">'  . day_name(($weekcol + $weekstarts) % 7) . ' '.$num_day.' '.$temp_month2.'</a>'.PHP_EOL;
+			echo '<a class="lienPlanning lienPlanningMobile'.$class.'" href="day.php?year='.$temp_year.'&amp;month='.$temp_month.'&amp;day='.$num_day.'&amp;area='.$area.'" title="'.$title.'">'  . day_short_name(($weekcol + $weekstarts) % 7) . '<br/>'.$num_day.'<br/>'.$temp_month2.'</a>'.PHP_EOL;
 			if (Settings::get("jours_cycles_actif") == "Oui" && intval($jour_cycle) >- 1)
 			{
 				if (intval($jour_cycle) > 0)
@@ -543,12 +555,13 @@ else
 						echo '<img src="img_grr/stop.png" alt="',get_vocab("reservation_impossible"),'" title="',get_vocab("reservation_impossible"),'" width="16" height="16" class\"',$class_image,'" />',PHP_EOL;
 					else
 					{
+		
 						if ((($authGetUserLevel > 1) || ($auth_visiteur == 1)) 
 									&& ($UserRoomMaxBooking != 0) 
 									&& verif_booking_date(getUserName(), -1, $row['2'], $date_booking, $date_now, $enable_periods) 
 									&& verif_delais_max_resa_room(getUserName(), $row['2'], $date_booking) 
 									&& verif_delais_min_resa_room(getUserName(), $row['2'], $date_booking) 
-									&& plages_libre_semaine_ressource($row['2'], $cmonth, $cday, $cyear) 
+									&& plages_libre_semaine_ressource($row['2'], $cmonth, $cday, $cyear)
 									&& (($row['4'] == "1") || (($row['4'] == "0") && (authGetUserLevel(getUserName(),$row['2']) > 2) )) 
 									&& ($_GET['pview'] != 1)
 									&& auth_user_reserv_room_etab($row[2])) {
@@ -592,12 +605,12 @@ else
 	}
 }
 echo '</table>'.PHP_EOL;
-if ($_GET['pview'] != 1)
+/*if ($_GET['pview'] != 1)
 {
 	echo '<div id="toTop">',PHP_EOL,'<b>',get_vocab("top_of_page"),'</b>',PHP_EOL;
 	bouton_retour_haut ();
 	echo '</div>',PHP_EOL;
-}
+}*/
 echo '</div>'.PHP_EOL;
 echo '</div>'.PHP_EOL;
 echo '</div>'.PHP_EOL;

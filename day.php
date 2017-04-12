@@ -212,25 +212,48 @@ else
 		if ($ferie_true)
 			$class .= "ferie ";
 	}
+	
+	// AFFICHAGE DU TITRE DU PLANNING 
 	echo '<div class="titre_planning '.$class.'">'.PHP_EOL;
-	if ((!isset($_GET['pview'])) || ($_GET['pview'] != 1))
-	{
-		echo '<table class="table-header">',PHP_EOL,'<tr>',PHP_EOL,'<td class="left">',PHP_EOL,'<button class="btn btn-default btn-xs" onclick="charger();javascript: location.href=\'day.php?year='.$yy.'&amp;month='.$ym.'&amp;day='.$yd.'&amp;area='.$area.'\';"> <span class="glyphicon glyphicon-backward"></span> ',get_vocab("daybefore"),'</button>',PHP_EOL,'</td>',PHP_EOL,'<td>',PHP_EOL;
+	
+	if ((!isset($_GET['pview'])) || ($_GET['pview'] != 1)){
+		
 		include "include/trailer.inc.php";
-		echo '</td>',PHP_EOL,'<td class="right">',PHP_EOL,'<button class="btn btn-default btn-xs" onclick="charger();javascript: location.href=\'day.php?year='.$ty.'&amp;month='.$tm.'&amp;day='.$td.'&amp;area='.$area.'\';">  '.get_vocab('dayafter').'  <span class="glyphicon glyphicon-forward"></span></button>',PHP_EOL,'</td>',PHP_EOL,'</tr>',PHP_EOL,'</table>',PHP_EOL;
 	}
-	echo '<h4 class="titre">' . ucfirst($this_area_name).' - '.get_vocab("all_areas");
-	if ($settings->get("jours_cycles_actif") == "Oui" && intval($jour_cycle) >- 1)
-	{
+	
+	echo '<div class="titre_planningDate">'.PHP_EOL;
+	// Flèche Précédente pour réculer d'un jour
+	echo '<button class="btn btn-link" onclick="charger();javascript: location.href=\'day.php?year='.$yy.'&amp;month='.$ym.'&amp;day='.$yd.'&amp;area='.$area.'\';"><span class="glyphicon glyphicon-chevron-left"></span></button>';
+	
+	echo '<h4 class="titre">';
+	
+	// Affichage du jour
+	echo ''.ucfirst(utf8_strftime($dformat, $am7)).'';
+	
+	//echo "<br/>";
+	echo '</h4>'.PHP_EOL;
+	
+	// Flèche Suivante pour avancer d'un jour
+	echo '<button class="btn btn-link" onclick="charger();javascript: location.href=\'day.php?year='.$ty.'&amp;month='.$tm.'&amp;day='.$td.'&amp;area='.$area.'\';"><span class="glyphicon glyphicon-chevron-right"></span></button>';
+	echo '</div>'.PHP_EOL;
+
+	// Affichage du nom du domaine
+	echo '<div class="titre_planningRessource">' .ucfirst($this_area_name).' - '.get_vocab("all_areas"). '</div>'.PHP_EOL;
+	
+	if ($settings->get("jours_cycles_actif") == "Oui" && intval($jour_cycle) >- 1){
 		if (intval($jour_cycle) > 0)
 			echo ' - '.get_vocab("rep_type_6")." ".$jour_cycle;
 		else
 			echo ' - '.$jour_cycle;
 	}
-	echo '<br>'.ucfirst(utf8_strftime($dformat, $am7)).'</h4>'.PHP_EOL;
+	
+	
+	//echo '</h4>'.PHP_EOL;
+	
+	
 	echo '</div>'.PHP_EOL;
-	if (isset($_GET['precedent']))
-	{
+	
+	if (isset($_GET['precedent'])){
 		if ($_GET['pview'] == 1 && $_GET['precedent'] == 1)
 			echo '<span id="lienPrecedent"><button class="btn btn-default btn-xs" onclick="charger();javascript:history.back();">Précedent</button></span>'.PHP_EOL;
 	}
@@ -501,19 +524,39 @@ else
 	echo '</table>'.PHP_EOL;
 }
 grr_sql_free($res);
-if ($_GET['pview'] != 1)
+/*if ($_GET['pview'] != 1)
 {
 	echo '<div id="toTop">'.PHP_EOL;
 	echo '<b>'.get_vocab('top_of_page').'</b>'.PHP_EOL;
 	bouton_retour_haut ();
 	echo '</div>'.PHP_EOL;
-}
+}*/
 echo '</div>'.PHP_EOL;
 echo '</div>'.PHP_EOL;
 affiche_pop_up(get_vocab('message_records'), 'user');
 
 ?>
 <script type="text/javascript">
+	window.onresize = function(){
+		scrollPlanning();
+	}
+
+	// permet l'ajout d'une scrollbar horizontal en haut du planning
+	function scrollPlanning(){
+		
+		$('.div_scroll_top').css('width', $(".contenu_planning .table-planning").width());
+		
+		$(".contenu_planning_scroll").scroll(function(){
+			$(".contenu_planning")
+				.scrollLeft($(".contenu_planning_scroll").scrollLeft());
+		});
+		
+		$(".contenu_planning").scroll(function(){
+			$(".contenu_planning_scroll")
+				.scrollLeft($(".contenu_planning").scrollLeft());
+		});
+	}
+
 	$(document).ready(function(){
 		$('table.table-bordered td').each(function(){
 			var $row = $(this);
@@ -524,18 +567,9 @@ affiche_pop_up(get_vocab('message_records'), 'user');
 
 		});
 		
-		$(function(){
-
-			$('.div_scroll_top').css('width', $(".contenu_planning .table-planning").width());
-			$(".contenu_planning_scroll").scroll(function(){
-				$(".contenu_planning")
-					.scrollLeft($(".contenu_planning_scroll").scrollLeft());
-			});
-			$(".contenu_planning").scroll(function(){
-				$(".contenu_planning_scroll")
-					.scrollLeft($(".contenu_planning").scrollLeft());
-			});
-		});
+		
+		scrollPlanning();
+		
 		
 	});
 	jQuery(document).ready(function($){

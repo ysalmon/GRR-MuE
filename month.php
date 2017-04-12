@@ -157,25 +157,34 @@ if ($_GET['pview'] != 1){
 	echo '<div id="planning">'.PHP_EOL;}
 else{
 	echo '<div id="print_planning">'.PHP_EOL;}
+	
+	
+// AFFICHAGE DU TITRE DU PLANNING 	
 echo '<div class="titre_planning">'.PHP_EOL;
-echo '<table class="table-header">'.PHP_EOL;
-if ((!isset($_GET['pview'])) || ($_GET['pview'] != 1))
-{
-	echo '<tr>'.PHP_EOL;
-	echo '<td class="left">'.PHP_EOL;
-	echo '<button class="btn btn-default btn-xs" onclick="charger();javascript: location.href=\'month.php?year='.$yy.'&amp;month='.$ym.'&amp;room='.$room.'\';"><span class="glyphicon glyphicon-backward"></span> '.get_vocab("monthbefore").'</button>'.PHP_EOL;
-	echo '</td>'.PHP_EOL;
-	echo '<td>'.PHP_EOL;
-	include "include/trailer.inc.php";
-	echo '</td>'.PHP_EOL;
-	echo '<td class="right">'.PHP_EOL;
-	echo '<button class="btn btn-default btn-xs" onclick="charger();javascript: location.href=\'month.php?year='.$ty.'&amp;month='.$tm.'&amp;room='.$room.'\';"> '.get_vocab('monthafter').'  <span class="glyphicon glyphicon-forward"></span></button>'.PHP_EOL;
-	echo '</td>'.PHP_EOL;
-	echo '</tr>'.PHP_EOL;
-	echo '</table>'.PHP_EOL;
-}
 
-echo '<h4 class="titre"> '. ucfirst($this_area_name).' - '.$this_room_name.' '.$this_room_name_des.'<br>'.ucfirst(utf8_strftime("%B %Y", $month_start)).'</h4>'.PHP_EOL;
+include "include/trailer.inc.php";
+
+echo '<div class="titre_planningDate">'.PHP_EOL;
+	// Flèche Précédente pour réculer d'un mois
+	echo '<button class="btn btn-link" onclick="charger();javascript: location.href=\'month.php?year='.$yy.'&amp;month='.$ym.'&amp;room='.$room.'\';"><span class="glyphicon glyphicon-chevron-left"></span></button>';
+		
+echo '<h4 class="titre">';
+
+	// Affichage du mois
+	echo ucfirst(utf8_strftime("%B %Y", $month_start));
+
+	echo '</h4>';
+	//echo '<br>';
+
+	// Flèche Suivante pour avancer d'un mois
+	echo '<button class="btn btn-link" onclick="charger();javascript: location.href=\'month.php?year='.$ty.'&amp;month='.$tm.'&amp;room='.$room.'\';"><span class="glyphicon glyphicon-chevron-right"></span></button>';
+	echo '</div>'.PHP_EOL;
+		
+	// Affichage du nom du domaine et de la ressource
+	//echo ucfirst($this_area_name).' - '.$this_room_name.' '.$this_room_name_des;
+	echo '<div class="titre_planningRessource">' .ucfirst($this_area_name).' - '.$this_room_name.' '.$this_room_name_des. '</div>'.PHP_EOL;
+
+//echo '</h4>'.PHP_EOL;
 
 if (verif_display_fiche_ressource(getUserName(), $room) && $_GET['pview'] != 1)
 	echo '<a href="javascript:centrerpopup(\'view_room.php?id_room=',$room,'\',600,480,\'scrollbars=yes,statusbar=no,resizable=yes\')" title="',get_vocab("fiche_ressource"),'"><span class="glyphcolor glyphicon glyphicon-search"></span></a>';
@@ -466,12 +475,12 @@ else
 		}
 	}
 	echo '</tr>'.PHP_EOL.'</table>'.PHP_EOL;
-	if ($_GET['pview'] != 1)
+	/*if ($_GET['pview'] != 1)
 	{
 		echo '<div id="toTop">',PHP_EOL,'<b>',get_vocab("top_of_page"),'</b>',PHP_EOL;
 		bouton_retour_haut ();
 		echo '</div>',PHP_EOL;
-	}
+	}*/
 	?>
 </div>
 </div>
