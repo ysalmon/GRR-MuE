@@ -379,10 +379,10 @@ function Definition_ressource_domaine_site()
 
 function bouton_retour_haut()
 {
-	echo '<script type="text/javascript">',PHP_EOL,'$(function()',PHP_EOL,'{',PHP_EOL,'$(window).scroll(function()',PHP_EOL,'{',PHP_EOL,
+	/*echo '<script type="text/javascript">',PHP_EOL,'$(function()',PHP_EOL,'{',PHP_EOL,'$(window).scroll(function()',PHP_EOL,'{',PHP_EOL,
 		'if ($(this).scrollTop() != 0)',PHP_EOL,'$("#toTop").fadeIn();',PHP_EOL,'else',PHP_EOL,'$("#toTop").fadeOut();',PHP_EOL,
 		'});',PHP_EOL,'$("#toTop").click(function()',PHP_EOL,'{',PHP_EOL,'$("body,html").animate({scrollTop:0},800);',PHP_EOL,
-		'});',PHP_EOL,'});',PHP_EOL,'</script>',PHP_EOL;
+		'});',PHP_EOL,'});',PHP_EOL,'</script>',PHP_EOL;*/
 }
 
 function bouton_aller_bas()
@@ -565,19 +565,21 @@ function plages_libre_semaine_ressource($id_room, $month_week, $day_week, $year_
 	global $morningstarts, $eveningends, $eveningends_minutes, $resolution, $enable_periods;
 	$date_end = mktime($eveningends, $eveningends_minutes, 0, $month_week, $day_week, $year_week);
 	$date_start = mktime($morningstarts, 0, 0, $month_week, $day_week, $year_week);
+			
 	$t = $date_start - 1;
 	$plage_libre = 0;
-	while ($t < $date_end)
-	{
+	
+	while ($t < $date_end){
 		$t += $resolution;
+
 		$test = grr_sql_query1("SELECT id FROM ".TABLE_PREFIX."_entry WHERE room_id='".$id_room."' AND start_time <= ".$t." AND end_time >= ".$t." ");
-		if ($test == -1)
-		{
+		if ($test == -1){
 			$plage_libre = true;
 			break;
 		}
 	}
-	return $plage_libre ;
+
+	return $plage_libre;
 }
 
 /* Fonction spéciale SE3
@@ -852,19 +854,19 @@ function page_accueil($param = 'no'){
 	return $page_accueil ;
 }
 
+// FUNCTION BEGIN_PAGE : création de la partie head
 function begin_page($title, $page = "with_session"){
 
 	if ($page == "with_session"){
 		
 		if (isset($_SESSION['default_style']) || function_exists('Settings::get')){
-			if(!empty(Settings::get("default_css"))){
+			if(!(Settings::get("default_css") == false)){
 				$sheetcss = 'themes/'.Settings::get("default_css").'/css';
 			}else{
 				$sheetcss = 'themes/'.$_SESSION['default_style'].'/css';
 			}
-
 		}else{
-			$sheetcss = 'themes/bleu/css';
+			$sheetcss = 'themes/default/css';
 		}
 		if (isset($_GET['default_language'])){
 			
@@ -892,6 +894,7 @@ function begin_page($title, $page = "with_session"){
 			die();
 		}
 	}
+	
 	global $vocab, $charset_html, $unicode_encoding, $clock_file, $use_select2, $use_admin;
 	header('Content-Type: text/html; charset=utf-8');
 	if (!isset($_COOKIE['open']))
@@ -907,12 +910,19 @@ function begin_page($title, $page = "with_session"){
 	$a .= '<meta name="Robots" content="noindex" />'.PHP_EOL;
 	$a .= '<title>'.$title.'</title>'.PHP_EOL;
 	$a .= '<link rel="shortcut icon" href="./favicon.ico" />'.PHP_EOL;
-
+	
 	if (@file_exists('admin_accueil.php')){ // Si on est dans l'administration
 
-		$a .= '<link rel="stylesheet" type="text/css" href="../'.$sheetcss.'/style.css" />'.PHP_EOL;
-		$a .= '<link rel="stylesheet" type="text/css" href="../'.$sheetcss.'/bootstrap.min.css" />'.PHP_EOL;
-		$a .= '<link rel="stylesheet" type="text/css" href="../'.$sheetcss.'/mod_bootstrap.css" />'.PHP_EOL;
+		
+		$a .= '<link rel="stylesheet" type="text/css" href="../themes/default/css/style.css" />'.PHP_EOL;
+		$a .= '<link rel="stylesheet" type="text/css" href="../themes/default/css/bootstrap.min.css" />'.PHP_EOL;
+		$a .= '<link rel="stylesheet" type="text/css" href="../themes/default/css/mod_bootstrap.css" />'.PHP_EOL;
+		
+		if($sheetcss != 'themes/default/css'){
+			$a .= '<link rel="stylesheet" type="text/css" href="../'.$sheetcss.'/style.css" />'.PHP_EOL;
+			$a .= '<link rel="stylesheet" type="text/css" href="../'.$sheetcss.'/mod_bootstrap.css" />'.PHP_EOL;
+		}
+		
 		$a .= '<link rel="stylesheet" type="text/css" href="../include/admin_grr.css" />'.PHP_EOL;
 		$a .= '<link rel="stylesheet" type="text/css" href="../themes/default/css/select2.css" />'.PHP_EOL;
 		$a .= '<link rel="stylesheet" type="text/css" href="../themes/default/css/select2-bootstrap.css" />'.PHP_EOL;
@@ -934,10 +944,13 @@ function begin_page($title, $page = "with_session"){
 		$a .= '<script type="text/javascript" src="../js/bootstrap-multiselect.js"></script>'.PHP_EOL;
 		$a .= '<script type="text/javascript" src="../js/html2canvas.js"></script>'.PHP_EOL;
 		$a .= '<script type="text/javascript" src="../js/menu.js"></script>'.PHP_EOL;
+		$a .= '<script type="text/javascript" src="../js/jquery.cookie.min.js"></script>'.PHP_EOL;
 		$a .= '<script type="text/javascript" src="../js/jspdf.min.js"></script>'.PHP_EOL;
 		$a .= '<script type="text/javascript" src="../js/pdf.js" ></script>'.PHP_EOL;
 		$a .= '<script type="text/javascript" src="../js/popup.js" charset="utf-8"></script>'.PHP_EOL;
 		$a .= '<script type="text/javascript" src="../js/functions.js" ></script>'.PHP_EOL;
+		// Ajoute pour eviter le double ascenseur dans le portail ENT - CD 30 juin 2014
+		$a .= '<script type="text/javascript" src="../js/postMessage-resize-iframe-in-parent.js"></script>'.PHP_EOL;
 		$a .= '<script type="text/javascript" src="../js/select2.js"></script>'.PHP_EOL;
 		$a .= '<script type="text/javascript" src="../js/select2_locale_fr.js"></script>'.PHP_EOL;
 		if (isset($use_tooltip_js))
@@ -951,9 +964,15 @@ function begin_page($title, $page = "with_session"){
 	
 	} else{
 	
-		$a .= '<link rel="stylesheet" type="text/css" href="'.$sheetcss.'/style.css" />'.PHP_EOL;
-		$a .= '<link rel="stylesheet" type="text/css" href="'.$sheetcss.'/bootstrap.min.css" />'.PHP_EOL;
-		$a .= '<link rel="stylesheet" type="text/css" href="'.$sheetcss.'/mod_bootstrap.css" />'.PHP_EOL;
+		$a .= '<link rel="stylesheet" type="text/css" href="themes/default/css/style.css" />'.PHP_EOL;
+		$a .= '<link rel="stylesheet" type="text/css" href="themes/default/css/bootstrap.min.css" />'.PHP_EOL;
+		$a .= '<link rel="stylesheet" type="text/css" href="themes/default/css/mod_bootstrap.css" />'.PHP_EOL;
+		
+		if($sheetcss != 'themes/default/css'){
+			$a .= '<link rel="stylesheet" type="text/css" href="'.$sheetcss.'/style.css" />'.PHP_EOL;
+			$a .= '<link rel="stylesheet" type="text/css" href="'.$sheetcss.'/mod_bootstrap.css" />'.PHP_EOL;
+		}
+		
 	    if (isset($use_admin))
 			$a .= '<link rel="stylesheet" type="text/css" href="include/admin_grr.css" />'.PHP_EOL;
 		if (isset($use_select2))
@@ -977,10 +996,13 @@ function begin_page($title, $page = "with_session"){
 		$a .= '<script type="text/javascript" src="bootstrap/js/bootstrap.min.js"></script>'.PHP_EOL;
 		$a .= '<script type="text/javascript" src="js/html2canvas.js"></script>'.PHP_EOL;
 		$a .= '<script type="text/javascript" src="js/menu.js"></script>'.PHP_EOL;
+		$a .= '<script type="text/javascript" src="js/jquery.cookie.js"></script>'.PHP_EOL;
 		$a .= '<script type="text/javascript" src="js/jspdf.min.js"></script>'.PHP_EOL;
 		$a .= '<script type="text/javascript" src="js/pdf.js" ></script>'.PHP_EOL;
 		$a .= '<script type="text/javascript" src="js/popup.js" charset="utf-8"></script>'.PHP_EOL;
 		$a .= '<script type="text/javascript" src="js/functions.js" ></script>'.PHP_EOL;
+		// Ajoute pour eviter le double ascenseur dans le portail ENT - CD 30 juin 2014
+		$a .= '<script type="text/javascript" src="js/postMessage-resize-iframe-in-parent.js"></script>'.PHP_EOL;
 		if (isset($use_select2))
 		{
 			$a .= '<script type="text/javascript" src="js/bootstrap-clockpicker.js"></script>'.PHP_EOL;
@@ -1008,7 +1030,7 @@ function begin_page($title, $page = "with_session"){
 */
 function print_header($day = '', $month = '', $year = '', $type_session = 'with_session')
 {
-	global $vocab, $search_str, $grrSettings, $clock_file, $desactive_VerifNomPrenomUser, $grr_script_name;
+	global $vocab, $search_str, $grrSettings, $clock_file, $desactive_VerifNomPrenomUser, $grr_script_name, $affiche_pview;
 	global $use_prototype, $use_admin, $use_tooltip_js, $desactive_bandeau_sup, $id_site, $use_select2;
 
 	if (!($desactive_VerifNomPrenomUser))
@@ -1077,7 +1099,9 @@ function print_header($day = '', $month = '', $year = '', $type_session = 'with_
 			
 			// Nouvel affichage du menu
 			
-			echo '<div class="navbar navbar-default">';
+			echo '<div class="navbar navbar-default navbar-static-top testnavbar">'; /*navbar-static-top*/
+			echo '	<div class="row">';
+			echo '		<div class="col-md-offset-2 col-md-10">';
 			
 			echo '		<div class="navbar-header">';
 			
@@ -1128,10 +1152,12 @@ function print_header($day = '', $month = '', $year = '', $type_session = 'with_
 				}
 			}
 
-			echo '		</div>'; // fin navbar-header
+			echo '		</div>'; // fin col-md-offset-2 col-md-10
+			echo '	</div>'; // fin row
+			echo '</div>'; // fin navbar-header
 			
 			echo '		<div class="navbarcollapse collapse">';	
-			echo '			<ul class="nav navbar-nav navbar-right">';
+			echo '			<ul class="nav navbar-nav navbar-right ">';
 			
 			// Drapeaux langues
 			echo '				<li>
@@ -1198,6 +1224,32 @@ function print_header($day = '', $month = '', $year = '', $type_session = 'with_
 				}
 			}
 			
+			
+
+			if ((!isset($_GET['pview']) || ($_GET['pview'] != 1)) && (isset($affiche_pview))){
+				
+				if (Settings::get("pview_new_windows") == 1){
+					
+					$s = "<li class='menuAdmin'><a href='#' onclick=\"";
+					$s .= "javascript:window.open(";
+					$s .= "'".traite_grr_url($grr_script_name)."?";
+					if (isset($_SERVER['QUERY_STRING']) && ($_SERVER['QUERY_STRING'] != ''))
+						$s .= htmlspecialchars($_SERVER['QUERY_STRING']) . "&amp;";
+					$s .= "pview=1')\"";
+				}
+				else{
+					
+					$s = "<li class='menuAdmin'><a href='#' onclick=\"charger();";
+					$s .= "   javascript:location.href=";
+					$s .= "'".traite_grr_url($grr_script_name)."?";
+					if (isset($_SERVER['QUERY_STRING']) && ($_SERVER['QUERY_STRING'] != ''))
+						$s .= htmlspecialchars($_SERVER['QUERY_STRING']) . "&amp;";
+					$s .= "pview=1&amp;precedent=1'\"";
+				}
+				$s.= ">Imprimer la page</a></li>";
+				echo $s;
+			}
+			
 			if ($type_session != "with_session")
 				echo '<script>selection()</script>'.PHP_EOL;
 
@@ -1210,23 +1262,27 @@ function print_header($day = '', $month = '', $year = '', $type_session = 'with_
 					echo '		<li class="menuAdmin">';
 					echo "			<a href='{$racineAd}admin_accueil.php?day={$day}&amp;month={$month}&amp;year={$year}'>".get_vocab('admin')."</a>";
 					echo '		</li>';
+					
 					if (authGetUserLevel(getUserName(), -1, 'area') >= 6){
 					
-						echo '	<li style="display:none">'; // le formulaire n'est pas affiché
-						echo "		<form name='sauvegardeBd' action='{$racineAd}admin_save_mysql.php' method='get'><div>".PHP_EOL;
-						echo '			<input type="hidden" name="flag_connect" value="yes" />'.PHP_EOL;
-						echo '			<input type="submit" class="btn btn-link" value="'.get_vocab("submit_backup").'" /></div>'.PHP_EOL;
-						echo '		</form>'.PHP_EOL;
-						echo '	</li>';
+//Le menu de sauvegarde ne doit pas être affichée - CD - 20170412
+//						echo '	<li style="display:none">'; // le formulaire n'est pas affiché
+//						echo "		<form name='sauvegardeBd' action='{$racineAd}admin_save_mysql.php' method='get'><div>".PHP_EOL;
+//						echo '			<input type="hidden" name="flag_connect" value="yes" />'.PHP_EOL;
+//						echo '			<input type="submit" class="btn btn-link" value="'.get_vocab("submit_backup").'" /></div>'.PHP_EOL;
+//						echo '		</form>'.PHP_EOL;
+//						echo '	</li>';
 						// exécution du formulaire de sauvegarde grace à la fonction js document.forms
-						echo '	<li class="menuAdmin"><a href="#" onclick="document.forms[\'sauvegardeBd\'].submit();">'.get_vocab("submit_backup").'</a></li>';
-						echo '	<li class="menuAdmin">';
-									how_many_connected();
-						echo '	</li>';
+//						echo '	<li class="menuAdmin"><a href="#" onclick="document.forms[\'sauvegardeBd\'].submit();">'.get_vocab("submit_backup").'</a></li>';
+//On retire aussi le menu des utilisateurs connectés - CD -20170412
+//						echo '	<li class="menuAdmin">';
+//									how_many_connected();
+//						echo '	</li>';
 					}
 				}
 			}
 			
+			echo '			<li>&nbsp;</li>';
 			echo '			</ul>';
 
 			echo '		</div>'; //<!-- /.navbar-collapse -->	
@@ -1244,12 +1300,43 @@ function print_header($day = '', $month = '', $year = '', $type_session = 'with_
 							if (_opened === true && !clickover.hasClass("navbar-toggle")) {
 								$("button.navbar-toggle").click();
 							}
-						});
-					});
+						});';
+						
+						// quand le menu "Calendrier" s'ouvre, on enregistre un cookie "accordeonCalendrier" à 'ouvert'
+						echo '
+						$("#collapseCalendar").on("shown.bs.collapse", function () {
+							$.cookie("accordeonCalendrier", "ouvert");
+						});';
+						
+						// quand le menu "Calendrier" se ferme, on supprimer le cookie "accordeonCalendrier"
+						echo '
+						$("#collapseCalendar").on("hidden.bs.collapse", function () {
+							$.removeCookie("accordeonCalendrier");
+						});';
+						
+						// Au chargement de la page, on vérifie l'existance du cookie accordeonCalendrier. Si il existe, on ouvre le menu Calendrier
+						echo '
+						var CookieCalendrier = $.cookie("accordeonCalendrier");
+						if (CookieCalendrier == "ouvert") {
+							
+							$("#collapseCalendar").addClass("in"); // ouverture de l accordeon Calendrier
+						}
+			
+					});';
+					
+					// Loader 
+					echo '				
+					$(window).load(function(){
+						
+						$(".loader").fadeOut("1000");
+						
+					})
 				</script>
 			';
 			
-			echo '<div class="container-fluid">';
+			echo '<div class="loader"></div>';
+			
+			echo '<div class="container-fluid containerGrr">';
 			
 			
 			//Ancien header
@@ -1913,6 +2000,11 @@ function get_default_etablissement()
 function day_name($daynumber)
 {
 	return utf8_encode(strftime("%A", mktime(0, 0, 0, 1, 2 + $daynumber, 2000)));
+}
+
+function day_short_name($daynumber)
+{
+	return utf8_encode(strftime("%a", mktime(0, 0, 0, 1, 2 + $daynumber, 2000)));
 }
 
 function affiche_heure_creneau($t,$resolution)
@@ -5982,7 +6074,7 @@ function getCompanyNameForBandeau(){
 		
 		if (Settings::get("etablissement_open") == 1 ) {
 			//Mode établissement ouvert, on recherche tous les établissements.
-			$sqlListeEtab = "SELECT E.code, E.shortname FROM ".TABLE_PREFIX."_etablissement as E order by E.shortname";
+			$sqlListeEtab = "SELECT E.code, E.shortname, E.name FROM ".TABLE_PREFIX."_etablissement as E order by E.shortname";
 		} else {
 			$username = getUserName();
 			if (isset($username ) && $username != NULL && $username != ''){
@@ -5994,10 +6086,10 @@ function getCompanyNameForBandeau(){
 					
 					if ($statut == "administrateur"){
 						//Tous les établisements pour l'administrateur de GRR
-						$sqlListeEtab = "SELECT E.code, E.shortname FROM ".TABLE_PREFIX."_etablissement as E order by E.shortname";
+						$sqlListeEtab = "SELECT E.code, E.shortname, E.name FROM ".TABLE_PREFIX."_etablissement as E order by E.shortname";
 					} else {
 						//Pour un utilisateurs non administrateur, on selectionne les établissement où il est inscrit en tant qu'utilisateur ou bien administrateur.
-						$sqlListeEtab = "SELECT DISTINCT E.code, E.shortname FROM ".TABLE_PREFIX."_etablissement as E ";
+						$sqlListeEtab = "SELECT DISTINCT E.code, E.shortname, E.name FROM ".TABLE_PREFIX."_etablissement as E ";
 						$sqlListeEtab .= "LEFT JOIN ".TABLE_PREFIX."_j_user_etablissement as J ON J.id_etablissement = E.id ";
 						$sqlListeEtab .= "LEFT JOIN ".TABLE_PREFIX."_j_useradmin_etablissement as JA ON JA.id_etablissement = E.id ";
 						$sqlListeEtab .= "WHERE (J.login='$username' OR JA.login = '$username') order by E.shortname";
