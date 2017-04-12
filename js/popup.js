@@ -92,6 +92,9 @@ function readData(sData)
 function requestModal(id,day,month,year,currentPage,callback)
 {
 	
+// Ajout CD - 20170314 pour aller en haut de l'écran avant affichage de la modale (indispensable quand on est en iframe dans un portail ENT)
+	$("body,html",  window.parent.document).scrollTop(0);
+// Fin ajout
 	document.getElementById('modalBody').innerHTML="";
 	var Id = id;
 	var Day = day;
