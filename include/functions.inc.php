@@ -2289,7 +2289,7 @@ function make_site_select_html($link, $current_site, $year, $month, $day, $user)
 	if (Settings::get("module_multisite") == "Oui"){
 		$nb_sites_a_afficher = 0;
 		$out_html = '<b><i>'.get_vocab('sites').get_vocab('deux_points').'</i></b><form id="site_001" action="'.$_SERVER['PHP_SELF'].'"><div>';
-		$out_html .= '<select class="form-control" name="site" onchange="site_go()">';
+		$out_html .= '<select class="form-control" name="site" onchange="jQuery(\'div.loader\').show();site_go()">';
 		/*if (strncmp("4.1", grr_sql_version(), 3) < 0){
 			
 			$sql = "SELECT id,sitename
@@ -2435,7 +2435,7 @@ function make_area_select_html( $link, $current_site, $current_area, $year, $mon
 	$out_html = '<b><i>'.get_vocab("areas").'</i></b>'.PHP_EOL;
 	$out_html .= '<form id="area_001" action="'.$_SERVER['PHP_SELF'].'">'.PHP_EOL;
 	$out_html .= '<div><select class="form-control" name="area" ';
-	$out_html .= ' onchange="area_go()" ';
+	$out_html .= ' onchange="jQuery(\'div.loader\').show();area_go()" ';
 	$out_html .= '>'.PHP_EOL;
 	
 	$res = grr_sql_query($sql);
@@ -2485,7 +2485,7 @@ function make_area_select_html( $link, $current_site, $current_area, $year, $mon
 function make_room_select_html($link, $current_area, $current_room, $year, $month, $day)
 {
 	global $vocab;
-	$out_html = "<b><i>".get_vocab('rooms').get_vocab("deux_points")."</i></b><br /><form id=\"room_001\" action=\"".$_SERVER['PHP_SELF']."\"><div><select class=\"form-control\" name=\"room\" onchange=\"room_go()\">";
+	$out_html = "<b><i>".get_vocab('rooms').get_vocab("deux_points")."</i></b><br /><form id=\"room_001\" action=\"".$_SERVER['PHP_SELF']."\"><div><select class=\"form-control\" name=\"room\" onchange=\"jQuery('div.loader').show();room_go()\">";
 	$out_html .= "<option value=\"".$link."_all.php?year=$year&amp;month=$month&amp;day=$day&amp;area=$current_area\">".get_vocab("all_rooms")."</option>";
 	$sql = "select id, room_name, description from ".TABLE_PREFIX."_room WHERE area_id='".protect_data_sql($current_area)."' order by order_display,room_name";
 	$res = grr_sql_query($sql);

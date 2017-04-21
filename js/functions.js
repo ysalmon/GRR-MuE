@@ -361,6 +361,7 @@ function cacherMoisSemaine(a)
 
 function charger(){
 	var test = document.getElementById("chargement");
+	jQuery('div.loader').show();
 	test.style.display = 'Block';
 }
 

@@ -933,7 +933,8 @@ if ($type_affichage_reser == 0)
 	echo '<tr><td class="CL">'.PHP_EOL;
 	echo '<div class="form-group">'.PHP_EOL;
 	echo '<div class="col-xs-4">';
-	spinner($duration);
+	//spinner($duration);
+	echo '<input class="form-control" name="duration" type="number" value="'.$duration.'" min="1">';
 	echo '</div><div class="col-xs-8"><select class="form-control" name="dur_units" size="1">'.PHP_EOL;
 	if ($enable_periods == 'y')
 		$units = array("periods", "days");
@@ -974,11 +975,11 @@ if ($type_affichage_reser == 0)
 		$heure_finale = $nb_jour. " ". $vocab["days"]. " + ". $heure_finale_restante;
 	}
 	$af_fin_jour = $heure_finale." H ".$minute_restante;
-	echo '<div><input name="all_day" type="checkbox" value="yes" />'.get_vocab("all_day");
+	echo '<br/><div><input name="all_day" type="checkbox" value="yes" />'.get_vocab("all_day");
 	if ($enable_periods != 'y')
 		echo ' ('.$morningstarts.' H - '.$af_fin_jour.')';
 	echo '</div>'.PHP_EOL;
-	echo '</td></tr>'.PHP_EOL;
+	echo '<br/></td></tr>'.PHP_EOL;
 }
 else
 {
@@ -1180,7 +1181,7 @@ echo '</table>',PHP_EOL;
 echo '</div>';
 
 // =====================================================================
-// COLONNE GAUCHE
+// COLONNE DROITE
 // =====================================================================
 
 echo '<div class="col-md-5 colPadding">';
@@ -1352,9 +1353,13 @@ else
 	//echo '</td>',PHP_EOL,'</tr>',PHP_EOL,'</table>',PHP_EOL;
 	echo '</div>',PHP_EOL,'</div>',PHP_EOL;
 	?>
+	
+	<div class="boutons">
+		<input type="button" class="btn btn-default" value="<?php echo get_vocab("cancel")?>" onclick="window.location.href='<?php echo $page.".php?year=".$year."&amp;month=".$month."&amp;day=".$day."&amp;area=".$area."&amp;room=".$room; ?>'" />
+		<input type="button" class="btn btn-primary" value="<?php echo get_vocab("save")?>" onclick="Save_entry();jQuery('div.loader').show();validate_and_submit();" />
+	</div>	
+	
 		<div id="fixe">
-			<input type="button" class="btn btn-default" value="<?php echo get_vocab("cancel")?>" onclick="window.location.href='<?php echo $page.".php?year=".$year."&amp;month=".$month."&amp;day=".$day."&amp;area=".$area."&amp;room=".$room; ?>'" />
-			<input type="button" class="btn btn-primary" value="<?php echo get_vocab("save")?>" onclick="Save_entry();validate_and_submit();" />
 			<input type="hidden" name="rep_id"    value="<?php echo $rep_id?>" />
 			<input type="hidden" name="edit_type" value="<?php echo $edit_type?>" />
 			<input type="hidden" name="page" value="<?php echo $page?>" />

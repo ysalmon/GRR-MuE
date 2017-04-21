@@ -421,5 +421,5 @@ h1,h2,h3,h4,h5>a{font-family:"Roboto Slab" !important}
 /*Ajouté CD - 20170309 : */
 	.containerGrr .titre, .containerGrr .titre_planningRessource{font-size:95%;}
 	.containerGrr >h2{font-size:18px;}
-	.containerGrr .titre_planningDate .glyphicon-refresh{display:none;}
+	.containerGrr .titre_planning .titre_planningDate .glyphicon-refresh{display:none;}
 }

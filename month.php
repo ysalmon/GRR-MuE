@@ -190,7 +190,7 @@ if (verif_display_fiche_ressource(getUserName(), $room) && $_GET['pview'] != 1)
 	echo '<a href="javascript:centrerpopup(\'view_room.php?id_room=',$room,'\',600,480,\'scrollbars=yes,statusbar=no,resizable=yes\')" title="',get_vocab("fiche_ressource"),'"><span class="glyphcolor glyphicon glyphicon-search"></span></a>';
 
 if (authGetUserLevel(getUserName(),$room) > 2 && $_GET['pview'] != 1)
-	echo "<a href='./admin/admin_edit_room.php?room=$room'><span class=\"glyphcolor glyphicon glyphicon-cog\"></span></a>";
+	echo "<a href='./admin/admin_edit_room.php?room=$room' onclick=\"jQuery('div.loader').show();\"><span class=\"glyphcolor glyphicon glyphicon-cog\"></span></a>";
 
 // La ressource est-elle empruntée ?
 affiche_ressource_empruntee($room);
@@ -449,9 +449,9 @@ else
 
 					echo '<div class="empty_cell">',PHP_EOL;
 					if ($enable_periods == 'y')
-						echo '<a href="edit_entry.php?room=',$room,'&amp;period=&amp;year=',$year,'&amp;month=',$month,'&amp;day=',$cday,'&amp;page=month" title="',get_vocab("cliquez_pour_effectuer_une_reservation"),'"><span class="glyphicon glyphicon-plus"></span></a>',PHP_EOL;
+						echo '<a href="edit_entry.php?room=',$room,'&amp;period=&amp;year=',$year,'&amp;month=',$month,'&amp;day=',$cday,'&amp;page=month" title="',get_vocab("cliquez_pour_effectuer_une_reservation"),'" onclick="jQuery(\'div.loader\').show();"><span class="glyphicon glyphicon-plus"></span></a>',PHP_EOL;
 					else
-						echo '<a href="edit_entry.php?room=',$room,'&amp;hour=',$hour,'&amp;minute=0&amp;year=',$year,'&amp;month=',$month,'&amp;day=',$cday,'&amp;page=month" title="',get_vocab("cliquez_pour_effectuer_une_reservation"),'"><span class="glyphicon glyphicon-plus"></span></a>',PHP_EOL;
+						echo '<a href="edit_entry.php?room=',$room,'&amp;hour=',$hour,'&amp;minute=0&amp;year=',$year,'&amp;month=',$month,'&amp;day=',$cday,'&amp;page=month" title="',get_vocab("cliquez_pour_effectuer_une_reservation"),'" onclick="jQuery(\'div.loader\').show();"><span class="glyphicon glyphicon-plus"></span></a>',PHP_EOL;
 					echo '</div>'.PHP_EOL;
 				}
 				else

@@ -428,7 +428,7 @@ else
 				echo '<span class="glyphcolor glyphicon glyphicon-search"></span></a>'.PHP_EOL;
 			}
 			if (authGetUserLevel(getUserName(),$row['2']) > 2 && $_GET['pview'] != 1)
-				echo '<a href="./admin/admin_edit_room.php?room='.$row['2'].'"><span class="glyphcolor glyphicon glyphicon-cog"></span></a>'.PHP_EOL;
+				echo '<a href="./admin/admin_edit_room.php?room='.$row['2'].'" onclick="jQuery(\'div.loader\').show();"><span class="glyphcolor glyphicon glyphicon-cog"></span></a>'.PHP_EOL;
 			affiche_ressource_empruntee($row['2']);
 			echo '</td>'.PHP_EOL;
 			$li++;
@@ -567,9 +567,9 @@ else
 									&& auth_user_reserv_room_etab($row[2])) {
 
 							if ($enable_periods == 'y')
-								echo '<a href="edit_entry.php?room=',$row["2"],'&amp;period=&amp;year=',$cyear,'&amp;month=',$cmonth,'&amp;day=',$cday,'&amp;page=week_all" title="',get_vocab("cliquez_pour_effectuer_une_reservation"),'"><span class="glyphicon glyphicon-plus"></span></a>',PHP_EOL;
+								echo '<a href="edit_entry.php?room=',$row["2"],'&amp;period=&amp;year=',$cyear,'&amp;month=',$cmonth,'&amp;day=',$cday,'&amp;page=week_all" title="',get_vocab("cliquez_pour_effectuer_une_reservation"),'" onclick="jQuery(\'div.loader\').show();"><span class="glyphicon glyphicon-plus"></span></a>',PHP_EOL;
 							else
-								echo '<a href="edit_entry.php?room=',$row["2"],'&amp;hour=',$hour,'&amp;minute=0&amp;year=',$cyear,'&amp;month=',$cmonth,'&amp;day=',$cday,'&amp;page=week_all" title="',get_vocab("cliquez_pour_effectuer_une_reservation"),'"><span class="glyphicon glyphicon-plus"></span></a>',PHP_EOL;;
+								echo '<a href="edit_entry.php?room=',$row["2"],'&amp;hour=',$hour,'&amp;minute=0&amp;year=',$cyear,'&amp;month=',$cmonth,'&amp;day=',$cday,'&amp;page=week_all" title="',get_vocab("cliquez_pour_effectuer_une_reservation"),'" onclick="jQuery(\'div.loader\').show();"><span class="glyphicon glyphicon-plus"></span></a>',PHP_EOL;;
 						}
 						else
 							echo ' '.PHP_EOL;

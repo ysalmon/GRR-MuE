@@ -210,7 +210,7 @@ if (verif_display_fiche_ressource(getUserName(), $room) && $_GET['pview'] != 1){
 }
 if (authGetUserLevel(getUserName(),$room) > 2 && $_GET['pview'] != 1){
 	
-	echo "<a href='./admin/admin_edit_room.php?room=$room'><span class=\"glyphcolor glyphicon glyphicon-cog\"></span></a>";
+	echo "<a href='./admin/admin_edit_room.php?room=$room' onclick=\"jQuery('div.loader').show();\"><span class=\"glyphcolor glyphicon glyphicon-cog\"></span></a>";
 }
 affiche_ressource_empruntee($room);
 if ($this_statut_room == "0" && $_GET['pview'] != 1){
@@ -546,13 +546,15 @@ for ($t = $week_start; $t <= $week_end; $t += 86400)
 							if ($enable_periods == 'y'){
 								echo "<a href=\"edit_entry.php?room=$room"
 								. "&amp;period=$time_t_stripped&amp;year=$wyear&amp;month=$wmonth"
-								. "&amp;day=$wday&amp;page=week\" title=\"".get_vocab("cliquez_pour_effectuer_une_reservation")."\"><span class=\"glyphicon glyphicon-plus\"></span>";
+								. "&amp;day=$wday&amp;page=week\" title=\"".get_vocab("cliquez_pour_effectuer_une_reservation")."\" onclick=\"jQuery('div.loader').show();\">"
+								. "<span class=\"glyphicon glyphicon-plus\"></span>";
 								echo "</a>";
 							}
 							else{
 								echo "<a href=\"edit_entry.php?room=$room"
 								. "&amp;hour=$hour&amp;minute=$minute&amp;year=$wyear&amp;month=$wmonth"
-								. "&amp;day=$wday&amp;page=week\" title=\"".get_vocab("cliquez_pour_effectuer_une_reservation")."\"><span class=\"glyphicon glyphicon-plus\"></span>";
+								. "&amp;day=$wday&amp;page=week\" title=\"".get_vocab("cliquez_pour_effectuer_une_reservation")."\" onclick=\"jQuery('div.loader').show();\">"
+								. "<span class=\"glyphicon glyphicon-plus\"></span>";
 								echo "</a>";
 							}
 						}

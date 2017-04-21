@@ -66,7 +66,7 @@ if ($area <= 0)
 {
 	print_header($day, $month, $year, $type_session);
 	echo '<h1>'.get_vocab("noareas").'</h1>';
-	echo '<a href="./admin/admin_accueil.php">'.get_vocab("admin").'</a>'.PHP_EOL.'</body>'.PHP_EOL.'</html>';
+	echo '<a href="./admin/admin_accueil.php" onclick="jQuery(\'div.loader\').show();">'.get_vocab("admin").'</a>'.PHP_EOL.'</body>'.PHP_EOL.'</html>';
 	exit();
 }
 print_header($day, $month, $year, $type_session);
@@ -325,7 +325,7 @@ else
 				echo '<a href="javascript:centrerpopup(\'view_room.php?id_room='.$id_room[$i].'\',600,480,\'scrollbars=yes,statusbar=no,resizable=yes\')" title="'.get_vocab("fiche_ressource").'\">
 			<span class="glyphcolor glyphicon glyphicon-search"></span></a>'.PHP_EOL;
 			if (authGetUserLevel(getUserName(),$id_room[$i]) > 2 && $_GET['pview'] != 1)
-				echo '<a href="./admin/admin_edit_room.php?room='.$id_room[$i].'"><span class="glyphcolor glyphicon glyphicon-cog"></span></a><br/>'.PHP_EOL;
+				echo '<a href="./admin/admin_edit_room.php?room='.$id_room[$i].'" onclick="jQuery(\'div.loader\').show();"><span class="glyphcolor glyphicon glyphicon-cog"></span></a><br/>'.PHP_EOL;
 			affiche_ressource_empruntee($id_room[$i]);
 			echo '<span id="boutonSelection'.$a.'" style="display:none;">'.PHP_EOL;
 			echo '<input type="button" class="btn btn-default btn-xs" title="'.htmlspecialchars(get_vocab("see_week_for_this_room")).'" onclick="charger();javascript: location.href=\'week.php?year='.$year.'&amp;month='.$month.'&amp;cher='.$day.'&amp;room='.$id_room[$i].'\';" value="'.get_vocab('week').'"/>'.PHP_EOL;
@@ -431,11 +431,11 @@ else
 
 							if ($enable_periods == 'y')
 							{
-								echo '<a href="edit_entry.php?room='.$room.'&amp;period='.$time_t_stripped.'&amp;year='.$year.'&amp;month='.$month.'&amp;day='.$day.'&amp;page=day" title="'.get_vocab("cliquez_pour_effectuer_une_reservation").'" ><span class="glyphicon glyphicon-plus"></span></a>'.PHP_EOL;
+								echo '<a href="edit_entry.php?room='.$room.'&amp;period='.$time_t_stripped.'&amp;year='.$year.'&amp;month='.$month.'&amp;day='.$day.'&amp;page=day" title="'.get_vocab("cliquez_pour_effectuer_une_reservation").'" onclick="jQuery(\'div.loader\').show();"><span class="glyphicon glyphicon-plus"></span></a>'.PHP_EOL;
 							}
 							else
 							{
-								echo '<a href="edit_entry.php?room='.$room.'&amp;hour='.$hour.'&amp;minute='.$minute.'&amp;year='.$year.'&amp;month='.$month.'&amp;day='.$day.'&amp;page=day" title="'.get_vocab("cliquez_pour_effectuer_une_reservation").'" ><span class="glyphicon glyphicon-plus"></span></a>'.PHP_EOL;
+								echo '<a href="edit_entry.php?room='.$room.'&amp;hour='.$hour.'&amp;minute='.$minute.'&amp;year='.$year.'&amp;month='.$month.'&amp;day='.$day.'&amp;page=day" title="'.get_vocab("cliquez_pour_effectuer_une_reservation").'" onclick="jQuery(\'div.loader\').show();"><span class="glyphicon glyphicon-plus"></span></a>'.PHP_EOL;
 							}
 						}
 						else
