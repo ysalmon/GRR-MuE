@@ -1441,7 +1441,7 @@ class Session{
 		//si la session n'existe pas encore
 		if($return['total'] == 0){
 			$sql = "INSERT INTO ".TABLE_PREFIX."_session
-				VALUES('$sid','$data','$expire')";//alors on la crée
+				VALUES('".$sid."','".$data."','".$expire."')";//alors on la crée
 				
 		}
 		else{//sinon
