@@ -1356,7 +1356,7 @@ else
 	
 	<div class="boutons">
 		<input type="button" class="btn btn-default" value="<?php echo get_vocab("cancel")?>" onclick="window.location.href='<?php echo $page.".php?year=".$year."&amp;month=".$month."&amp;day=".$day."&amp;area=".$area."&amp;room=".$room; ?>'" />
-		<input type="button" class="btn btn-primary" value="<?php echo get_vocab("save")?>" onclick="Save_entry();jQuery('div.loader').show();validate_and_submit();" />
+		<input type="button" class="btn btn-primary" value="<?php echo get_vocab("save")?>" onclick="Save_entry();if (validate_and_submit()){jQuery('div.loader').show()};" />
 	</div>	
 	
 		<div id="fixe">
