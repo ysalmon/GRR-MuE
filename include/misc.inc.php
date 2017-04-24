@@ -80,7 +80,7 @@ $liste_themes = array(
 	"default",
 	"agricole",
 	"netocentre",
-	"tourraine"
+	"touraine"
 	);
 
 # Liste des noms des styles

@@ -1,0 +1,5 @@
+<?php
+$serveurSSO='cas.serveur.grr';
+$serveurSSOPort=443;
+$serveurSSORacine='cas';
+?>
