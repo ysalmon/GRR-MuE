@@ -26,6 +26,25 @@ fieldset[disabled] .btn-primary.active{background-color:#25B2F3;border-color:#25
 .panel-primary>.panel-footer+.panel-collapse>.panel-body{border-bottom-color:#25B2F3}
 caption{text-align: center}
 
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: #209FD6;
+  background-position: 0 -15px;
+  border-color:#25B2F3
+}
+.btn-primary:active,
+.btn-primary.active {
+  background-color: #209FD6;
+  border-color: #2b669a;
+  border-color:#25B2F3
+}
+.btn-primary:disabled,
+.btn-primary[disabled] {
+  background-color: #209FD6;
+  background-image: none;
+  border-color:#25B2F3
+}
+
 .btn-danger {
 	color:#fff !important;
 	background-color:#E085AB !important;
