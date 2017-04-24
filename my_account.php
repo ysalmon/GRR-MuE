@@ -641,8 +641,8 @@ echo ('
 								<input type="hidden" name="month" value="'.$month.'" />
 								<input type="hidden" name="year" value="'.$year.'" />
 								<br />
-								<div id="fixe" style="text-align:center;">
-								<input class="btn btn-primary" type="submit" value="'.get_vocab('save').'" />
+								<div class="">
+									<input class="btn btn-primary" type="submit" value="'.get_vocab('save').'" />
 								</div>
 							</div>
 						</form>
@@ -660,7 +660,7 @@ echo ('
 								<input type="hidden" name="default_css" value="" />
 								<input type="hidden" name="area_item_format" value="item" />
 								<input type="hidden" name="default_language" value="" />
-								<input class="btn btn-primary" type="submit" value="'.get_vocab('reset').'" />
+								<input class="btn btn-warning" type="submit" value="'.get_vocab('reset').'" />
 							</div>
 						</form>
 						</div>
