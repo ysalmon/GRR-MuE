@@ -13,12 +13,18 @@ if ($_GET['pview'] != 1)
 	
 	$pageActuel = str_replace(".php","",basename($_SERVER['PHP_SELF']));
 	
-	echo '<h5>
-			<a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseCalendar" aria-expanded="true" aria-controls="collapseOne">
+	//echo '<h5>
+	//		<a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseCalendar" aria-expanded="true" aria-controls="collapseOne">
+	//			<span class="glyphicon glyphicon-calendar color-glyphicon"></span> <b>'.get_vocab("mg_calendrier").'</b>
+	//			<span class="glyphicon glyphicon-chevron-down chevronCollapse"></span>
+	//		</a>
+	//	  </h5>';
+	echo '<a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseCalendar" aria-expanded="true" aria-controls="collapseOne">
+		<h5>
 				<span class="glyphicon glyphicon-calendar color-glyphicon"></span> <b>'.get_vocab("mg_calendrier").'</b>
 				<span class="glyphicon glyphicon-chevron-down chevronCollapse"></span>
-			</a>
-		  </h5>';
+		</h5>
+	      </a>';
 	echo '<div class="collapse" id="collapseCalendar">';
 	minicals($year, $month, $day, $area, $room, $pageActuel);
 	echo '</div><br/>';
@@ -28,12 +34,18 @@ if ($_GET['pview'] != 1)
 		$area_list_format = Settings::get("area_list_format");
 	}
 	
-	echo '<h5>
-			<a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseFilter" aria-expanded="true" aria-controls="collapseOne">
+	//echo '<h5>
+	//		<a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseFilter" aria-expanded="true" aria-controls="collapseOne">
+	//			<span class="glyphicon glyphicon-filter color-glyphicon"></span> <b>'.get_vocab("mg_filtres").'</b>
+	//			<span class="glyphicon glyphicon-chevron-down chevronCollapse"></span>
+	//		</a>
+	//	  </h5>';
+	echo '<a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseFilter" aria-expanded="true" aria-controls="collapseOne">
+		<h5>
 				<span class="glyphicon glyphicon-filter color-glyphicon"></span> <b>'.get_vocab("mg_filtres").'</b>
 				<span class="glyphicon glyphicon-chevron-down chevronCollapse"></span>
-			</a>
-		  </h5>';
+		</h5>
+	      </a>';
 	echo '<div class="collapse in" id="collapseFilter">';
 	if ($area_list_format != "list")
 	{
@@ -61,12 +73,18 @@ if ($_GET['pview'] != 1)
 	
 	if (Settings::get("legend") == '0'){
 		echo '<div class="legende-mg">';
-		echo '<h5>
-				<a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseLegend" aria-expanded="true" aria-controls="collapseOne">
+		//echo '<h5>
+		//		<a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseLegend" aria-expanded="true" aria-controls="collapseOne">
+		//			<span class="glyphicon glyphicon-th-list color-glyphicon"></span> <b>'.get_vocab("mg_legende").'</b>
+		//			<span class="glyphicon glyphicon-chevron-down chevronCollapse"></span>
+		//		</a>
+		//	</h5>';
+		echo '<a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseLegend" aria-expanded="true" aria-controls="collapseOne">
+			<h5>
 					<span class="glyphicon glyphicon-th-list color-glyphicon"></span> <b>'.get_vocab("mg_legende").'</b>
 					<span class="glyphicon glyphicon-chevron-down chevronCollapse"></span>
-				</a>
-			</h5>';
+			</h5>
+		      </a>';
 		echo '<div class="collapse in" id="collapseLegend">';
 		show_colour_key($area);
 		echo '</div>';
