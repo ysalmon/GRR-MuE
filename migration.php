@@ -88,8 +88,6 @@ $result_inter .= traite_requete("UPDATE grr_setting SET value = 'select' WHERE n
 $result_inter .= traite_requete("UPDATE grr_setting_etablissement SET value = 'select' WHERE name = 'area_list_format';");
 
 
-$result_inter .= traite_requete("UPDATE grr_setting_etablissement SET value = 'tourraine' WHERE name = 'default_css' and code_etab = '0281041E';");
-
 // Suppression de toutes les lignes "default_css" de la table grr_setting_etablissement
 $result_inter .= traite_requete("delete from grr_setting_etablissement where name='default_css';");
 
@@ -123,7 +121,7 @@ where name = 'default_css' and code_etab in (
 );");
 
 // Affectation du style Touraine e-school pour les établissements concernés
-$result_inter .= traite_requete("update grr_setting_etablissement set value = 'tourraine'
+$result_inter .= traite_requete("update grr_setting_etablissement set value = 'touraine'
 where name = 'default_css' and code_etab in (
 '0370793L', '0370010K', '0370044X', '0370007G', '0370013N', '0371248F', '0370791J', '0371210P', '0371098T', '0370034L', '0371101W', '0371122U', 
 '0370051E', '0370022Y', '0280957N', '0377777U', '0370045Y', '0370026C', '0371189S', '0370768J', '0371204H', '0370994E', '0370792K', '0370023Z', 
@@ -135,6 +133,11 @@ where name = 'default_css' and code_etab in (
 // Etablissements à supprimer 0180777X - 0450790P - 0360658V
 $result_inter .= traite_requete("DELETE FROM grr_etablissement WHERE code in ('0180777X', '0450790P', '0360658V');");
 $result_inter .= traite_requete("DELETE FROM grr_setting_etablissement WHERE code_etab in ('0180777X', '0450790P', '0360658V');");
+
+// Augmentation de la colonne sess_id de la table grr_session
+$result_inter .= traite_requete("ALTER TABLE grr_session CHANGE sess_id sess_id CHAR(60) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL;");
+
+
 
 /////////////////////////////////////////////
 // DEV ATOS - requete pour developpement en local (condition pour eviter l'execution en production)
