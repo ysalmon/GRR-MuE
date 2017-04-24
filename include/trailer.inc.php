@@ -40,9 +40,10 @@
  *
  *
  */
+ // ATOS - 02/2017 - Le lien Imprimer est disponible dans le bandeau de menu
 // Affichage d'un lien pour format imprimable
 //Appel d'une methode en fonction du paramétrage pour le lien imprimable
-if ((!isset($_GET['pview']) || ($_GET['pview'] != 1)) && (isset($affiche_pview)))
+/*if ((!isset($_GET['pview']) || ($_GET['pview'] != 1)) && (isset($affiche_pview)))
 {
 	if (Settings::get("pview_new_windows") == 1)
 	{
@@ -64,7 +65,8 @@ if ((!isset($_GET['pview']) || ($_GET['pview'] != 1)) && (isset($affiche_pview))
 	}
 	$s.= "><span class=\"glyphicon glyphicon-print\"></span> </button>";
 	echo $s;
-}
+}*/
+
 // Affichage du message d'erreur en cas d'échec de l'envoi de mails automatiques
 if (!(Settings::get("javascript_info_disabled")))
 {
