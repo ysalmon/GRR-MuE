@@ -48,6 +48,10 @@ if (!$settings)
 //On définit l'utilisation des sessions en personnel
 ini_set('session.save_handler', 'user');
 
+// Sécuriser les cookies de session
+ini_set('session.cookie_secure', true);
+ini_set('session.cookie_httponly', true);
+
 // On déclare la classe
 $session = new Session();
 
