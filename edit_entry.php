@@ -988,12 +988,15 @@ else
 
 	echo '<div class="form-group">'.PHP_EOL;
 	jQuery_DatePicker('end');
+	echo '</div>'.PHP_EOL;
+        echo '<div class="form-group">'.PHP_EOL;
 
 	if ($enable_periods=='y')
 	{
 		echo "<b>".get_vocab("period")."</b>";
-		echo "<td class=\"CL\">\n";
-		echo "<select class=\"form-control\" name=\"end_period\">";
+//		echo "<td class=\"CL\">\n";
+//		echo "<select class=\"form-control\" name=\"end_period\">";
+		echo "<select name=\"end_period\">";
 		foreach ($periods_name as $p_num => $p_val)
 		{
 			echo "<option value=\"".$p_num."\"";
