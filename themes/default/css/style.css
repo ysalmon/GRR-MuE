@@ -188,7 +188,13 @@ a:hover, a:focus {color: #4B4B4B !important;}
 .btn-lien:hover{color:#fff !important;}
 #colgauche > .well{border:none;box-shadow: unset;}
 
+/*Changé pour une meilleure intégration du message d'accueil
+CD - 20170515
+css de départ :
 #message-accueil{float: left;padding: 8px 4px;}
+css de remplacement :*/
+.containerGrr #message-accueil * {max-width: 100%;}
+/*Fin du changement */
 .popover{max-width:90% !important;}
 
 .table-rapport th a{

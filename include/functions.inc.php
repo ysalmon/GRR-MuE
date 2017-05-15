@@ -1125,23 +1125,7 @@ function print_header($day = '', $month = '', $year = '', $type_session = 'with_
 			// Liste des établissements
 			echo ' 			<span class="listEtablissement">'.getCompanyNameForBandeau().'</span>';
 			
-			// Message d'accueil : affiché à la fin du bandeau de menu
-			if(Settings::get('message_accueil') != ''){
-				
-				echo '<span id="message-accueil">';
-					if(strlen(strip_tags(Settings::get('message_accueil'))) >= 100){
-						echo substr(strip_tags(Settings::get('message_accueil')), 0, 100).'...';
-						$messageEchappe = addslashes(Settings::get('message_accueil'));
-						echo "<a id='popoverMessage' role='button' class='btn btn-link' data-toggle='popover' data-content='".$messageEchappe."' data-placement='bottom' data-html='true' data-trigger='click'>Lire la suite</a>";
-					}else{
-						echo Settings::get('message_accueil');
-					}
-				echo '</span>';
-				echo "<script>$('#popoverMessage').popover();</script>";
-				
-			}
-
-			//Mail réservartion
+			//Mail réservation
 			$sql = "SELECT value FROM ".TABLE_PREFIX."_setting WHERE name='mail_etat_destinataire'";
 			$res = grr_sql_query1($sql);
 			//Libère le résultat de la mémoire
@@ -1193,8 +1177,9 @@ function print_header($day = '', $month = '', $year = '', $type_session = 'with_
 				echo '	<li>
 							<a href="'.$racine.'my_account.php?day='.$day.'&amp;year='.$year.'&amp;month='.$month.'">'.get_vocab("manage_my_account").'</a>
 						</li>';
-				if (verif_access_search(getUserName()))
-					echo '<li><a href="'.$racine.'report.php">'.get_vocab("report").'</a></li>';
+// Mis en commentaire en attendant mieux à cause des stats qui sature le mysql : CD - 20170512
+//				if (verif_access_search(getUserName()))
+//					echo '<li><a href="'.$racine.'report.php">'.get_vocab("report").'</a></li>';
 				
 				$disconnect_link = false;
 				
@@ -1265,7 +1250,7 @@ function print_header($day = '', $month = '', $year = '', $type_session = 'with_
 					
 					if (authGetUserLevel(getUserName(), -1, 'area') >= 6){
 					
-//Le menu de sauvegarde ne doit pas être affichée - CD - 20170412
+//Le menu de sauvegarde ne doit pas être affiché - CD - 20170412
 //						echo '	<li style="display:none">'; // le formulaire n'est pas affiché
 //						echo "		<form name='sauvegardeBd' action='{$racineAd}admin_save_mysql.php' method='get'><div>".PHP_EOL;
 //						echo '			<input type="hidden" name="flag_connect" value="yes" />'.PHP_EOL;
@@ -1338,142 +1323,24 @@ function print_header($day = '', $month = '', $year = '', $type_session = 'with_
 			
 			echo '<div class="container-fluid containerGrr">';
 			
-			
-			//Ancien header
-		/*	echo '<div id="toppanel">'.PHP_EOL;
-			echo '<div id="panel">'.PHP_EOL;
-		echo '<div class="content">'.PHP_EOL;
-			echo '<div class="row" id="header">'.PHP_EOL;
+// Message d'accueil déplacé ici et modifié car sinon, mauvais affichage de la fenêtre !
+// CD - 20170515
+                        // Message d'accueil : affiché à la fin du bandeau de menu
+                        if(Settings::get('message_accueil') != ''){
 
-			//Logo
-			$nom_picture = $racine."images/".Settings::get("logo");
-			if ((Settings::get("logo") != '') && (@file_exists($nom_picture)))
-				echo '<td class="logo" height="100">'.PHP_EOL.'<a href="'.$racine.page_accueil('yes').'day='.$day.'&amp;year='.$year.'&amp;month='.$month.'"><img src="'.$nom_picture.'" alt="logo"/></a>'.PHP_EOL.'</td>'.PHP_EOL;
+                                echo '<div class="row">';
+                                   echo '<div id="message-accueil" class="col-md-offset-2 col-md-10">';
+                                        if(strlen(strip_tags(Settings::get('message_accueil'))) >= 100){
+                                                echo substr(strip_tags(Settings::get('message_accueil')), 0, 100).'...';
+                                                $messageEchappe = addslashes(Settings::get('message_accueil'));
+                                                echo "<a id='popoverMessage' role='button' class='btn btn-link' data-toggle='popover' data-content='".$messageEchappe."' data-placement='bottom' data-html='true' data-trigger='click'>Lire la suite</a>";
+                                        }else{
+                                                echo Settings::get('message_accueil');
+                                        }
+                                echo '</div></div>';
+                                echo "<script>$('#popoverMessage').popover();</script>";
+                        }
 			
-			//Accueil
-			echo '<div class="col-md-4 accueil ">',PHP_EOL,'<h3>',PHP_EOL,'<a href="'.$racine.page_accueil('yes'),'day=',$day,'&amp;year=',$year,'&amp;month=',$month,'">',get_vocab("welcome"),'</a>';
-			echo ' - <b style="font-size: 20px;">',getCompanyNameForBandeau(),'</b>',PHP_EOL,'</h3>',PHP_EOL;
-			
-			
-			
-			//Mail réservartion
-			echo Settings::get('message_accueil');
-			$sql = "SELECT value FROM ".TABLE_PREFIX."_setting WHERE name='mail_etat_destinataire'";
-			$res = grr_sql_query1($sql);
-			
-			//Libère le résultat de la mémoire
-			grr_sql_free($res);
-			if ($res == 1)
-			{
-				if ($type_session == "no_session")
-				{
-					echo '<span class="contactformulaire">',PHP_EOL,'<input class="btn btn-default" type="submit" rel="popup_name" value="Réserver" onClick="javascript:location.href=\'contactFormulaire.php?day=',$day,'&amp;month=',$month,'&amp;year=',$year,'\'" >',PHP_EOL,'</span>',PHP_EOL;
-				}
-			}
-			echo '</div>';
-			
-			// Administration div Sauvegarde
-			if ($type_session == "with_session")
-			{
-				if ((authGetUserLevel(getUserName(), -1, 'area') >= 4) || (authGetUserLevel(getUserName(), -1, 'user') == 1))
-				{
-					echo '<div class="col-md-4 administration">'.PHP_EOL;
-					echo "<br><a href='{$racineAd}admin_accueil.php?day={$day}&amp;month={$month}&amp;year={$year}'>".get_vocab('admin')."</a>".PHP_EOL;
-					if (authGetUserLevel(getUserName(), -1, 'area') >= 6)
-					{
-						echo '<br />'.PHP_EOL;
-						echo "<form action='{$racineAd}admin_save_mysql.php' method='get'><div>".PHP_EOL;
-						echo '<input type="hidden" name="flag_connect" value="yes" />'.PHP_EOL;
-						echo '<input type="submit" class="btn btn-default btn-xs" value="'.get_vocab("submit_backup").'" /></div>'.PHP_EOL;
-						echo '</form>'.PHP_EOL;
-						how_many_connected();
-					}
-					echo '</div>'.PHP_EOL;
-				}
-			}
-			if ($type_session != "with_session")
-				echo '<script>selection()</script>'.PHP_EOL;
-			
-			echo '<div class="col-md-4 configuration" >'.PHP_EOL;
-			// Suppression de la date/heure
-			if (@file_exists('js/'.$clock_file))
-			{
-				echo '<div class="clock">'.PHP_EOL;
-				echo '<div id="Date">'.PHP_EOL;
-				echo '&nbsp;<span id="hours"></span>'.PHP_EOL;
-				echo 'h'.PHP_EOL;
-				echo '<span id="min"></span>'.PHP_EOL;
-				echo '</div></div>'.PHP_EOL;
-			}
-			$_SESSION['chemin_retour'] = '';
-			if (isset($_SERVER['QUERY_STRING']) && ($_SERVER['QUERY_STRING'] != ''))
-			{
-				$parametres_url = htmlspecialchars($_SERVER['QUERY_STRING'])."&amp;";
-				$_SESSION['chemin_retour'] = traite_grr_url($grr_script_name)."?". $_SERVER['QUERY_STRING'];
-				echo '<a onclick="charger();" href="'.traite_grr_url($grr_script_name).'?'.$parametres_url.'default_language=fr"><img src="'.$racine.'img_grr/fr_dp.png" alt="France" title="france" width="20" height="13" class="image" /></a>'.PHP_EOL;
-				echo '<a onclick="charger();" href="'.traite_grr_url($grr_script_name).'?'.$parametres_url.'default_language=de"><img src="'.$racine.'img_grr/de_dp.png" alt="Deutch" title="deutch" width="20" height="13" class="image" /></a>'.PHP_EOL;
-				echo '<a onclick="charger();" href="'.traite_grr_url($grr_script_name).'?'.$parametres_url.'default_language=en"><img src="'.$racine.'img_grr/en_dp.png" alt="English" title="English" width="20" height="13" class="image" /></a>'.PHP_EOL;
-				echo '<a onclick="charger();" href="'.traite_grr_url($grr_script_name).'?'.$parametres_url.'default_language=it"><img src="'.$racine.'img_grr/it_dp.png" alt="Italiano" title="Italiano" width="20" height="13" class="image" /></a>'.PHP_EOL;
-				echo '<a onclick="charger();" href="'.traite_grr_url($grr_script_name).'?'.$parametres_url.'default_language=es"><img src="'.$racine.'img_grr/es_dp.png" alt="Spanish" title="Spanish" width="20" height="13" class="image" /></a>'.PHP_EOL;
-			}
-			if ($type_session == 'no_session')
-			{
-				if ((Settings::get('sso_statut') == 'cas_visiteur') || (Settings::get('sso_statut') == 'cas_utilisateur'))
-				{
-					echo '<br /> <a href="index.php?force_authentification=y">'.get_vocab("authentification").'</a>'.PHP_EOL;
-					echo '<br /> <small><i><a href="login.php">'.get_vocab("connect_local").'</a></i></small>'.PHP_EOL;
-				}
-				else
-					echo '<br /> <a href="login.php">'.get_vocab("connect").'</a>'.PHP_EOL;
-			}
-			else
-			{
-				// suppression du "Bienvenue + nom d'utilisateur"
-				//echo '<br /> <b>'.get_vocab("welcome_to").htmlspecialchars($_SESSION['prenom']).' '.htmlspecialchars($_SESSION['nom']).'</b>'.PHP_EOL;
-				echo '<br /> <a href="'.$racine.'my_account.php?day='.$day.'&amp;year='.$year.'&amp;month='.$month.'">'.get_vocab("manage_my_account").'</a>'.PHP_EOL;
-				if (verif_access_search(getUserName()))
-					echo '<br/><a href="'.$racine.'report.php">'.get_vocab("report").'</a>'.PHP_EOL;
-				$disconnect_link = false;
-				
-				if (!((Settings::get("cacher_lien_deconnecter") == 'y') && (isset($_SESSION['est_authentifie_sso'])))){
-					
-					$disconnect_link = true;
-					if (Settings::get("authentification_obli") == 1)
-						echo '<br /> <a href="'.$racine.'logout.php?auto=0" >'.get_vocab('disconnect').'</a>'.PHP_EOL;
-					else
-						echo '<br /> <a href="'.$racine.'logout.php?auto=0&amp;redirect_page_accueil=yes" >'.get_vocab('disconnect').'</a>'.PHP_EOL;
-				}
-				if ((Settings::get("Url_portail_sso") != '') && (isset($_SESSION['est_authentifie_sso']))){
-					
-					if ($disconnect_link)
-						echo ' - '.PHP_EOL;
-					else
-						echo '<br />'.PHP_EOL;
-					echo '<a href="'.Settings::get("Url_portail_sso").'">'.get_vocab("Portail_accueil").'</a>'.PHP_EOL;
-				}
-				if ((Settings::get('sso_statut') == 'lasso_visiteur') || (Settings::get('sso_statut') == 'lasso_utilisateur')){
-					
-					echo '<br />';
-					if ($_SESSION['lasso_nameid'] == NULL)
-						echo '<a href="lasso/federate.php">'.get_vocab('lasso_federate_this_account').'</a>'.PHP_EOL;
-					else
-						echo '<a href="lasso/defederate.php">'.get_vocab('lasso_defederate_this_account').'</a>'.PHP_EOL;
-				}
-			}
-
-			echo '</div>'.PHP_EOL;
-			echo '</div>'.PHP_EOL;
-			echo '</div>'.PHP_EOL;
-			echo '<div class="tab">'.PHP_EOL;
-				//	echo '<ul class="login">'.PHP_EOL;
-					//echo '<li>'.PHP_EOL;
-					// Suppression de l'option "ouvrir/fermer"
-					//echo '<a id="open" class="open" href="#">Menu <i>(ouvrir/fermer)</i></a>'.PHP_EOL;
-				//	echo '</li>'.PHP_EOL;
-				//	echo '</ul>'.PHP_EOL;
-			echo '</div>'.PHP_EOL;
-			echo '</div>'.PHP_EOL;
-			echo '</div>'.PHP_EOL;*/
 		}
 	}
 }
