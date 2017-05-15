@@ -303,15 +303,23 @@ else
 		else
 			$erreur = 'y';
 	}
-	if (!isset($_GET["end_day"]) || !isset($_GET["end_month"]) || !isset($_GET["end_year"]) || !isset($_GET["end_hour"]) || !isset($_GET["end_minute"]))
+//	if (!isset($_GET["end_day"]) or !isset($_GET["end_month"]) or !isset($_GET["end_year"]) or !isset($_GET["end_hour"]) or !isset($_GET["end_minute"]))
+	if (!isset($_GET["end_day"]) || !isset($_GET["end_month"]) || !isset($_GET["end_year"]) || (!isset($_GET["end_"]) && !isset($_GET["end_hour"])) || (!isset($_GET["end_"]) && !isset($_GET["end_minute"])))
 		$erreur = 'y';
 	else
 	{
 		$end_day = $_GET["end_day"];
 		$end_year = $_GET["end_year"];
 		$end_month = $_GET["end_month"];
-		$end_hour = $_GET["end_hour"];
-		$end_minute = $_GET["end_minute"];
+                if (isset($_GET["end_"])) {
+                        $fin = array();
+                        $fin = explode(':', $_GET["end_"]);
+                        $end_hour = $fin[0];
+                        $end_minute = $fin[1];
+                } else {
+                        $end_hour = $_GET["end_hour"];
+                        $end_minute = $_GET["end_minute"];
+                }
 		settype($end_month, "integer");
 		settype($end_day, "integer");
 		settype($end_year, "integer");
