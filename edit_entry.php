@@ -321,6 +321,10 @@ if (!getWritable($beneficiaire, getUserName(),$id))
 }
 
 // On cherche s'il y a d'autres domaines auxquels l'utilisateur a accès
+$allareas_id = array();
+/* On supprime la recherche des domaines, qui semblent ne servir à rien ici.
+// Par contre, on garde le tableau $allareas_id car sinon les types de réservations ne s'affichent pas !?
+// CD - 20170516
 $nb_areas = 0;
 
 if (Settings::get("module_multietablissement") == "Oui"){
@@ -334,7 +338,6 @@ if (Settings::get("module_multietablissement") == "Oui"){
 }
 
 $res = grr_sql_query($sql);
-$allareas_id = array();
 if ($res)
 {
 	for ($i = 0; ($row = grr_sql_row($res, $i)); $i++)
@@ -346,6 +349,7 @@ if ($res)
 		}
 	}
 }
+//Fin de la recherche des domaines, qui semble ne servir à rien... */
 $use_select2 = 'y';
 print_header($day, $month, $year, $type="with_session");
 
@@ -656,6 +660,9 @@ if (isset($this_room_warning) && $this_room_warning!='' && $this_room_warning!='
     echo "<h3><span class='avertissement'>".htmlspecialchars($this_room_warning)."</span></h3>\n";
 
 echo '<form class="form-inline" id="main" action="edit_entry_handler.php" method="get">'.PHP_EOL;
+// cette variable sera nécessaire dans la suite, l'exécuter une Fois seulement fait gagner beaucoup de temps...
+// CD - 20170516
+$tab_rooms_noaccess = verif_acces_ressource(getUserName(), 'all');
 ?>
 
 <script type="text/javascript" >
@@ -707,7 +714,9 @@ echo '<form class="form-inline" id="main" action="edit_entry_handler.php" method
 					{
 						print "      case \"".$row[0]."\":\n";
 						$sql2 = "SELECT id, room_name FROM ".TABLE_PREFIX."_room WHERE area_id='".$row[0]."'";
-						$tab_rooms_noaccess = verif_acces_ressource(getUserName(), 'all');
+// Retiré, c'est pas la peine de lancer cette fonction gourmande à chaque passage...
+// CD - 20170516
+//						$tab_rooms_noaccess = verif_acces_ressource(getUserName(), 'all');
 						foreach($tab_rooms_noaccess as $key)
 						{
 							$sql2 .= " AND id != $key ";
@@ -1072,6 +1081,8 @@ if (($delais_option_reservation > 0) && (($modif_option_reservation == 'y') || (
 	echo '<br /><div class="alert alert-danger" role="alert">'.get_vocab("avertissement_reservation_a_confirmer").'</b></div>'.PHP_EOL;
 	echo "</div></td></tr>\n";
 }
+/* Début de la suppression de la liste des domaines, ce qui semble ne servir à rien !
+// CD - 20170516
 echo "<tr ";
 if ($nb_areas == 1)
 	echo "style=\"display:none\" ";
@@ -1128,6 +1139,7 @@ if ($res){
 }
 
 echo '</select>',PHP_EOL,'</div>',PHP_EOL,'</td>',PHP_EOL,'</tr>',PHP_EOL;
+//FIN de la recherche des domaines, qui ne sert à rien ! */
 
 // *****************************************
 // Edition de la partie ressources
@@ -1137,8 +1149,9 @@ echo '<!-- ************* Ressources edition ***************** -->',PHP_EOL;
 echo "<tr><td class=\"E\"><b>".get_vocab("rooms").get_vocab("deux_points")."</b></td></tr>\n";
 $sql = "SELECT id, room_name, description FROM ".TABLE_PREFIX."_room WHERE area_id=$area_id ";
 
-// on ne cherche pas parmi les ressources invisibles pour l'utilisateur
-$tab_rooms_noaccess = verif_acces_ressource(getUserName(), 'all');
+// On ne cherche pas ic parmi les ressources invisibles pour l'utilisateur puisque c'est fait plus haut
+// CD - 20170516
+//$tab_rooms_noaccess = verif_acces_ressource(getUserName(), 'all');
 
 foreach ($tab_rooms_noaccess as $key){
 	
