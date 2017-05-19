@@ -80,6 +80,14 @@ if (isset($_GET['grr_mail_smtp']))
 		die();
 	}
 }
+if (isset($_GET['smtp_port']))
+{
+	if (!Settings::set("smtp_port", $_GET['smtp_port']))
+	{
+		echo "Erreur lors de l'enregistrement de smtp_port !<br />";
+		die();
+	}
+}
 if (isset($_GET['grr_mail_Username']))
 {
 	if (!Settings::set("grr_mail_Username", $_GET['grr_mail_Username']))
@@ -214,6 +222,8 @@ echo "/>\n";
 echo get_vocab('methode smtp');
 echo "\n<br /><br />".get_vocab('Explications methode smtp 1').get_vocab('deux_points');
 echo "\n<input type = \"text\" name=\"grr_mail_smtp\" value =\"".Settings::get('grr_mail_smtp')."\" />";
+echo "\n<br />".get_vocab('smtp_port').get_vocab('deux_points');
+echo "\n<input type = \"text\" name=\"smtp_port\" value =\"".Settings::get('smtp_port')."\" />";
 echo "\n<br />".get_vocab('Explications methode smtp 2');
 echo "\n<br />".get_vocab('utilisateur smtp').get_vocab('deux_points');
 echo "\n<input type = \"text\" name=\"grr_mail_Username\" value =\"".Settings::get('grr_mail_Username')."\" />";
