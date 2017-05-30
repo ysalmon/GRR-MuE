@@ -44,17 +44,17 @@ print_header("", "", "", $type="with_session");
 include "admin_col_gauche.php";
 
 if ((isset($_GET['action_del'])) && ($_GET['js_confirmed'] == 1) && ($_GET['action_del'] = 'yes')){
-	
+
 	// faire le test si il existe une réservation en cours avec ce type de réservation
 	$type_id = grr_sql_query1("SELECT type_letter FROM ".TABLE_PREFIX."_type_area WHERE id = '".$_GET['type_del']."'");
 	$test1 = grr_sql_query1("SELECT count(id) FROM ".TABLE_PREFIX."_entry WHERE type= '".$type_id."'");
 	$test2 = grr_sql_query1("SELECT count(id) FROM ".TABLE_PREFIX."_repeat WHERE type= '".$type_id."'");
 	if (($test1 != 0) || ($test2 != 0)){
-		
+
 		$msg =  "Suppression impossible : des réservations ont été enregistrées avec ce type.";
 	}
 	else{
-		
+
 		$sql = "DELETE FROM ".TABLE_PREFIX."_type_area WHERE id='".$_GET['type_del']."'";
 		if (grr_sql_command($sql) < 0)
 			fatal_error(1, "<p>" . grr_sql_error());
@@ -75,13 +75,13 @@ echo "<br />\n";
 echo "<br />\n";
 
 if (Settings::get("module_multietablissement") == "Oui") {
-	$sql = "SELECT id, type_name, order_display, couleur, type_letter, disponible 
-			FROM ".TABLE_PREFIX."_type_area 
+	$sql = "SELECT id, type_name, order_display, couleur, type_letter, disponible
+			FROM ".TABLE_PREFIX."_type_area
 			LEFT JOIN ".TABLE_PREFIX."_j_etablissement_type_area ON id_type_area = id
-			WHERE id_etablissement IS NULL 
+			WHERE id_etablissement IS NULL
 			ORDER BY order_display,type_letter";
 } else {
-	$sql = "SELECT id, type_name, order_display, couleur, type_letter, disponible 
+	$sql = "SELECT id, type_name, order_display, couleur, type_letter, disponible
 			FROM ".TABLE_PREFIX."_type_area
 			ORDER BY order_display,type_letter";
 }
@@ -91,7 +91,7 @@ $nb_lignes = grr_sql_count($res);
 if ($nb_lignes == 0){
 	// fin de l'affichage de la colonne de droite
 	//echo "</td></tr></table>";
-	echo "</div></div>';
+	echo "</div></div>";
 	echo "</body></html>";
 	die();
 }
