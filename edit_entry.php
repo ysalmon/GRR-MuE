@@ -142,6 +142,11 @@ if (UserRoomMaxBooking(getUserName(), $room, $compt) == 0){
 }
 $etype = 0;
 
+$duree_petit_bloc_area = grr_sql_query1("SELECT resolution_area FROM ".TABLE_PREFIX."_area WHERE id='".$area."'");
+$debut_Matin = grr_sql_query1("SELECT morningstarts_area FROM ".TABLE_PREFIX."_area WHERE id='".$area."'");
+$fin_Soir = grr_sql_query1("SELECT eveningends_area FROM ".TABLE_PREFIX."_area WHERE id='".$area."'");
+
+
 if (isset($id)){
 	
 	$sql = "SELECT name, beneficiaire, description, start_time, end_time, type, room_id, entry_type, repeat_id, option_reservation, jours, create_by, beneficiaire_ext, statut_entry, clef, courrier FROM ".TABLE_PREFIX."_entry WHERE id=$id";
@@ -917,12 +922,12 @@ else
 	if (isset ($_GET['id']))
 	{
 		$duree_par_defaut_reservation_area = $duration;
-		jQuery_TimePicker('start_', $start_hour, $start_min,$duree_par_defaut_reservation_area);
+        comboBoxHeureDebutFinReservation($debut_Matin,$fin_Soir,$duree_petit_bloc_area,$start_hour,$start_min,false);
 	}
 	else
 	{
-		jQuery_TimePicker('start_', '', '',$duree_par_defaut_reservation_area);
-	}
+        comboBoxHeureDebutFinReservation($debut_Matin,$fin_Soir,$duree_petit_bloc_area, $_GET['hour'],$_GET['minute'],false);
+    }
 	if (!$twentyfourhour_format)
 	{
 		$checked = ($start_hour < 12) ? 'checked="checked"' : "";
@@ -1020,12 +1025,12 @@ else
 		echo "<b>".get_vocab("time")." : </b>";
 		if (isset ($_GET['id']))
 		{
-			jQuery_TimePicker ('end_', $end_hour, $end_min,$duree_par_defaut_reservation_area);
-		}
-		else
-		{
-			jQuery_TimePicker ('end_', '', '',$duree_par_defaut_reservation_area);
-		}
+            comboBoxHeureDebutFinReservation($debut_Matin,$fin_Soir,$duree_petit_bloc_area,$end_hour, $end_min,true);
+        }
+        else
+        {
+            comboBoxHeureDebutFinReservation($debut_Matin,$fin_Soir,$duree_petit_bloc_area, $_GET['hour'],$_GET['minute'],true);
+        }
 		if (!$twentyfourhour_format)
 		{
 			$checked = ($end_hour < 12) ? "checked=\"checked\"" : "";

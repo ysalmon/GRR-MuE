@@ -5148,11 +5148,12 @@ function jQuery_TimePicker($typeTime, $start_hour, $start_min,$dureepardefaultse
 	</span>
 </div>';
 echo '<script type="text/javascript">
-$(\'.clockpicker\').clockpicker({
+var cl = $(\'.clockpicker\').clockpicker({
 	align: \'left\',
 	placement: \'top\',
-	donetext: \'Valider\'
-});
+	donetext: \'Valider\',
+	minuteInterval : '.(is_float($dureepardefaultsec/60) ? 5 : (60%($dureepardefaultsec/60) ==0 ? $dureepardefaultsec/60 : 60%($dureepardefaultsec/60)) ).' 
+}); 
 </script>';
 }
 function spinner ($duration)
@@ -5166,6 +5167,51 @@ function spinner ($duration)
 		});});
 </script>";
 }
+/** comboBoxHeureDebutFinReservation()
+ *
+ * Creer la comboBox pour la selection de l'heure de debut et de fin de reservation. Avec toutes les heures possible
+ * dans la plage de la journée.
+ *
+ *
+ * Returns:
+ *   void
+ */
+function comboBoxHeureDebutFinReservation($debut_Matin,$fin_Soir,$duree_petit_bloc_area,$start_hour,$start_min,$isend){
+
+    $name = $isend ? 'end_' : 'start_';
+    echo "<div class=\"input-group col-xs-6\"><select class=\"form-control\" name=\"".$name."\"  >";
+    $optionsResolution = array();
+    //Recuperation des heures de debut de la journée et de fin
+    $debut_Matin=  $debut_Matin.":00";
+    $fin_Soir=  $fin_Soir.":00";
+    //conversion en date 
+    $tStart = strtotime($debut_Matin);
+    $tEnd = strtotime($fin_Soir);
+    $tNow = $tStart;
+
+    while($tNow <= $tEnd){
+        array_push($optionsResolution,date("H:i",$tNow));
+        //On ajoute le nombre de secondes de la résolution 
+        $tNow = strtotime('+'.$duree_petit_bloc_area.' seconds',$tNow);
+    }
+    //On ajoute l'heure de fin en plus si selection de l"heure de fin
+    if($isend){
+        array_push($optionsResolution,date("H:i",$tNow));
+    }
+    $output = '';
+    for( $i=0; $i<count($optionsResolution); $i++ ) {
+        $output .= '<option value="'.$optionsResolution[$i]. '" ';
+        $output .= (( $start_hour.":".$start_min) == $optionsResolution[$i]) ? 'selected="selected" ' : ''  ;
+        $output .= ' >'.$optionsResolution[$i];
+        $output .= '</option>';
+    }
+    echo $output;
+    echo "</select>";
+    echo "</div>";
+
+}
+
+
 /** supprimerReservationsUtilisateursEXT()
  *
  * Supprime les réservations des membres qui proviennent d'une source "EXT"
