@@ -118,8 +118,14 @@ if (isset($_GET['valider']))
 affiche_pop_up($msg,"admin");
 
 $area_name = grr_sql_query1("SELECT area_name FROM ".TABLE_PREFIX."_area WHERE id='".$id_area."'");
+if($area_name == -1){
+    echo "</body></html>";
+    die();
+    //admin_room.php?id_site=
+}
+$etablisement_name = grr_sql_query1("SELECT name FROM ".TABLE_PREFIX."_etablissement WHERE id='".$idEtablissement."'");
 echo "<div>";
-echo "<h2>".get_vocab('admin_type.php')."</h2>";
+echo "<h2>".get_vocab('admin_type_area.php').get_vocab('deux_points').$etablisement_name."</h2>";
 echo "<h2>".get_vocab("match_area").get_vocab('deux_points')." ".$area_name."</h2>";
 $res = grr_sql_query($sql);
 $nb_lignes = grr_sql_count($res);
@@ -130,8 +136,9 @@ if ($nb_lignes == 0)
 }
 echo "<form action=\"admin_type_area.php\" id=\"type\" method=\"get\">\n";
 echo "<table>";
-if (authGetUserLevel(getUserName(),-1) >= 6)
-	echo "<tr><td><a href=\"admin_type_modify.php?id=0\">".get_vocab("display_add_type")."</a></td></tr>";
+if (authGetUserLevel(getUserName(),-1) >= 7)
+    echo "<tr><td><a href=\"admin_type_modify.php?id=0\">".get_vocab("display_add_type_general")."</a></td></tr>";
+echo "<tr><td><a href=\"admin_type_etablissement_modify.php?id=0\">".get_vocab("display_add_type_etablissement")."</a></td></tr>";
 echo "<tr><td>".get_vocab("explications_active_type")."</td></tr>";
 echo "<tr><td>\n";
 // Affichage du tableau
