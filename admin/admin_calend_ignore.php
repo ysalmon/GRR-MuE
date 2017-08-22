@@ -42,7 +42,7 @@ if (Settings::get("module_multietablissement") == "Oui"){
 	$id_etablissement = getIdEtablissementCourant();
 }
 
-check_access(6, $back);
+check_access(7, $back);
 
 
 

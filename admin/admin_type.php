@@ -34,7 +34,7 @@ $back = "";
 if (isset($_SERVER['HTTP_REFERER']))
 	$back = htmlspecialchars($_SERVER['HTTP_REFERER']);
 
-check_access(6, $back);
+check_access(7, $back);
 if ((isset($_GET['msg'])) && isset($_SESSION['displ_msg']) && ($_SESSION['displ_msg'] == 'yes') )
 	$msg = $_GET['msg'];
 else
@@ -70,7 +70,7 @@ echo "<h2>".get_vocab('admin_type.php')."</h2>";
 echo get_vocab('admin_type_explications');
 echo "<br />\n";
 echo "<br />\n";
-echo "| <a href=\"admin_type_modify.php?id=0\">".get_vocab("display_add_type")."</a> |\n";
+echo "| <a href=\"admin_type_modify.php?id=0\">".get_vocab("display_add_type_general")."</a> |\n";
 echo "<br />\n";
 echo "<br />\n";
 
