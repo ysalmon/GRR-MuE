@@ -155,7 +155,7 @@ echo "<h3>".get_vocab("Activer_module_jours_cycles")."</h3>\n";
 echo "<table border='0'>\n<tr>\n<td>\n";
 echo get_vocab("Activer_module_jours_cycles").get_vocab("deux_points");
 echo "<select name='jours_cycles'>\n";
-if (Settings::get("jours_cycles_actif") == "Oui")
+if (Settings::getGeneral("jours_cycles_actif") == "Oui")
 {
 	echo "<option value=\"Oui\" selected=\"selected\">".get_vocab('YES')."</option>\n";
 	echo "<option value=\"Non\">".get_vocab('NO')."</option>\n";
@@ -173,7 +173,7 @@ echo "<h3>".get_vocab("Activer_module_multietablissement")."</h3>\n";
 echo "<table border='0'>\n<tr>\n<td>\n";
 echo get_vocab("Activer_module_multietablissement").get_vocab("deux_points");
 echo "<select name='module_multietablissement'>\n";
-if (Settings::get("module_multietablissement",true) == "Oui") {
+if (Settings::getGeneral("module_multietablissement",true) == "Oui") {
 	echo "<option value=\"Oui\" selected=\"selected\">".get_vocab('YES')."</option>\n";
 	echo "<option value=\"Non\">".get_vocab('NO')."</option>\n";
 } else {
@@ -188,7 +188,7 @@ echo "<h3>".get_vocab("Activer_module_multisite")."</h3>\n";
 echo "<table border='0'>\n<tr>\n<td>\n";
 echo get_vocab("Activer_module_multisite").get_vocab("deux_points");
 echo "<select name='module_multisite'>\n";
-if (Settings::get("module_multisite") == "Oui")
+if (Settings::getGeneral("module_multisite") == "Oui")
 {
 	echo "<option value=\"Oui\" selected=\"selected\">".get_vocab('YES')."</option>\n";
 	echo "<option value=\"Non\">".get_vocab('NO')."</option>\n";
@@ -205,7 +205,7 @@ echo "<h3>".get_vocab("Activer_export_xml")."</h3>\n";
 echo "<table border='0'>\n<tr>\n<td>\n";
 echo get_vocab("Activer_export_xml").get_vocab("deux_points");
 echo "<select name='export_xml'>\n";
-if (Settings::get("export_xml_actif") == "Oui")
+if (Settings::getGeneral("export_xml_actif") == "Oui")
 {
 	echo "<option value=\"Oui\" selected=\"selected\">".get_vocab('YES')."</option>\n";
 	echo "<option value=\"Non\">".get_vocab('NO')."</option>\n";
@@ -222,7 +222,7 @@ echo "<h3>".get_vocab("Activer_export_plus_xml")."</h3>\n";
 echo "<table border='0'>\n<tr>\n<td>\n";
 echo get_vocab("Activer_export_plus_xml").get_vocab("deux_points");
 echo "<select name='export_xml_plus'>\n";
-if (Settings::get("export_xml_plus_actif") == "Oui")
+if (Settings::getGeneral("export_xml_plus_actif") == "Oui")
 {
 	echo "<option value=\"Oui\" selected=\"selected\">".get_vocab('YES')."</option>\n";
 	echo "<option value=\"Non\">".get_vocab('NO')."</option>\n";
@@ -240,13 +240,13 @@ echo "\n<p>".get_vocab("use_fckeditor_explain")."</p>";
 echo "\n<table>";
 echo "\n<tr><td>".get_vocab("use_fckeditor0")."</td><td>";
 echo "\n<input type='radio' name='use_fckeditor' value='0' ";
-if (Settings::get("use_fckeditor") == '0')
+if (Settings::getGeneral("use_fckeditor") == '0')
 	echo "checked=\"checked\"";
 echo " />";
 echo "\n</td></tr>";
 echo "\n<tr><td>".get_vocab("use_fckeditor1")."</td><td>";
 echo "\n<input type='radio' name='use_fckeditor' value='1' ";
-if (Settings::get("use_fckeditor") == '1')
+if (Settings::getGeneral("use_fckeditor") == '1')
 	echo "checked=\"checked\"";
 echo " />";
 echo "\n</td></tr>";

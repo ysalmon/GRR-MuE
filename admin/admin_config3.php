@@ -189,57 +189,57 @@ echo "<p><i>".get_vocab("warning_message_mail")."</i></p>\n";
 echo "<p>".get_vocab("explain_automatic_mail")."\n";
 ?>
 <br />
-<input type='radio' name='automatic_mail' value='yes' id='label_3' <?php if (Settings::get("automatic_mail") == 'yes') echo "checked=\"checked\"";?> />
+<input type='radio' name='automatic_mail' value='yes' id='label_3' <?php if (Settings::getGeneral("automatic_mail") == 'yes') echo "checked=\"checked\"";?> />
 <label for='label_3'>
 <?php
 echo get_vocab("mail_admin_on");
-if (Settings::get("automatic_mail") == 'yes')
+if (Settings::getGeneral("automatic_mail") == 'yes')
 	echo " - <a href='admin_email_manager.php'>".get_vocab('admin_email_manager.php')."</a>\n";
 ?>
 </label>
 <br />
-<input type='radio' name='automatic_mail' value='no' id='label_4' <?php if (Settings::get("automatic_mail") == 'no') echo "checked=\"checked\"";?> />
+<input type='radio' name='automatic_mail' value='no' id='label_4' <?php if (Settings::getGeneral("automatic_mail") == 'no') echo "checked=\"checked\"";?> />
 <label for='label_4'><?php echo get_vocab("mail_admin_off"); ?></label>
 <?php
 // Configuration des liens adresses
 echo "</p><hr /><h3>".get_vocab('configuration_liens_adresses')."</h3>\n";
 echo "<p>";
 ?>
-<input type='radio' name='envoyer_email_avec_formulaire' value='yes' id='label_5' <?php if (Settings::get("envoyer_email_avec_formulaire") == 'yes') echo "checked=\"checked\"";?> /><label for='label_5'><?php echo get_vocab("envoyer_email_avec_formulaire_oui"); ?></label>
-<br /><input type='radio' name='envoyer_email_avec_formulaire' value='no' id='label_6' <?php if (Settings::get("envoyer_email_avec_formulaire") == 'no') echo "checked=\"checked\"";?> /> <label for='label_6'><?php echo get_vocab("envoyer_email_avec_formulaire_non"); ?></label>
+<input type='radio' name='envoyer_email_avec_formulaire' value='yes' id='label_5' <?php if (Settings::getGeneral("envoyer_email_avec_formulaire") == 'yes') echo "checked=\"checked\"";?> /><label for='label_5'><?php echo get_vocab("envoyer_email_avec_formulaire_oui"); ?></label>
+<br /><input type='radio' name='envoyer_email_avec_formulaire' value='no' id='label_6' <?php if (Settings::getGeneral("envoyer_email_avec_formulaire") == 'no') echo "checked=\"checked\"";?> /> <label for='label_6'><?php echo get_vocab("envoyer_email_avec_formulaire_non"); ?></label>
 <?php
 echo "</p><hr /><h3>".get_vocab('Parametres configuration envoi automatique mails')."</h3>\n";
 echo "<p>".get_vocab('Explications des parametres configuration envoi automatique mails');
 echo "<br /><br /><input type=\"radio\" name=\"grr_mail_method\" value=\"mail\" ";
-if (Settings::get('grr_mail_method') == "mail")
+if (Settings::getGeneral('grr_mail_method') == "mail")
 	echo " checked=\"checked\" ";
 echo "/>\n";
 echo get_vocab('methode mail');
 echo "  <input type=\"radio\" name=\"grr_mail_method\" value=\"smtp\" ";
-if (Settings::get('grr_mail_method') == "smtp")
+if (Settings::getGeneral('grr_mail_method') == "smtp")
 	echo " checked=\"checked\" ";
 echo "/>\n";
 echo get_vocab('methode smtp');
 echo "\n<br /><br />".get_vocab('Explications methode smtp 1').get_vocab('deux_points');
-echo "\n<input type = \"text\" name=\"grr_mail_smtp\" value =\"".Settings::get('grr_mail_smtp')."\" />";
+echo "\n<input type = \"text\" name=\"grr_mail_smtp\" value =\"".Settings::getGeneral('grr_mail_smtp')."\" />";
 echo "\n<br />".get_vocab('smtp_port').get_vocab('deux_points');
-echo "\n<input type = \"text\" name=\"smtp_port\" value =\"".Settings::get('smtp_port')."\" />";
+echo "\n<input type = \"text\" name=\"smtp_port\" value =\"".Settings::getGeneral('smtp_port')."\" />";
 echo "\n<br />".get_vocab('Explications methode smtp 2');
 echo "\n<br />".get_vocab('utilisateur smtp').get_vocab('deux_points');
-echo "\n<input type = \"text\" name=\"grr_mail_Username\" value =\"".Settings::get('grr_mail_Username')."\" />";
+echo "\n<input type = \"text\" name=\"grr_mail_Username\" value =\"".Settings::getGeneral('grr_mail_Username')."\" />";
 echo "\n<br />".get_vocab('pwd').get_vocab('deux_points');
-echo "\n<input type = \"password\" name=\"grr_mail_Password\" value =\"".Settings::get('grr_mail_Password')."\" />";
+echo "\n<input type = \"password\" name=\"grr_mail_Password\" value =\"".Settings::getGeneral('grr_mail_Password')."\" />";
 echo "\n<br />".get_vocab('Email_expediteur_messages_automatiques').get_vocab('deux_points');
-if (trim(Settings::get('grr_mail_from')) == "")
+if (trim(Settings::getGeneral('grr_mail_from')) == "")
 	$grr_mail_from = "noreply@mon.site.fr";
 else
-	$grr_mail_from = Settings::get('grr_mail_from');
+	$grr_mail_from = Settings::getGeneral('grr_mail_from');
 echo "\n<input type = \"text\" name=\"grr_mail_from\" value =\"".$grr_mail_from."\" size=\"30\" />";
 echo "\n<br />".get_vocab('Nom_expediteur_messages_automatiques').get_vocab('deux_points');
-echo "\n<input type = \"text\" name=\"grr_mail_fromname\" value =\"".Settings::get('grr_mail_fromname')."\" size=\"30\" />";
+echo "\n<input type = \"text\" name=\"grr_mail_fromname\" value =\"".Settings::getGeneral('grr_mail_fromname')."\" size=\"30\" />";
 echo "\n<br /><br />";
 echo "\n<input type=\"checkbox\" name=\"grr_mail_Bcc\" value=\"y\" ";
-if (Settings::get('grr_mail_Bcc') == "y")
+if (Settings::getGeneral('grr_mail_Bcc') == "y")
 	echo " checked=\"checked\" ";
 echo "/>";
 echo get_vocab('copie cachee');
@@ -249,13 +249,13 @@ echo "\n</p><hr /><h3>".get_vocab("javascript_info_disabled_msg")."</h3>";
 echo "\n<table cellspacing=\"5\">";
 echo "\n<tr><td>".get_vocab("javascript_info_disabled0")."</td><td>";
 echo "\n<input type='radio' name='javascript_info_disabled' value='0' ";
-if (Settings::get("javascript_info_disabled") == '0')
+if (Settings::getGeneral("javascript_info_disabled") == '0')
 	echo "checked=\"checked\"";
 echo " />";
 echo "\n</td></tr>";
 echo "\n<tr><td>".get_vocab("javascript_info_disabled1")."</td><td>";
 echo "\n<input type='radio' name='javascript_info_disabled' value='1' ";
-if (Settings::get("javascript_info_disabled") == '1')
+if (Settings::getGeneral("javascript_info_disabled") == '1')
 	echo "checked=\"checked\"";
 echo " />";
 echo "\n</td></tr>";
@@ -267,13 +267,13 @@ echo "\n<hr /><h3>".get_vocab("javascript_info_admin_disabled_msg")."</h3>";
 echo "\n<table cellspacing=\"5\">";
 echo "\n<tr><td>".get_vocab("javascript_info_admin_disabled0")."</td><td>";
 echo "\n<input type='radio' name='javascript_info_admin_disabled' value='0' ";
-if (Settings::get("javascript_info_admin_disabled") == '0')
+if (Settings::getGeneral("javascript_info_admin_disabled") == '0')
 	echo "checked=\"checked\"";
 echo " />";
 echo "\n</td></tr>";
 echo "\n<tr><td>".get_vocab("javascript_info_disabled1")."</td><td>";
 echo "\n<input type='radio' name='javascript_info_admin_disabled' value='1' ";
-if (Settings::get("javascript_info_admin_disabled") == '1')
+if (Settings::getGeneral("javascript_info_admin_disabled") == '1')
 	echo "checked=\"checked\"";
 echo " />";
 echo "\n</td></tr>";
@@ -285,21 +285,21 @@ echo "\n<p>".get_vocab('Explications suppression_automatique_des_reservations').
 echo "\n<table cellspacing=\"5\">";
 echo "\n<tr><td>".get_vocab("verif_reservation_auto0")."</td><td>";
 echo "\n<input type='radio' name='verif_reservation_auto' value='0' ";
-if (Settings::get("verif_reservation_auto") == '0')
+if (Settings::getGeneral("verif_reservation_auto") == '0')
 	echo "checked=\"checked\"";
 echo " />";
 echo "\n</td></tr>";
 echo "\n<tr><td>".get_vocab("verif_reservation_auto1")."</td><td>";
 echo "\n<input type='radio' name='verif_reservation_auto' value='1' ";
-if (Settings::get("verif_reservation_auto") == '1')
+if (Settings::getGeneral("verif_reservation_auto") == '1')
 	echo "checked=\"checked\"";
 echo " />";
 echo "\n</td></tr>";
 echo "\n<tr><td>".get_vocab("verif_reservation_auto2").get_vocab("deux_points")."</td><td>";
-echo "\n<input type=\"text\" name=\"motdepasse_verif_auto_grr\" value=\"".Settings::get("motdepasse_verif_auto_grr")."\" size=\"20\" />";
+echo "\n<input type=\"text\" name=\"motdepasse_verif_auto_grr\" value=\"".Settings::getGeneral("motdepasse_verif_auto_grr")."\" size=\"20\" />";
 echo "\n</td></tr>";
 echo "\n<tr><td>".get_vocab("verif_reservation_auto3").get_vocab("deux_points")."</td><td>";
-echo "\n<input type=\"text\" name=\"chemin_complet_grr\" value=\"".Settings::get("chemin_complet_grr")."\" size=\"20\" />";
+echo "\n<input type=\"text\" name=\"chemin_complet_grr\" value=\"".Settings::getGeneral("chemin_complet_grr")."\" size=\"20\" />";
 echo "\n</td></tr>";
 echo "\n</table>";
 echo "\n<p><input type=\"hidden\" name=\"page_config\" value=\"3\" />";
