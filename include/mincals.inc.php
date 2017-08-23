@@ -115,10 +115,14 @@ function minicals($year, $month, $day, $area, $room, $dmy){
 				$j = ($i + 7 + $weekstarts) % 7;
 				if ($display_day[$j] == "1")
 				{
-					if (($this->dmy == 'day') && ($d == $this->day) && ($this->h))
+                    $currentDay =   date("d");
+                    $currentMonth =   date("n");
+                	$currentYear =   date("Y");
+
+ 					if (($this->dmy == 'day') && ($d == $this->day) && ($this->h))
 						$s .= "<td class=\"week cal_current_day\">";
 					else{
-						if (($d == $this->day) && ($this->h))
+						if (($d == $this->day) && ($this->h) && ($this->dmy == 'day'))
 							$s .= "<td class=\"cellcalendar cellcalendar_current_day\">";
 						else
 							$s .= "<td class=\"cellcalendar\">";
@@ -129,9 +133,13 @@ function minicals($year, $month, $day, $area, $room, $dmy){
 						$link = $this->getDateLink($d, $this->month, $this->year);
 						if ($link == "")
 							$s .= $d;
-						elseif (($d == $this->day) && ($this->h))
-							$s .= $link."><span class=\"cal_current_day\" title=\"".$d."--".$this->day."--".$this->h."\">$d</span></a>";
-						else
+						elseif (($d == $this->day) && ($this->h)  && ($this->dmy != 'day'   ))
+                            $s .= $link."><span   class=\"\" title=\"".$d."--".$this->day."--".$this->h."\">$d</span></a>";
+						elseif (($d == $this->day) && ($this->h)   )
+                            $s .= $link."><span class=\"cal_current_day\" title=\"".$d."--".$this->day."--".$this->h."\">$d</span></a>";
+						elseif (($d == $currentDay)  && ($this->month == $currentMonth)  && ($this->year == $currentYear)   )
+                            $s .= $link."><span style=\"color: red;background-color: transparent;\" title=\"".$d."--".$this->day."--".$this->h."\">$d</span></a>";
+                        else
 							$s .= $link.">$d</a>";
 					}
 					else
