@@ -1,9 +1,9 @@
 <?php
 /**
  * admin_config5.php
- * Interface permettant à l'administrateur la configuration des paramètres pour le module Jours Cycles
+ * Interface permettant ï¿½ l'administrateur la configuration des paramï¿½tres pour le module Jours Cycles
  * Ce script fait partie de l'application GRR
- * Dernière modification : $Date: 2010-05-07 21:26:44 $
+ * Derniï¿½re modification : $Date: 2010-05-07 21:26:44 $
  * @author    Laurent Delineau <laurent.delineau@ac-poitiers.fr>
  * @copyright Copyright 2003-2008 Laurent Delineau
  * @link      http://www.gnu.org/licenses/licenses.html
@@ -27,7 +27,7 @@
  * along with GRR; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * Dernière modification 2014-à_-25 : CD - GIP RECIA - pour GRR version 2.0.2
+ * Derniï¿½re modification 2014-ï¿½_-25 : CD - GIP RECIA - pour GRR version 2.0.2
         Meilleur alignement du bouton "save"
  */
 /**
@@ -53,14 +53,14 @@
 if (!Settings::load())
     die("Erreur chargement settings");
 
-// Met à jour dans la BD le champ qui détermine si les fonctionnalités Jours/Cycles sont activées ou désactivées
+// Met ï¿½ jour dans la BD le champ qui dï¿½termine si les fonctionnalitï¿½s Jours/Cycles sont activï¿½es ou dï¿½sactivï¿½es
 if (isset($_GET['jours_cycles'])) {
     if (!Settings::setEtab("jours_cycles_actif", $_GET['jours_cycles'])) {
         echo "Erreur lors de l'enregistrement de jours_cycles_actif ! <br />";
     }
 }
 
-// Met à jour dans la BD du champ qui détermine si la fonctionnalité "multisite" est activée ou non
+// Met ï¿½ jour dans la BD du champ qui dï¿½termine si la fonctionnalitï¿½ "multisite" est activï¿½e ou non
 if (isset($_GET['module_multisite'])) {
     if (!Settings::setEtab("module_multisite", $_GET['module_multisite'])) {
         echo "Erreur lors de l'enregistrement de module_multisite ! <br />";
@@ -99,7 +99,7 @@ echo "<h3>".get_vocab("Activer_module_jours_cycles")./*grr_help("aide_grr_jours_
 echo "<table border='0'>\n<tr>\n<td>\n";
 echo get_vocab("Activer_module_jours_cycles").get_vocab("deux_points");
 echo "<select name='jours_cycles'>\n";
-if (Settings::get("jours_cycles_actif") == "Oui") {
+if (Settings::getEtab("jours_cycles_actif") == "Oui") {
     echo "<option value=\"Oui\" selected=\"selected\">".get_vocab('YES')."</option>\n";
     echo "<option value=\"Non\">".get_vocab('NO')."</option>\n";
 } else {
@@ -113,7 +113,7 @@ echo "<h3>".get_vocab("Activer_module_multisite")./*grr_help("aide_grr_multisite
 echo "<table border='0'>\n<tr>\n<td>\n";
 echo get_vocab("Activer_module_multisite").get_vocab("deux_points");
 echo "<select name='module_multisite'>\n";
-if (Settings::get("module_multisite") == "Oui") {
+if (Settings::getEtab("module_multisite") == "Oui") {
     echo "<option value=\"Oui\" selected=\"selected\">".get_vocab('YES')."</option>\n";
     echo "<option value=\"Non\">".get_vocab('NO')."</option>\n";
 } else {
@@ -123,22 +123,22 @@ if (Settings::get("module_multisite") == "Oui") {
 echo "</select>\n</td>\n</tr>\n</table>\n";
 
 
-# La page de modification de la configuration d'une ressource utilise pour le champ "description complète"
+# La page de modification de la configuration d'une ressource utilise pour le champ "description complï¿½te"
 # l'application FckEditor permettant une mise en forme "wysiwyg" de la page.
-# "0" pour ne pas utiliser cette application (le répertoire "fckeditor" et tout ce qu'il contient n'est alors pas nécessaire au bon fonctionnement de GRR).
+# "0" pour ne pas utiliser cette application (le rï¿½pertoire "fckeditor" et tout ce qu'il contient n'est alors pas nï¿½cessaire au bon fonctionnement de GRR).
 echo "\n<hr /><h3>".get_vocab("use_fckeditor_msg")."</h3>";
 echo "\n<p>".get_vocab("use_fckeditor_explain")."</p>";
 echo "\n<table>";
 echo "\n<tr><td>".get_vocab("use_fckeditor0")."</td><td>";
-echo "\n<input type='radio' name='use_fckeditor' value='0' "; if (Settings::get("use_fckeditor")=='0') echo "checked=\"checked\""; echo " />";
+echo "\n<input type='radio' name='use_fckeditor' value='0' "; if (Settings::getEtab("use_fckeditor")=='0') echo "checked=\"checked\""; echo " />";
 echo "\n</td></tr>";
 echo "\n<tr><td>".get_vocab("use_fckeditor1")."</td><td>";
-echo "\n<input type='radio' name='use_fckeditor' value='1' "; if (Settings::get("use_fckeditor")=='1') echo "checked=\"checked\""; echo " />";
+echo "\n<input type='radio' name='use_fckeditor' value='1' "; if (Settings::getEtab("use_fckeditor")=='1') echo "checked=\"checked\""; echo " />";
 echo "\n</td></tr>";
 echo "\n</table>";
 
 // Modif CD - RECIA - 2014-05-28 : 
-// alignement différent du bouton save pour intégration portail ENT
+// alignement diffï¿½rent du bouton save pour intï¿½gration portail ENT
 // Ancien code :
 //echo "\n<div id=\"fixe\" style=\"text-align:center;\"><input type=\"submit\" name=\"ok\" value=\"".get_vocab("save")."\" style=\"font-variant: small-caps;\"/>\n";
 // Nouveau code :

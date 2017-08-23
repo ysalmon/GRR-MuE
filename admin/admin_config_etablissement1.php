@@ -1,9 +1,9 @@
 <?php
 /**
  * admin_config_etablissement1.php
- * Interface permettant à l'administrateur la configuration de certains paramètres généraux
+ * Interface permettant ï¿½ l'administrateur la configuration de certains paramï¿½tres gï¿½nï¿½raux
  * Ce script fait partie de l'application GRR
- * Dernière modification : $Date: 2010-11-24 20:52:41 $
+ * Derniï¿½re modification : $Date: 2010-11-24 20:52:41 $
  * @author    Laurent Delineau <laurent.delineau@ac-poitiers.fr>
  * @copyright Copyright 2003-2008 Laurent Delineau
  * @link      http://www.gnu.org/licenses/licenses.html
@@ -27,7 +27,7 @@
  * along with GRR; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * Dernière modification 2014-à_-25 : CD - GIP RECIA - pour GRR version 2.0.2
+ * Derniï¿½re modification 2014-ï¿½_-25 : CD - GIP RECIA - pour GRR version 2.0.2
 	Meilleur alignement du bouton "save"
  */
 
@@ -38,7 +38,7 @@ if (isset($_POST['message_accueil'])) {
     }
 }
 
-// Style/thème
+// Style/thï¿½me
 if (isset($_POST['default_css'])) {
     if (!Settings::setEtab("default_css", $_POST['default_css'])) {
         echo "Erreur lors de l'enregistrement de default_css !<br />";
@@ -64,7 +64,7 @@ if (isset($_POST['area_list_format'])) {
     }
 }
 
-// site par défaut
+// site par dï¿½faut
 if (isset($_POST['id_site'])) {
     if (!Settings::setEtab("default_site", $_POST['id_site'])) {
         echo "Erreur lors de l'enregistrement de default_site !<br />";
@@ -72,7 +72,7 @@ if (isset($_POST['id_site'])) {
     }
 }
 
-// domaine par défaut
+// domaine par dï¿½faut
 if (isset($_POST['id_area'])) {
     if (!Settings::setEtab("default_area", $_POST['id_area'])) {
         echo "Erreur lors de l'enregistrement de default_area !<br />";
@@ -118,7 +118,7 @@ if (isset($_POST['display_short_description'])) {
     }
 }
 
-// remplissage de la description brève
+// remplissage de la description brï¿½ve
 if (isset($_POST['remplissage_description_breve'])) {
     if (!Settings::setEtab("remplissage_description_breve", $_POST['remplissage_description_breve'])) {
         echo "Erreur lors de l'enregistrement de remplissage_description_breve !<br />";
@@ -207,7 +207,7 @@ if ($demande_confirmation == 'yes') {
 if (!Settings::load())
     die("Erreur chargement settings");
 
-// Si pas de problème, message de confirmation
+// Si pas de problï¿½me, message de confirmation
 if (isset($_POST['ok'])) {
 	$_SESSION['displ_msg'] = 'yes';
     if ($msg == '') $msg = get_vocab("message_records");
@@ -221,7 +221,7 @@ if ((isset($_GET['msg'])) and isset($_SESSION['displ_msg']) and ($_SESSION['disp
 else
    $msg = '';
 
-// Utilisation de la bibliothèqye prototype dans ce script
+// Utilisation de la bibliothï¿½qye prototype dans ce script
 $use_prototype = 'y';
 
 # print the page header
@@ -237,7 +237,7 @@ include_once "../include/admin_config_tableau.inc.php";
 
 
 //
-// Config générale
+// Config gï¿½nï¿½rale
 //****************
 //
 echo "<form enctype=\"multipart/form-data\" action=\"./admin_config_etablissement.php\" id=\"nom_formulaire\" method=\"post\" style=\"width: 100%;\">";
@@ -297,7 +297,7 @@ echo "</p>";
 
 
 //
-// Début et fin des réservations
+// Dï¿½but et fin des rï¿½servations
 //******************************
 //
 echo "<hr /><h3>".get_vocab("title_begin_end_bookings")."</h3>\n";
@@ -305,9 +305,9 @@ echo "<hr /><h3>".get_vocab("title_begin_end_bookings")."</h3>\n";
 <table border='0'>
 <tr><td><?php echo get_vocab("begin_bookings"); ?></td><td>
 <?php
-$bday = strftime("%d", Settings::get("begin_bookings"));
-$bmonth = strftime("%m", Settings::get("begin_bookings"));
-$byear = strftime("%Y", Settings::get("begin_bookings"));
+$bday = strftime("%d", Settings::getEtab("begin_bookings"));
+$bmonth = strftime("%m", Settings::getEtab("begin_bookings"));
+$byear = strftime("%Y", Settings::getEtab("begin_bookings"));
 genDateSelector("begin_", $bday, $bmonth, $byear,"more_years") ?>
 </td>
 <td>&nbsp;</td>
@@ -320,16 +320,16 @@ genDateSelector("begin_", $bday, $bmonth, $byear,"more_years") ?>
 <table border='0'>
 <tr><td><?php echo get_vocab("end_bookings"); ?></td><td>
 <?php
-$eday = strftime("%d", Settings::get("end_bookings"));
-$emonth = strftime("%m", Settings::get("end_bookings"));
-$eyear= strftime("%Y", Settings::get("end_bookings"));
+$eday = strftime("%d", Settings::getEtab("end_bookings"));
+$emonth = strftime("%m", Settings::getEtab("end_bookings"));
+$eyear= strftime("%Y", Settings::getEtab("end_bookings"));
 genDateSelector("end_",$eday,$emonth,$eyear,"more_years") ?>
 </td>
 </tr>
 </table>
 <?php echo "<p><i>".get_vocab("end_bookings_explain")."</i></p>";
 //
-// Configuration de l'affichage par défaut
+// Configuration de l'affichage par dï¿½faut
 //****************************************
 //
 ?>
@@ -490,7 +490,7 @@ else
  */
 echo '<tr><td colspan="2">';
 echo '<div id="div_liste_domaines">';
-// Ici, on insère la liste des domaines avec de l'ajax !
+// Ici, on insï¿½re la liste des domaines avec de l'ajax !
 echo '</div></td></tr>';
 
 /**
@@ -499,7 +499,7 @@ echo '</div></td></tr>';
 echo '<tr><td colspan="2">';
 echo '<div id="div_liste_ressources">';
 echo '<input type="hidden" id="id_area" name="id_area" value="'.Settings::get("default_area").'" />';
-// Ici, on insère la liste des ressouces avec de l'ajax !
+// Ici, on insï¿½re la liste des ressouces avec de l'ajax !
 echo '</div></td></tr></table>';
 
 // Au chargement de la page, on remplit les listes de domaine et de ressources
@@ -538,10 +538,10 @@ while ($i < count($liste_language)) {
 echo "</select></td></tr></table>\n";
 
 #
-# Affichage du contenu des "info-bulles" des réservations, dans les vues journées, semaine et mois.
+# Affichage du contenu des "info-bulles" des rï¿½servations, dans les vues journï¿½es, semaine et mois.
 # display_info_bulle = 0 : pas d'info-bulle.
-# display_info_bulle = 1 : affichage des noms et prénoms du bénéficiaire de la réservation.
-# display_info_bulle = 2 : affichage de la description complète de la réservation.
+# display_info_bulle = 1 : affichage des noms et prï¿½noms du bï¿½nï¿½ficiaire de la rï¿½servation.
+# display_info_bulle = 2 : affichage de la description complï¿½te de la rï¿½servation.
 echo "<hr /><h3>".get_vocab("display_info_bulle_msg")."</h3>\n";
 echo "<table>";
 echo "<tr><td>".get_vocab("info-bulle0")."</td><td>";
@@ -555,9 +555,9 @@ echo "<input type='radio' name='display_info_bulle' value='2' "; if (Settings::g
 echo "</td></tr>";
 echo "</table>";
 
-# Afficher la description complète de la réservation dans les vues semaine et mois.
-# display_full_description=1 : la description complète s'affiche.
-# display_full_description=0 : la description complète ne s'affiche pas.
+# Afficher la description complï¿½te de la rï¿½servation dans les vues semaine et mois.
+# display_full_description=1 : la description complï¿½te s'affiche.
+# display_full_description=0 : la description complï¿½te ne s'affiche pas.
 echo "<hr /><h3>".get_vocab("display_full_description_msg")."</h3>\n";
 echo "<table>";
 echo "<tr><td>".get_vocab("display_full_description0")."</td><td>";
@@ -568,7 +568,7 @@ echo "<input type='radio' name='display_full_description' value='1' "; if (Setti
 echo "</td></tr>";
 echo "</table>";
 
-# Afficher la description courte de la réservation dans les vues semaine et mois.
+# Afficher la description courte de la rï¿½servation dans les vues semaine et mois.
 # display_short_description=1 : la description  s'affiche.
 # display_short_description=0 : la description  ne s'affiche pas.
 echo "<hr /><h3>".get_vocab("display_short_description_msg")."</h3>\n";
@@ -582,16 +582,16 @@ echo "</td></tr>";
 echo "</table>";
 
 ###########################################################
-# Affichage des  adresses email dans la fiche de réservation
+# Affichage des  adresses email dans la fiche de rï¿½servation
 ###########################################################
 # Qui peut voir les adresse email ?
-# display_level_email  = 0 : N'importe qui allant sur le site, meme s'il n'est pas connecté
-# display_level_email  = 1 : Il faut obligatoirement se connecter, même en simple visiteur.
+# display_level_email  = 0 : N'importe qui allant sur le site, meme s'il n'est pas connectï¿½
+# display_level_email  = 1 : Il faut obligatoirement se connecter, mï¿½me en simple visiteur.
 # display_level_email  = 2 : Il faut obligatoirement se connecter et avoir le statut "utilisateur"
-# display_level_email  = 3 : Il faut obligatoirement se connecter et être au moins gestionnaire d'une ressource
-# display_level_email  = 4 : Il faut obligatoirement se connecter et être au moins administrateur du domaine
-# display_level_email  = 5 : Il faut obligatoirement se connecter et être administrateur de site
-# display_level_email  = 6 : Il faut obligatoirement se connecter et être administrateur général
+# display_level_email  = 3 : Il faut obligatoirement se connecter et ï¿½tre au moins gestionnaire d'une ressource
+# display_level_email  = 4 : Il faut obligatoirement se connecter et ï¿½tre au moins administrateur du domaine
+# display_level_email  = 5 : Il faut obligatoirement se connecter et ï¿½tre administrateur de site
+# display_level_email  = 6 : Il faut obligatoirement se connecter et ï¿½tre administrateur gï¿½nï¿½ral
 echo "<hr /><h3>".get_vocab("display_level_email_msg1")."</h3>\n";
 echo "<p>".get_vocab("display_level_email_msg2")."</p>";
 echo "<table cellspacing=\"5\">";
@@ -636,7 +636,7 @@ echo "<input type='radio' name='remplissage_description_breve' value='2' "; if (
 echo "</td></tr>";
 echo "</table>";
 
-# Ouvrir les pages au format imprimable dans une nouvelle fenêtre du navigateur (0 pour non et 1 pour oui)
+# Ouvrir les pages au format imprimable dans une nouvelle fenï¿½tre du navigateur (0 pour non et 1 pour oui)
 echo "<hr /><h3>".get_vocab("pview_new_windows_msg")."</h3>\n";
 echo "<table>";
 echo "<tr><td>".get_vocab("pview_new_windows0")."</td><td>";
@@ -648,15 +648,15 @@ echo "</td></tr>";
 echo "</table>";
 
 
-# Formulaire de réservation
+# Formulaire de rï¿½servation
 echo "</p><hr /><h3>".get_vocab("formulaire_reservation")."</h3>\n";
 echo "<p>".get_vocab("longueur_liste_ressources").get_vocab("deux_points")."
 <input type=\"text\" name=\"longueur_liste_ressources_max\" value=\"".Settings::get("longueur_liste_ressources_max")."\" size=\"5\" />";
 
 /*
-# nb_year_calendar permet de fixer la plage de choix de l'année dans le choix des dates de début et fin des réservations
-# La plage s'étend de année_en_cours - $nb_year_calendar à année_en_cours + $nb_year_calendar
-# Par exemple, si on fixe $nb_year_calendar = 5 et que l'on est en 2005, la plage de choix de l'année s'étendra de 2000 à 2010
+# nb_year_calendar permet de fixer la plage de choix de l'annï¿½e dans le choix des dates de dï¿½but et fin des rï¿½servations
+# La plage s'ï¿½tend de annï¿½e_en_cours - $nb_year_calendar ï¿½ annï¿½e_en_cours + $nb_year_calendar
+# Par exemple, si on fixe $nb_year_calendar = 5 et que l'on est en 2005, la plage de choix de l'annï¿½e s'ï¿½tendra de 2000 ï¿½ 2010
 echo "<hr /><h3>".get_vocab("nb_year_calendar_msg")."</h3>\n";
 echo get_vocab("nb_year_calendar_explain").get_vocab("deux_points");
 echo "<select name=\"nb_year_calendar\" size=\"1\">\n";
@@ -671,7 +671,7 @@ echo "</select>\n";
 */
 
 // Modif CD - RECIA - 2014-05-28 : 
-// alignement différent du bouton save pour intégration portail ENT
+// alignement diffï¿½rent du bouton save pour intï¿½gration portail ENT
 // Ancien code :
 //echo "<br /><br /></p><div id=\"fixe\" style=\"text-align:center;\"><input type=\"submit\" name=\"ok\" value=\"".get_vocab("save")."\" style=\"font-variant: small-caps;\"/></div>";
 // Nouveau code :

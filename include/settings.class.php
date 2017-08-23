@@ -39,20 +39,41 @@ class Settings {
 		}
 	}
 
-	static function get($_name, $global = false)
-	{
-		if (! $global && 
-			isset($_SESSION['current_etablisement']) &&
-			isset(self::$grrSettingsEtab[$_SESSION['current_etablisement']]) &&
-			isset(self::$grrSettingsEtab[$_SESSION['current_etablisement']][$_name]) &&
-			self::$grrSettingsEtab[$_SESSION['current_etablisement']][$_name] != ''){
+    static function get($_name, $global = false)
+    {
+        if (! $global &&
+            isset($_SESSION['current_etablisement']) &&
+            isset(self::$grrSettingsEtab[$_SESSION['current_etablisement']]) &&
+            isset(self::$grrSettingsEtab[$_SESSION['current_etablisement']][$_name]) &&
+            self::$grrSettingsEtab[$_SESSION['current_etablisement']][$_name] != ''){
 
-			return self::$grrSettingsEtab[$_SESSION['current_etablisement']][$_name];
-		}
-	
-		if (isset(self::$grrSettings[$_name]))
-			return self::$grrSettings[$_name];
-	}
+            return self::$grrSettingsEtab[$_SESSION['current_etablisement']][$_name];
+        }
+
+        if (isset(self::$grrSettings[$_name]))
+            return self::$grrSettings[$_name];
+    }
+
+    static function getEtab($_name)
+    {
+        if (isset($_SESSION['current_etablisement']) &&
+            isset(self::$grrSettingsEtab[$_SESSION['current_etablisement']]) &&
+            isset(self::$grrSettingsEtab[$_SESSION['current_etablisement']][$_name]) &&
+            self::$grrSettingsEtab[$_SESSION['current_etablisement']][$_name] != ''){
+
+            return self::$grrSettingsEtab[$_SESSION['current_etablisement']][$_name];
+        }
+
+        if (isset(self::$grrSettings[$_name]))
+            return self::$grrSettings[$_name];
+    }
+
+
+    static function getGeneral($_name)
+    {
+        if (isset(self::$grrSettings[$_name]))
+            return self::$grrSettings[$_name];
+    }
 
 	static function set($_name, $_value)
 	{
