@@ -45,6 +45,7 @@ check_access(6, $back);
 if (isset($_GET['valid']) && ($_GET['valid'] == "yes")){
 	
 	if ($_GET['id_etablissement']) {
+
 		if (!Settings::setEtab("begin_bookings", $_GET['begin_bookings'])){
 			echo "Erreur lors de l'enregistrement de begin_bookings !<br />";
 		}
@@ -63,45 +64,56 @@ if (isset($_GET['valid']) && ($_GET['valid'] == "yes")){
 			$del = grr_sql_query("DELETE FROM ".TABLE_PREFIX."_entry_moderate WHERE (end_time < ".Settings::get('begin_bookings').") AND id IN (".$sqlSelectEntryModerate.$sqlJoin.")");
 			$del = grr_sql_query("DELETE FROM ".TABLE_PREFIX."_j_etablissement_calendar WHERE DAY < ".Settings::get("begin_bookings")."AND id_etablissement = " . $_GET['id_etablissement']);
 		}
+
+        if (!Settings::setEtab("end_bookings", $_GET['end_bookings'])) {
+            echo "Erreur lors de l'enregistrement de end_bookings !<br />";
+        } else {
+            $del = grr_sql_query("DELETE FROM ".TABLE_PREFIX."_entry WHERE (start_time > ".Settings::get('end_bookings').") AND id IN (".$sqlSelectEntry.$sqlJoin.")");
+            $del = grr_sql_query("DELETE FROM ".TABLE_PREFIX."_repeat WHERE ( start_time > ".Settings::get("end_bookings").") AND id IN (".$sqlSelectRepeat.$sqlJoin.")");
+            $del = grr_sql_query("DELETE FROM ".TABLE_PREFIX."_entry_moderate WHERE (start_time > ".Settings::get('end_bookings').") AND id IN (".$sqlSelectEntryModerate.$sqlJoin.")");
+            $del = grr_sql_query("DELETE FROM ".TABLE_PREFIX."_j_etablissement_calendar WHERE DAY > ".Settings::get("end_bookings") ."AND id_etablissement = " . $_GET['id_etablissement']);
+
+        }
+
+        //si nous somme dans un réglage d'établissement, on redirige sur la config de celui ci
+        header("Location: ./admin_config_etablissement.php");
+
 	}else{
 		
-		if (!Settings::set("end_bookings", $_GET['end_bookings']))
-			echo "Erreur lors de l'enregistrement de end_bookings !<br />";
+		if (!Settings::setGeneral("begin_bookings", $_GET['begin_bookings']))
+			echo "Erreur lors de l'enregistrement de begin_bookings !<br />";
 		else
 		{
-			$del = grr_sql_query("DELETE FROM ".TABLE_PREFIX."_entry WHERE start_time > ".Settings::get("end_bookings"));
-			$del = grr_sql_query("DELETE FROM ".TABLE_PREFIX."_repeat WHERE start_time > ".Settings::get("end_bookings"));
-			$del = grr_sql_query("DELETE FROM ".TABLE_PREFIX."_entry_moderate WHERE (start_time > ".Settings::get('end_bookings').")");
-			$del = grr_sql_query("DELETE FROM ".TABLE_PREFIX."_calendar WHERE DAY > ".Settings::get("end_bookings"));
-		}
-	}
-	
-	if ($_GET['id_etablissement']) {
-		if (!Settings::setEtab("end_bookings", $_GET['end_bookings'])) {
-			echo "Erreur lors de l'enregistrement de end_bookings !<br />";
-		} else {
-			$del = grr_sql_query("DELETE FROM ".TABLE_PREFIX."_entry WHERE (start_time > ".Settings::get('end_bookings').") AND id IN (".$sqlSelectEntry.$sqlJoin.")");
-			$del = grr_sql_query("DELETE FROM ".TABLE_PREFIX."_repeat WHERE ( start_time > ".Settings::get("end_bookings").") AND id IN (".$sqlSelectRepeat.$sqlJoin.")");
-			$del = grr_sql_query("DELETE FROM ".TABLE_PREFIX."_entry_moderate WHERE (start_time > ".Settings::get('end_bookings').") AND id IN (".$sqlSelectEntryModerate.$sqlJoin.")");
-			$del = grr_sql_query("DELETE FROM ".TABLE_PREFIX."_j_etablissement_calendar WHERE DAY > ".Settings::get("end_bookings") ."AND id_etablissement = " . $_GET['id_etablissement']);
+            $del = grr_sql_query("DELETE FROM ".TABLE_PREFIX."_entry WHERE (end_time < ".Settings::get('begin_bookings').")");
+            $del = grr_sql_query("DELETE FROM ".TABLE_PREFIX."_repeat WHERE end_date < ".Settings::get("begin_bookings"));
+            $del = grr_sql_query("DELETE FROM ".TABLE_PREFIX."_entry_moderate WHERE (end_time < ".Settings::get('begin_bookings').")");
+            $del = grr_sql_query("DELETE FROM ".TABLE_PREFIX."_calendar WHERE DAY < ".Settings::get("begin_bookings"));
 
 		}
-	} else {
-		if (!Settings::set("end_bookings", $_GET['end_bookings'])) {
-			echo "Erreur lors de l'enregistrement de end_bookings !<br />";
-		} else {
-			$del = grr_sql_query("DELETE FROM ".TABLE_PREFIX."_entry WHERE start_time > ".Settings::get("end_bookings",true));
-			$del = grr_sql_query("DELETE FROM ".TABLE_PREFIX."_repeat WHERE start_time > ".Settings::get("end_bookings",true));
-			$del = grr_sql_query("DELETE FROM ".TABLE_PREFIX."_entry_moderate WHERE (start_time > ".Settings::get('end_bookings',true).")");
-			$del = grr_sql_query("DELETE FROM ".TABLE_PREFIX."_calendar WHERE DAY > ".Settings::get("end_bookings",true));
-		}
-	}
+
+        if (!Settings::setGeneral("end_bookings", $_GET['end_bookings'])) {
+            echo "Erreur lors de l'enregistrement de end_bookings !<br />";
+        } else {
+            $del = grr_sql_query("DELETE FROM ".TABLE_PREFIX."_entry WHERE start_time > ".Settings::get("end_bookings",true));
+            $del = grr_sql_query("DELETE FROM ".TABLE_PREFIX."_repeat WHERE start_time > ".Settings::get("end_bookings",true));
+            $del = grr_sql_query("DELETE FROM ".TABLE_PREFIX."_entry_moderate WHERE (start_time > ".Settings::get('end_bookings',true).")");
+            $del = grr_sql_query("DELETE FROM ".TABLE_PREFIX."_calendar WHERE DAY > ".Settings::get("end_bookings",true));
+        }
+
+        //si nous somme dans un réglage generale, on redirige sur la config generale
+        header("Location: ./admin_config.php");
+
+    }
 	
-	header("Location: ./admin_config_etablissement.php");
+	//header("Location: ./admin_config_etablissement.php");
 
 }
 else if (isset($_GET['valid']) && ($_GET['valid'] == "no")){
-	header("Location: ./admin_config_etablissement.php");
+    if ($_GET['id_etablissement']) {
+        header("Location: ./admin_config_etablissement.php");
+    }else{
+        header("Location: ./admin_config.php");
+    }
 }
 
 
@@ -122,15 +134,16 @@ echo "<p>".get_vocab("msg_del_bookings")."</p>";
 	<div>
 		<input class="btn btn-primary" type="submit" value="<?php echo get_vocab("save");?>" />
 		<input type="hidden" name="valid" value="yes" />
-		<input type="hidden" name="id_etablissement" value=" <?php echo $idEtablissement; ?>" />
-		<input type="hidden" name="begin_bookings" value=" <?php echo $_GET['begin_bookings']; ?>" />
-		<input type="hidden" name="end_bookings" value=" <?php echo $_GET['end_bookings']; ?>" />
+		<input type="hidden" name="id_etablissement" value="<?php echo $idEtablissement; ?>" />
+		<input type="hidden" name="begin_bookings" value="<?php echo $_GET['begin_bookings']; ?>" />
+		<input type="hidden" name="end_bookings" value="<?php echo $_GET['end_bookings']; ?>" />
 	</div>
 </form>
 
 <form action="admin_confirm_change_date_bookings.php" method='get'>
 	<div>
-		<input class="btn btn-primary" type="submit" value="<?php echo get_vocab("cancel");?>" />
+        <input type="hidden" name="id_etablissement" value="<?php echo $idEtablissement; ?>" />
+        <input class="btn btn-primary" type="submit" value="<?php echo get_vocab("cancel");?>" />
 		<input type="hidden" name="valid" value="no" />
 	</div>
 </form>
