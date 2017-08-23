@@ -1027,7 +1027,7 @@ function begin_page($title, $page = "with_session"){
 /*
 ** Fonction qui affiche le header
 */
-function print_header($day = '', $month = '', $year = '', $type_session = 'with_session')
+function print_header($dayParam = '', $monthParam = '', $yearParam = '', $type_session = 'with_session')
 {
 	global $vocab, $search_str, $grrSettings, $clock_file, $desactive_VerifNomPrenomUser, $grr_script_name, $affiche_pview;
 	global $use_prototype, $use_admin, $use_tooltip_js, $desactive_bandeau_sup, $id_site, $use_select2;
@@ -1046,20 +1046,17 @@ function print_header($day = '', $month = '', $year = '', $type_session = 'with_
 	// Si nous ne sommes pas dans un format imprimable
 	if ((!isset($_GET['pview'])) || ($_GET['pview'] != 1))
 	{
-		// If we dont know the right date then make it up
-		if (!isset($day) || !isset($month) || !isset($year) || ($day == '') || ($month == '') || ($year == ''))
-		{
-			$date_now = time();
-			if ($date_now < Settings::get("begin_bookings"))
-				$date_ = Settings::get("begin_bookings");
-			else if ($date_now > Settings::get("end_bookings"))
-				$date_ = Settings::get("end_bookings");
-			else
-				$date_ = $date_now;
-			$day   = date("d",$date_);
-			$month = date("m",$date_);
-			$year  = date("Y",$date_);
-		}
+        $date_now = time();
+        if ($date_now < Settings::get("begin_bookings"))
+            $date_ = Settings::get("begin_bookings");
+        else if ($date_now > Settings::get("end_bookings"))
+            $date_ = Settings::get("end_bookings");
+        else
+            $date_ = $date_now;
+        $day   = date("d",$date_);
+        $month = date("m",$date_);
+        $year  = date("Y",$date_);
+
 		if (!(isset($search_str)))
 			$search_str = get_vocab("search_for");
 		if (empty($search_str))
@@ -1120,7 +1117,10 @@ function print_header($day = '', $month = '', $year = '', $type_session = 'with_
 				// Texte "Accueil"
 				echo '<a class="navbar-brand" href="'.$racine.page_accueil('yes'),'day=',$day,'&amp;year=',$year,'&amp;month=',$month,'"><span class="glyphicon glyphicon-home glyphicon-accueil" alt="',get_vocab("welcome"),'" title="',get_vocab("welcome"),'"></span></a>';
 			}
-
+            if ($_SERVER['PHP_SELF']== "/edit_entry.php" && (isset($dayParam) || isset($monthParam) || isset($yearParam) || ($dayParam != '') || ($monthParam != '') || ($yearParam != '')))
+            {
+                 echo '<a class="navbar-brand" href="'.$racine.page_accueil('yes'),'day=',$dayParam,'&amp;year=',$yearParam,'&amp;month=',$monthParam,'"><span class="glyphicon glyphicon-arrow-left" alt="',get_vocab("back"),'" title="',get_vocab("back"),'"></span></a>';
+            }
 			// Liste des établissements
 			echo ' 			<span class="listEtablissement">'.getCompanyNameForBandeau().'</span>';
 
