@@ -815,7 +815,7 @@ function page_accueil($param = 'no'){
 
 
 	// Definition de $defaultroom
-	if (isset($_SESSION['default_room']) && ($_SESSION['default_room'] > 0)){
+	if (isset($_SESSION['default_room']) && ($_SESSION['default_room'] >= -4)){
 		$defaultroom = $_SESSION['default_room'];
 	}else{
 		$defaultroom = Settings::get("default_room");
@@ -828,7 +828,6 @@ function page_accueil($param = 'no'){
 			}
 		}
 	}
-
 
 
 	// Calcul de $page_accueil
