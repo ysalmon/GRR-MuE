@@ -119,7 +119,21 @@ bouton_aller_bas();
 						<select id="area" name="area" class="form-control" required>
 							<option>SELECTIONNER UN DOMAINE </option>
 							<?php
-							$sql_areaName = "SELECT id, area_name,resolution_area FROM ".TABLE_PREFIX."_area ORDER BY area_name";
+
+                            if (Settings::get("module_multietablissement") == "Oui"){
+
+                                $idEtablissement = getIdEtablissementCourant();
+
+                                $sql_areaName = "SELECT a.id, a.area_name,a.resolution_area
+                                     FROM ".TABLE_PREFIX."_area a, ".TABLE_PREFIX."_j_site_area j
+                                     JOIN ".TABLE_PREFIX."_j_etablissement_site ES ON ES.id_site =j.id_site
+                                     WHERE a.id=j.id_area
+                                     AND ES.id_etablissement = $idEtablissement
+                                     ORDER BY a.order_display, a.area_name";
+                            } else {
+                                $sql_areaName = "SELECT id, area_name,resolution_area FROM ".TABLE_PREFIX."_area ORDER BY area_name";
+
+                            }
 							$res_areaName = grr_sql_query($sql_areaName);
 							for ($i = 0; ($row_areaName = grr_sql_row($res_areaName, $i)); $i++)
 							{

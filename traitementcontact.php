@@ -19,8 +19,6 @@ $message = $msg_erreur;
 define('MAIL_DESTINATAIRE','informatique@talmontsainthilaire.fr');
 define('MAIL_SUJET','GRR : Réservation d\'une salle ');
 
-
-//~ 
 if (empty($_POST['nom']))
 	$message .= "Votre nom";
 if (empty($_POST['prenom']))
@@ -44,8 +42,6 @@ if (empty($_POST['duree']))
 foreach ($_POST as $index => $valeur)
 	$index = stripslashes(trim($valeur));
 
-
-
 $mail_entete  = "MIME-Version: 1.0\r\n";
 $mail_entete .= "From: {$_POST['nom']} "
 ."<{$_POST['email']}>\r\n";
@@ -53,9 +49,6 @@ $mail_entete .= 'Reply-To: '.$_POST['email']."\r\n";
 $mail_entete .= 'Content-Type: text/plain; charset="iso-8859-1"';
 $mail_entete .= "\r\nContent-Transfer-Encoding: 8bit\r\n";
 $mail_entete .= 'X-Mailer:PHP/' . phpversion()."\r\n";
-
-
-
 
 $mail_corps  = "<html><head></head><body> Message de :" .$_POST['prenom']." " .$_POST['nom'] . "<br/>";
 $mail_corps  .= "Email : ".$_POST['email']. "<br/>";
@@ -66,32 +59,10 @@ $id .= $_POST['area'] ;
 $sql_areaName .= "SELECT area_name FROM ".TABLE_PREFIX."_area where id = \"$id\" ";
 $res_areaName .= grr_sql_query1($sql_areaName);
 $mail_corps  .= "Domaines : ".$res_areaName. "<br/> ";
-$mail_corps  .= "Salle : ".$_POST['room']. "<br/><br/>";
+$mail_corps  .= "Ressource : ".$_POST['room']. "<br/><br/>";
 $mail_corps  .= "Date  :".$_POST['start_day']."/".$_POST['start_month']."/".$_POST['start_year']. " <br/>";
 $mail_corps  .= "Heure réservation  : ".$_POST['heure']. "h  ".$_POST['minutes']. "min<br/>";
 $mail_corps  .= "Durée de la réservation : ".$_POST['duree']. " \n";
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 $mail_corps  .= " h ".$_POST['dureemin']. " \n</body></html>";
 
 $mail_destinataire = Settings::get("mail_destinataire");
@@ -121,10 +92,12 @@ if($mail_method =='mail'){
 	$mail->SetLanguage("fr", "./phpmailer/language/");
 	setlocale(LC_ALL, $locale);
 
-	$sujet ="Réservation d'une salle";
+	$sujet ="Réservation d'une ressource";
 	$mail->AddAddress($mail_destinataire);
 	$mail->Subject = $sujet;
 	$mail->MsgHTML($mail_corps);
+	echo $mail_corps;
+	die;
 	$mail->AddReplyTo( $email_reponse );
 	if (!$mail->Send())
 		{
