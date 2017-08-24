@@ -12,13 +12,13 @@ if ($_GET['pview'] != 1)
 	echo '<div id="menuGauche">';
 	
 	$pageActuel = str_replace(".php","",basename($_SERVER['PHP_SELF']));
-	
-	//echo '<h5>
-	//		<a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseCalendar" aria-expanded="true" aria-controls="collapseOne">
-	//			<span class="glyphicon glyphicon-calendar color-glyphicon"></span> <b>'.get_vocab("mg_calendrier").'</b>
-	//			<span class="glyphicon glyphicon-chevron-down chevronCollapse"></span>
-	//		</a>
-	//	  </h5>';
+    $out = demandeModeration($user);
+    if(count($out) != 0){
+        echo '<td id="ouvrir" style="cursor: inherit;width: 100%;" class="fontcolor4" align="center" >	
+				<a class="btn btn-warning btn-lien btn-block" href="moderation.php">Vous avez des demandes de modération</a>
+			</td>';
+    }
+
 	echo '<a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseCalendar" aria-expanded="true" aria-controls="collapseOne">
 		<h5>
 				<span class="glyphicon glyphicon-calendar color-glyphicon"></span> <b>'.get_vocab("mg_calendrier").'</b>
