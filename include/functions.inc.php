@@ -3254,12 +3254,15 @@ function send_mail($id_entry, $action, $dformat, $tab_id_moderes = array())
 				else
 					$mail->AddAddress( $value );
 			}
+			$urlGRR =traite_grr_url("","y") ;
+			$validationLink = "";
+            $urlGRR == "" ? "" : $validationLink = $urlGRR."validation.php?id=".$id_entry;
 			$sujet5 = $vocab["subject_mail1"].$room_name." - ".$date_avis;
 			$sujet5 .= $vocab["subject_mail_moderation"];
 			$message5 = removeMailUnicode(Settings::get("company"))." - ".$vocab["title_mail"];
 			$message5 .= traite_grr_url("","y")."\n\n";
 			$message5 .= $vocab["subject_a_moderer"];
-			$message5 .= "\n".traite_grr_url("","y")."validation.php?id=".$id_entry;
+			$message5 .= "\n".$validationLink;
 			$message5 .= "\n\n".$vocab['created_by'].affiche_nom_prenom_email($user_login,"","formail");
 			$message5 .= "\n".$vocab['room'].$vocab['deux_points'].$room_name." (".$area_name.") \n";
 			$message5 = html_entity_decode($message5);
