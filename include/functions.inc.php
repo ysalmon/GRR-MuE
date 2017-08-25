@@ -3256,7 +3256,7 @@ function send_mail($id_entry, $action, $dformat, $tab_id_moderes = array())
 			}
 			$urlGRR =traite_grr_url("","y") ;
 			$validationLink = "";
-            $urlGRR == "" ? "" : $validationLink = $urlGRR;//."validation.php?id=".$id_entry;
+      $urlGRR == "" ? "" : $validationLink = $urlGRR;//."validation.php?id=".$id_entry;
 			$sujet5 = $vocab["subject_mail1"].$room_name." - ".$date_avis;
 			$sujet5 .= $vocab["subject_mail_moderation"];
 			$message5 = removeMailUnicode(Settings::get("company"))." - ".$vocab["title_mail"];
