@@ -3075,11 +3075,11 @@ function send_mail($id_entry, $action, $dformat, $tab_id_moderes = array())
 		}
 		$message .= "\n".$vocab["voir_details"].$vocab["deux_points"]."\n";
 		if (count($tab_id_moderes) == 0 )
-			$message .= "\n".traite_grr_url("","y")."view_entry.php?id=".$id_entry;
+			$message .= "\n".traite_grr_url("","y");//."view_entry.php?id=".$id_entry;
 		else
 		{
 			foreach ($tab_id_moderes as $id_moderes)
-				$message .= "\n".traite_grr_url("","y")."view_entry.php?id=".$id_moderes;
+				$message .= "\n".traite_grr_url("","y");//."view_entry.php?id=".$id_moderes;
 		}
 		$message .= "\n\n".$vocab["rappel_de_la_demande"].$vocab["deux_points"]."\n";
 	}
@@ -3093,7 +3093,7 @@ function send_mail($id_entry, $action, $dformat, $tab_id_moderes = array())
 		if ($beneficiaire_email != "")
 			$message .= $vocab["un email envoye"].$beneficiaire_email." \n";
 		$message .= "\n".$vocab["changer statut lorsque ressource restituee"].$vocab["deux_points"];
-		$message .= "\n".traite_grr_url("","y")."view_entry.php?id=".$id_entry." \n";
+		$message .= "\n".traite_grr_url("","y")." \n";//.."view_entry.php?id=".$id_entry." \n";
 	}
 	if (($action == 2) || ($action == 3))
 	{
@@ -3256,7 +3256,7 @@ function send_mail($id_entry, $action, $dformat, $tab_id_moderes = array())
 			}
 			$urlGRR =traite_grr_url("","y") ;
 			$validationLink = "";
-            $urlGRR == "" ? "" : $validationLink = $urlGRR."validation.php?id=".$id_entry;
+      $urlGRR == "" ? "" : $validationLink = $urlGRR;//."validation.php?id=".$id_entry;
 			$sujet5 = $vocab["subject_mail1"].$room_name." - ".$date_avis;
 			$sujet5 .= $vocab["subject_mail_moderation"];
 			$message5 = removeMailUnicode(Settings::get("company"))." - ".$vocab["title_mail"];
@@ -4727,7 +4727,7 @@ function traite_grr_url($grr_script_name = "", $force_use_grr_url = "n")
 			$ad_signe = "/";
 		else
 			$ad_signe = "";
-		return Settings::get("grr_url").$ad_signe.$grr_script_name;
+		return getGrrDomain().Settings::get("grr_url").$ad_signe.$grr_script_name;
 	}
 
 	return getGrrUrl() . $grr_script_name;
@@ -6337,9 +6337,19 @@ function getGrrUrl() {
   // Recuperation du path et suppression du nom du fichier
   $grr_path = $_SERVER['SCRIPT_NAME'];
   $grr_path = preg_replace('/([[:alnum:]]|[[:space:]]|\.|_)*\.php/', "", $grr_path);
-
-
   return $server_url . $grr_path; // Recuperation de l'URL via la requete
+}
+
+function getGrrDomain() {
+
+    $server_url = getServeurUrl(); // Recuperation du l'URL du serveur
+
+    // Recuperation du path et suppression du nom du fichier
+    $grr_path = $_SERVER['SCRIPT_NAME'];
+    $grr_path = preg_replace('/([[:alnum:]]|[[:space:]]|\.|_)*\.php/', "", $grr_path);
+
+
+    return $server_url . $grr_path; // Recuperation de l'URL via la requete
 }
 
 
