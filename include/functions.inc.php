@@ -2425,7 +2425,7 @@ function make_site_list_html($link, $current_site, $year, $month, $day,$user)
 					FROM ".TABLE_PREFIX."_site
 					ORDER BY sitename";
 		}
-		$out_html .= $sql;
+		//$out_html .= $sql;
 		$res = grr_sql_query($sql);
 		if ($res){
 			$nb_sites_a_afficher = 0;
@@ -3254,12 +3254,15 @@ function send_mail($id_entry, $action, $dformat, $tab_id_moderes = array())
 				else
 					$mail->AddAddress( $value );
 			}
+			$urlGRR =traite_grr_url("","y") ;
+			$validationLink = "";
+            $urlGRR == "" ? "" : $validationLink = $urlGRR."validation.php?id=".$id_entry;
 			$sujet5 = $vocab["subject_mail1"].$room_name." - ".$date_avis;
 			$sujet5 .= $vocab["subject_mail_moderation"];
 			$message5 = removeMailUnicode(Settings::get("company"))." - ".$vocab["title_mail"];
 			$message5 .= traite_grr_url("","y")."\n\n";
 			$message5 .= $vocab["subject_a_moderer"];
-			$message5 .= "\n".traite_grr_url("","y")."validation.php?id=".$id_entry;
+			$message5 .= "\n".$validationLink;
 			$message5 .= "\n\n".$vocab['created_by'].affiche_nom_prenom_email($user_login,"","formail");
 			$message5 .= "\n".$vocab['room'].$vocab['deux_points'].$room_name." (".$area_name.") \n";
 			$message5 = html_entity_decode($message5);
@@ -6251,6 +6254,50 @@ function canAccesAdmin(){
 	}
 
 }
+/*
+ * Recuperation de toutes les ressources pour faire un test si validation à faire
+ * Return une liste des éléments a moderer
+*/
+function demandeModeration($user){
+    $outList =  array();
+    if (Settings::get("module_multietablissement") == "Oui"){
+        $idEtablissement = getIdEtablissementCourant();
+        $sql = "select ".TABLE_PREFIX."_room.id, ".TABLE_PREFIX."_room.room_name, ".TABLE_PREFIX."_room.description, j.id_area , entry.id, entry.repeat_id from grr_room
+            
+             inner join ".TABLE_PREFIX."_j_site_area j on area_id = j.id_area
+             INNER JOIN ".TABLE_PREFIX."_j_etablissement_site ES ON ES.id_site =j.id_site
+            
+            inner JOIN ".TABLE_PREFIX."_entry entry ON entry.room_id =".TABLE_PREFIX."_room.id  and entry.moderate = 1
+            WHERE ES.id_etablissement = $idEtablissement
+            order by order_display,room_name";
+    } else {
+        $sql = "select ".TABLE_PREFIX."_room.id, ".TABLE_PREFIX."_room.room_name, ".TABLE_PREFIX."_room.description, j.id_area , entry.id, entry.repeat_id from grr_room
+            
+             inner join ".TABLE_PREFIX."_j_site_area j on area_id = j.id_area
+             INNER JOIN ".TABLE_PREFIX."_j_etablissement_site ES ON ES.id_site =j.id_site
+            
+            inner JOIN ".TABLE_PREFIX."_entry entry ON entry.room_id =".TABLE_PREFIX."_room.id  and entry.moderate = 1
+             order by order_display,room_name";
+    }
+
+    $res = grr_sql_query($sql);
+    if ($res){
+            for ($i = 0; ($rowSite = grr_sql_row($res, $i)); $i++){
+                if (authUserAccesArea($user,$rowSite[3]) == 1)
+                {
+                    if (verif_acces_ressource(getUserName(), $rowSite[0]))
+                    {
+                        if ((getUserName() != '') && (authGetUserLevel(getUserName(), $rowSite[0]) >= 3) )
+                        {
+                            array_push($outList, $rowSite);
+                        }
+                    }
+                }
+            }
+        }
+    return $outList;
+}
+
 
 ///////////////////////////////////////////////////
 // FIN FONCTION MULTI-ETAB
