@@ -3,7 +3,7 @@
  * admin_config3.php
  * Interface permettant à l'administrateur la configuration de certains paramètres généraux
  * Ce script fait partie de l'application GRR
- * Derni�re modification : $Date: 2010-05-07 21:26:44 $
+ * Dernière modification : $Date: 2010-05-07 21:26:44 $
  * @author    Laurent Delineau <laurent.delineau@ac-poitiers.fr>
  * @copyright Copyright 2003-2008 Laurent Delineau
  * @link      http://www.gnu.org/licenses/licenses.html
