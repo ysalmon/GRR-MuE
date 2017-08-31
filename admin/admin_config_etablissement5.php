@@ -145,14 +145,18 @@ echo "\n</table>";
 //echo "\n<div style=\"text-align:right;\"><input type=\"submit\" name=\"ok\" value=\"".get_vocab("save")."\" style=\"font-variant: small-caps;\"/>\n";
 // Fin modif RECIA
 
-echo "<input type=\"hidden\" value=\"5\" name=\"page_config\" /></div>\n";
+//Modif d'affichage - CD - 20170831
+//echo "<input type=\"hidden\" value=\"5\" name=\"page_config\" /></div>\n";
+echo "<input type=\"hidden\" value=\"5\" name=\"page_config\" />\n";
 //echo "</form>";
 
 // Nouveau code Bootstrap (bouton bleu flottant)
 echo '<br />'.PHP_EOL;
 echo '<br />'.PHP_EOL;
 echo '</p>'.PHP_EOL;
-echo '<div id="fixe" style="text-align:center;">'.PHP_EOL;
+//Modif pour ne plus centrer le bouton - CD - 20170831
+//echo '<div id="fixe" style="text-align:center;">'.PHP_EOL;
+echo '<div id="fixe">'.PHP_EOL;
 echo '<input class="btn btn-primary" type="submit" name="ok" value="'.get_vocab('save').'" style="font-variant: small-caps;"/>'.PHP_EOL;
 echo '</div>';
 echo '</form>';

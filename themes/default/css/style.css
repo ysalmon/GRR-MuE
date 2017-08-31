@@ -149,7 +149,8 @@ a.buttonsReservation{cursor:pointer}
 #panel{width:100%;height:150px;overflow:hidden;position:relative;z-index:3}
 #panel a{text-decoration:none}
 .pad-15,.pad-15 tboby{padding-left:15px !important}
-#fixe{position:fixed;right:5%;bottom:5%}
+/*#fixe{position:fixed;right:5%;bottom:5%}*/
+#fixe{padding-top:.5em}
 .small a{color:#000 !important}
 .col a{color:#000 !important}
 .col span a{color:#000 !important}
@@ -392,9 +393,9 @@ h1,h2,h3,h4,h5>a{font-family:"Roboto Slab" !important}
 
 /* GESTION RESPONSIVE */
 
-@media only screen and (min-width:1200px) { 
+/*@media only screen and (min-width:1200px) { 
 	#fixe{position:fixed;right:14%;bottom:5%}
-}
+}*/
 
 
 @media only screen and (max-width:992px) { 
