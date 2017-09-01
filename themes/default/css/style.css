@@ -399,7 +399,7 @@ h1,h2,h3,h4,h5>a{font-family:"Roboto Slab" !important}
 
 
 @media only screen and (max-width:992px) { 
-	.menuAdmin{display:none !important;} /* Suppression menu admin quand on passe en responsive */
+	/*.menuAdmin{display:none !important;} /* Suppression menu admin quand on passe en responsive */
 	.legende-mg{display:none !important;} /* on cache la legende dans le menu de gauche */
 	.legende-bas{display:block !important;} /* on affiche la legende sous le planning */
 	.lienPlanningMobile{display:block !important;}
@@ -407,6 +407,7 @@ h1,h2,h3,h4,h5>a{font-family:"Roboto Slab" !important}
 }
 
 @media only screen and (max-width:800px) { 
+	.menuAdmin{display:none !important;} /* Suppression menu admin quand on passe en responsive */
 	.accueil {display:none;}
 	#element{
 		left:0px;
