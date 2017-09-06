@@ -247,7 +247,7 @@ if (@file_exists("language/lang_subst_".$area.".".$locale))
 	include "language/lang_subst_".$area.".".$locale;
 
 if ((authGetUserLevel(getUserName(), -1) < 1) and (Settings::get("authentification_obli") == 1)){
-	
+    include("menu_gauche.php");
 	showAccessDenied($back);
 	exit();
 }

@@ -72,12 +72,14 @@ if ($area <= 0)
 print_header($day, $month, $year, $type_session);
 if ((authGetUserLevel(getUserName(), -1) < 1) && ($settings->get("authentification_obli") == 1))
 {
-	showAccessDenied($back);
+    include("menu_gauche.php");
+    showAccessDenied($back);
 	exit();
 }
 if (authUserAccesArea(getUserName(), $area) == 0)
 {
-	showAccessDenied($back);
+    include("menu_gauche.php");
+    showAccessDenied($back);
 	exit();
 }
 if (check_begin_end_bookings($day, $month, $year))

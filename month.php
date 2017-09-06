@@ -99,7 +99,8 @@ if (check_begin_end_bookings($day, $month, $year))
 }
 if (((authGetUserLevel(getUserName(), -1) < 1) && (Settings::get("authentification_obli") == 1)) || !$verif_acces_ressource || authUserAccesArea(getUserName(), $area)==0)
 {
-	showAccessDenied($back);
+    include("menu_gauche.php");
+    showAccessDenied($back);
 	exit();
 }
 // On vérifie une fois par jour si le délai de confirmation des réservations est dépassé
