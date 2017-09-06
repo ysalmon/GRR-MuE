@@ -174,7 +174,8 @@ if (!$res)
 	fatal_error(0, grr_sql_error());
 if (grr_sql_count($res) == 0)
 {
-	echo '<h1>'.get_vocab("no_rooms_for_area").'</h1>';
+    include("menu_gauche.php");
+    echo '<h1>'.get_vocab("no_rooms_for_area").'</h1>';
 	grr_sql_free($res);
 }
 else

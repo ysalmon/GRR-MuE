@@ -126,7 +126,8 @@ $this_area_comment = grr_sql_query1("SELECT comment_room FROM ".TABLE_PREFIX."_r
 $this_area_show_comment = grr_sql_query1("SELECT show_comment FROM ".TABLE_PREFIX."_room WHERE id=$room");
 if ($room <= 0)
 {
-	echo "<h1>".get_vocab("no_rooms_for_area")."</h1>";
+    include("menu_gauche.php");
+    echo "<h1>".get_vocab("no_rooms_for_area")."</h1>";
 	exit;
 }
 echo '<div class="row">'.PHP_EOL;
