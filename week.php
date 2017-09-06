@@ -281,7 +281,7 @@ else
 				$t = $weekday * 86400 + $am7;
 				continue;
 			}
-			if ($slot <= $last_slot-1)
+			if ($slot <= $last_slot)
 			{
 				$d[$weekday][$slot]["color"] = $row[2];
 				if (($row[1]) > mktime(24, 0, 0, date('m',$row[0]), date('d',$row[0]), date('Y',$row[0]))) // changed
