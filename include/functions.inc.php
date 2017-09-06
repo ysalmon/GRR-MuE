@@ -802,8 +802,8 @@ function page_accueil($param = 'no'){
 	// Definition de $defaultarea
 	if (isset($_SESSION['default_area']) && ($_SESSION['default_area'] > 0))
 		$defaultarea = $_SESSION['default_area'];
-	else if (Settings::get("default_area") > 0)
-		$defaultarea = Settings::get("default_area");
+	else if (Settings::getEtab("default_area") > 0)
+		$defaultarea = Settings::getEtab("default_area");
 	else
 		$defaultarea = get_default_area($defaultsite);
 
@@ -812,7 +812,6 @@ function page_accueil($param = 'no'){
 			$defaultarea = findFirstIdAreaInSite($defaultsite);
 		}
 	}
-
 
 	// Definition de $defaultroom
 	if (isset($_SESSION['default_room']) && ($_SESSION['default_room'] >= -4)){
@@ -828,7 +827,6 @@ function page_accueil($param = 'no'){
 			}
 		}
 	}
-
 
 	// Calcul de $page_accueil
 	if ($defaultarea == - 1)
@@ -6135,7 +6133,10 @@ function findFirstIdSiteInEtablissement($idEtablissement){
 * @return integer le premier id de domaine disponible dans le site.
 */
 function findFirstIdAreaInSite($idSite){
-	$sql = "SELECT id_area FROM ".TABLE_PREFIX."_j_site_area WHERE id_site= $idSite";
+	$sql = "SELECT id_area FROM ".TABLE_PREFIX."_j_site_area 
+	        INNER JOIN grr_area a on id_area = a.id
+	        WHERE id_site= $idSite ORDER BY a.order_display";
+
 	$res = grr_sql_query($sql);
 	if ($res && grr_sql_count($res) > 0 ){
 		$row = grr_sql_row($res,0);
