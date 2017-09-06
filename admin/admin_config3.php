@@ -170,6 +170,29 @@ if (!Settings::load())
 	die("Erreur chargement settings");
 # print the page header
 print_header("", "", "", $type="with_session");
+if (isset($_GET['smtp_secure']))
+    {
+    	if (!Settings::set("smtp_secure", $_GET['smtp_secure']))
+        	{
+        		echo "Erreur lors de l'enregistrement de smtp_secure !<br />";
+		die();
+	}
+}
+if (isset($_GET['smtp_port']))
+    {
+    	if (!Settings::set("smtp_port", $_GET['smtp_port']))
+        	{
+        		echo "Erreur lors de l'enregistrement de smtp_port !<br />";
+		die();
+	}
+}
+// Si Email test renseigné on y envois un mail
+if (isset($_GET['mail_test']) && !empty($_GET['mail_test']))
+    {
+    	require_once '../include/mail.class.php';
+    	require_once '../phpmailer/PHPMailerAutoload.php';
+    	Email::Envois($_GET['mail_test'], 'Votre GRR', "Ceci est un test depuis l'administration de votre GRR.<br>Le mail est arrivée à destination.", Settings::get('grr_mail_from'), '', '');
+    }
 if (isset($_GET['ok']))
 {
 	$msg = get_vocab("message_records");
@@ -208,8 +231,10 @@ echo "<p>";
 <input type='radio' name='envoyer_email_avec_formulaire' value='yes' id='label_5' <?php if (Settings::getGeneral("envoyer_email_avec_formulaire") == 'yes') echo "checked=\"checked\"";?> /><label for='label_5'><?php echo get_vocab("envoyer_email_avec_formulaire_oui"); ?></label>
 <br /><input type='radio' name='envoyer_email_avec_formulaire' value='no' id='label_6' <?php if (Settings::getGeneral("envoyer_email_avec_formulaire") == 'no') echo "checked=\"checked\"";?> /> <label for='label_6'><?php echo get_vocab("envoyer_email_avec_formulaire_non"); ?></label>
 <?php
+// Paramètres de configuration de l'envoi automatique des mails
 echo "</p><hr /><h3>".get_vocab('Parametres configuration envoi automatique mails')."</h3>\n";
 echo "<p>".get_vocab('Explications des parametres configuration envoi automatique mails');
+// Choix mail ou smtp
 echo "<br /><br /><input type=\"radio\" name=\"grr_mail_method\" value=\"mail\" ";
 if (Settings::getGeneral('grr_mail_method') == "mail")
 	echo " checked=\"checked\" ";
@@ -220,13 +245,16 @@ if (Settings::getGeneral('grr_mail_method') == "smtp")
 	echo " checked=\"checked\" ";
 echo "/>\n";
 echo get_vocab('methode smtp');
+// Serveur SMTP:
 echo "\n<br /><br />".get_vocab('Explications methode smtp 1').get_vocab('deux_points');
 echo "\n<input type = \"text\" name=\"grr_mail_smtp\" value =\"".Settings::getGeneral('grr_mail_smtp')."\" />";
 echo "\n<br />".get_vocab('smtp_port').get_vocab('deux_points');
 echo "\n<input type = \"text\" name=\"smtp_port\" value =\"".Settings::getGeneral('smtp_port')."\" />";
 echo "\n<br />".get_vocab('Explications methode smtp 2');
+// Utilisateur SMTP:
 echo "\n<br />".get_vocab('utilisateur smtp').get_vocab('deux_points');
 echo "\n<input type = \"text\" name=\"grr_mail_Username\" value =\"".Settings::getGeneral('grr_mail_Username')."\" />";
+// @ expediteur:
 echo "\n<br />".get_vocab('pwd').get_vocab('deux_points');
 echo "\n<input type = \"password\" name=\"grr_mail_Password\" value =\"".Settings::getGeneral('grr_mail_Password')."\" />";
 echo "\n<br />".get_vocab('Email_expediteur_messages_automatiques').get_vocab('deux_points');
@@ -235,8 +263,22 @@ if (trim(Settings::getGeneral('grr_mail_from')) == "")
 else
 	$grr_mail_from = Settings::getGeneral('grr_mail_from');
 echo "\n<input type = \"text\" name=\"grr_mail_from\" value =\"".$grr_mail_from."\" size=\"30\" />";
+// Nom expediteur
 echo "\n<br />".get_vocab('Nom_expediteur_messages_automatiques').get_vocab('deux_points');
 echo "\n<input type = \"text\" name=\"grr_mail_fromname\" value =\"".Settings::getGeneral('grr_mail_fromname')."\" size=\"30\" />";
+// smtpauth
+//echo "\n<br />".get_vocab('smtp_auth').get_vocab('deux_points');
+//echo "\n<input type = \"text\" name=\"smtp_auth\" value =\"".Settings::get('smtp_auth')."\" size=\"30\" />";
+// smtpsecure
+echo "\n<br />".get_vocab('smtp_secure').get_vocab('deux_points');
+echo "\n<input type = \"text\" name=\"smtp_secure\" value =\"".Settings::get('smtp_secure')."\" size=\"30\" />";
+// Port
+echo "\n<br />".get_vocab('smtp_port').get_vocab('deux_points');
+echo "\n<input type = \"text\" name=\"smtp_port\" value =\"".Settings::get('smtp_port')."\" size=\"30\" />";
+// Mail Test
+echo "\n<br />".get_vocab('mail_test').get_vocab('deux_points');
+echo "\n<input type = \"text\" name=\"mail_test\" value =\"\" size=\"30\" />";
+// Copie CCi
 echo "\n<br /><br />";
 echo "\n<input type=\"checkbox\" name=\"grr_mail_Bcc\" value=\"y\" ";
 if (Settings::getGeneral('grr_mail_Bcc') == "y")

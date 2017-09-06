@@ -99,7 +99,8 @@ if (check_begin_end_bookings($day, $month, $year))
 }
 if (((authGetUserLevel(getUserName(), -1) < 1) && (Settings::get("authentification_obli") == 1)) || !$verif_acces_ressource || authUserAccesArea(getUserName(), $area)==0)
 {
-	showAccessDenied($back);
+    include("menu_gauche.php");
+    showAccessDenied($back);
 	exit();
 }
 // On vérifie une fois par jour si le délai de confirmation des réservations est dépassé
@@ -135,7 +136,7 @@ $this_area_comment = grr_sql_query1("SELECT comment_room FROM ".TABLE_PREFIX."_r
 $this_area_show_comment = grr_sql_query1("SELECT show_comment FROM ".TABLE_PREFIX."_room WHERE id=$room");
 if ($room <= 0)
 {
-	echo "<h1>".get_vocab("no_rooms_for_area")."</h1>";
+    include("menu_gauche.php");echo "<h1>".get_vocab("no_rooms_for_area")."</h1>";
 	include "include/trailer.inc.php";
 	exit;
 }

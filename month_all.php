@@ -87,7 +87,7 @@ if (check_begin_end_bookings($day, $month, $year)){
 }
 
 if (((authGetUserLevel(getUserName(),-1) < 1) && (Settings::get("authentification_obli") == 1)) || authUserAccesArea(getUserName(), $area) == 0){
-	showAccessDenied($back);
+    include("menu_gauche.php");showAccessDenied($back);
 	exit();
 }
 

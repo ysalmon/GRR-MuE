@@ -72,12 +72,14 @@ if ($area <= 0)
 print_header($day, $month, $year, $type_session);
 if ((authGetUserLevel(getUserName(), -1) < 1) && ($settings->get("authentification_obli") == 1))
 {
-	showAccessDenied($back);
+    include("menu_gauche.php");
+    showAccessDenied($back);
 	exit();
 }
 if (authUserAccesArea(getUserName(), $area) == 0)
 {
-	showAccessDenied($back);
+    include("menu_gauche.php");
+    showAccessDenied($back);
 	exit();
 }
 if (check_begin_end_bookings($day, $month, $year))
@@ -174,7 +176,8 @@ if (!$res)
 	fatal_error(0, grr_sql_error());
 if (grr_sql_count($res) == 0)
 {
-	echo '<h1>'.get_vocab("no_rooms_for_area").'</h1>';
+    include("menu_gauche.php");
+    echo '<h1>'.get_vocab("no_rooms_for_area").'</h1>';
 	grr_sql_free($res);
 }
 else
