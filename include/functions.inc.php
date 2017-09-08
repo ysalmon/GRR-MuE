@@ -3045,11 +3045,11 @@ function send_mail($id_entry, $action, $dformat, $tab_id_moderes = array())
 		}
 		$message .= "\n".$vocab["voir_details"].$vocab["deux_points"]."\n";
 		if (count($tab_id_moderes) == 0 )
-			$message .= "\n".traite_grr_url("","y");//."view_entry.php?id=".$id_entry;
+			$message .= "\n".traite_grr_url("","y","y");//."view_entry.php?id=".$id_entry;
 		else
 		{
 			foreach ($tab_id_moderes as $id_moderes)
-				$message .= "\n".traite_grr_url("","y");//."view_entry.php?id=".$id_moderes;
+				$message .= "\n".traite_grr_url("","y","y");//."view_entry.php?id=".$id_moderes;
 		}
 		$message .= "\n\n".$vocab["rappel_de_la_demande"].$vocab["deux_points"]."\n";
 	}
@@ -3063,7 +3063,7 @@ function send_mail($id_entry, $action, $dformat, $tab_id_moderes = array())
 		if ($beneficiaire_email != "")
 			$message .= $vocab["un email envoye"].$beneficiaire_email." \n";
 		$message .= "\n".$vocab["changer statut lorsque ressource restituee"].$vocab["deux_points"];
-		$message .= "\n".traite_grr_url("","y")." \n";//.."view_entry.php?id=".$id_entry." \n";
+		$message .= "\n".traite_grr_url("","y","y")." \n";//.."view_entry.php?id=".$id_entry." \n";
 	}
 	if (($action == 2) || ($action == 3))
 	{
@@ -3192,7 +3192,7 @@ function send_mail($id_entry, $action, $dformat, $tab_id_moderes = array())
             foreach ($mail_admin as $value){
                 $destinataire = $destinataire .";". $value;
             }
-            $urlGRR =traite_grr_url("","y") ;
+            $urlGRR =traite_grr_url("","y","y") ;
 			$validationLink = "";
             $urlGRR == "" ? "" : $validationLink = $urlGRR;//."validation.php?id=".$id_entry;
 			$sujet5 = $vocab["subject_mail1"].$room_name." - ".$date_avis;
@@ -4631,26 +4631,35 @@ function grrDelOverloadFromEntries($id_field)
 		}
 	}
 }
-function traite_grr_url($grr_script_name = "", $force_use_grr_url = "n")
+function traite_grr_url($grr_script_name = "", $force_use_grr_url = "n", $url_ent = "n")
 {
-	// Dans certaines configuration (reverse proxy, ...) les variables $_SERVER["SCRIPT_NAME"] ou $_SERVER['PHP_SELF']
-	// sont mal interprétées entraînant des liens erronés sur certaines pages.
-	if (((Settings::get("use_grr_url") == "y") && (Settings::get("grr_url") != "")) || ($force_use_grr_url == "y"))
-	{
-		if (substr(Settings::get("grr_url"), -1) != "/")
-			$ad_signe = "/";
-		else
-			$ad_signe = "";
-		return getGrrDomain().Settings::get("grr_url").$ad_signe.$grr_script_name;
-	}
+        // Dans certaines configuration (reverse proxy, ...) les variables $_SERVER["SCRIPT_NAME"] ou $_SERVER['PHP_SELF']
+        // sont mal interprétées entraînant des liens erronés sur certaines pages.
+        if ($url_ent == "y")
+                $url_grr_used = Settings::get("grr_ent_url");
+        else
+                $url_grr_used = Settings::get("grr_url");
 
-	return getGrrUrl() . $grr_script_name;
+        if (((Settings::get("use_grr_url") == "y") && ($url_grr_used != "")) || ($force_use_grr_url == "y"))
+        {
+                if (substr($grr_url_used, -1) != "/")
+                        $ad_signe = "/";
+                else
+                        $ad_signe = "";
+                if ($url_ent == "y")
+                        return getGrrDomain().$grr_url_used;
+                else
+                        return getGrrDomain().$grr_url_used.$ad_signe.$grr_script_name;
+        }
+        else
+                return getGrrUrl() . $grr_script_name;
 
-	// GIP RECIA | DEBUT | 2012-10-12
-	//else
-		//return $_SERVER['PHP_SELF'];
-	// GIP RECIA | FIN
+        // GIP RECIA | DEBUT | 2012-10-12
+        //else
+                //return $_SERVER['PHP_SELF'];
+        // GIP RECIA | FIN
 }
+
 // Pour les Jours/Cycles
 //Crée le calendrier Jours/Cycles
 function cree_calendrier_date_valide($n, $i)

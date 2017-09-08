@@ -944,4 +944,6 @@ $vocab['holidays_msg'] = "Afficher les Vacances scolaire et les jour fériés (f
 $vocab['holidays_zone_msg'] = "Choix de la zone de vacances scolaire (france)";
 $vocab['courrier_msg'] = "Afficher la gestion des salles par courrier";
 
+// Ajouts GIP RECIA :
+$vocab['grr_ent_url'] = "Adresse du canal grr dans l'ENT (/p/NOM_CANAL)";
 ?>

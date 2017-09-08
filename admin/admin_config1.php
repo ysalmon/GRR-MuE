@@ -95,6 +95,12 @@ if (isset($_POST['grr_url'])) {
         die();
     }
 }
+if (isset($_POST['grr_ent_url'])) {
+    if (!Settings::set('grr_ent_url', $_POST['grr_ent_url'])) {
+        echo "Erreur lors de l'enregistrement de grr_ent_url !<br />";
+        die();
+    }
+}
 if (isset($_POST['ok'])) {
     if (isset($_POST['use_grr_url'])) {
         $use_grr_url = 'y';
@@ -529,6 +535,14 @@ echo '<h3>'.get_vocab('miscellaneous').'</h3>'.PHP_EOL;
 			<input class="form-control" type="text" name="grr_url" size="40" value="<?php echo(Settings::getGeneral('grr_url')); ?>" />
 		</td>
 	</tr>
+        <tr>
+                <td>
+                        <?php echo get_vocab('grr_ent_url'); ?>
+                </td>
+                <td>
+                        <input class="form-control" type="text" name="grr_ent_url" size="40" value="<?php echo(Settings::getGeneral('grr_ent_url')); ?>" />
+                </td>
+        </tr>
 	<tr>
 		<td colspan="2">
 			<input type="checkbox" name="use_grr_url" value="y" <?php if (Settings::getGeneral('use_grr_url') == 'y') {
