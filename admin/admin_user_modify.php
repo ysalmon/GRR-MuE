@@ -187,7 +187,7 @@ if ($valid == "yes")
 		{
 			// un gestionnaire d'utilisateurs ne peut pas modifier un administrateur général ou un gestionnaire d'utilisateurs
 			$test_statut = TRUE;
-			if (authGetUserLevel(getUserName(),-1) < 6)
+			if (authGetUserLevel(getUserName(),-1) < 7)
 			{
 				$old_statut = grr_sql_query1("SELECT statut FROM ".TABLE_PREFIX."_utilisateurs WHERE login='".protect_data_sql($user_login)."'");
 				if (((($old_statut == "administrateur") || ($old_statut == "gestionnaire_utilisateur")) && ($old_statut != $reg_statut))
@@ -500,7 +500,7 @@ else
 	}
 	echo ">".get_vocab("statut_user")."</option>\n";
 // un gestionnaire d'utilisateurs ne peut pas créer un administrateur général ou un gestionnaire d'utilisateurs
-	if (authGetUserLevel(getUserName(),-1) >= 6)
+	if (authGetUserLevel(getUserName(),-1) >= 7)
 	{
 		echo "<option value=\"gestionnaire_utilisateur\" ";
 		if ($user_statut == "gestionnaire_utilisateur")
