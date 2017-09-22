@@ -80,7 +80,7 @@ if (isset($_GET['valid']) && ($_GET['valid'] == "yes")){
 
 	}else{
 		
-		if (!Settings::setGeneral("begin_bookings", $_GET['begin_bookings']))
+		if (!Settings::set("begin_bookings", $_GET['begin_bookings']))
 			echo "Erreur lors de l'enregistrement de begin_bookings !<br />";
 		else
 		{
@@ -91,7 +91,7 @@ if (isset($_GET['valid']) && ($_GET['valid'] == "yes")){
 
 		}
 
-        if (!Settings::setGeneral("end_bookings", $_GET['end_bookings'])) {
+        if (!Settings::set("end_bookings", $_GET['end_bookings'])) {
             echo "Erreur lors de l'enregistrement de end_bookings !<br />";
         } else {
             $del = grr_sql_query("DELETE FROM ".TABLE_PREFIX."_entry WHERE start_time > ".Settings::get("end_bookings",true));
