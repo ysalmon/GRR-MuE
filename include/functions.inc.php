@@ -814,7 +814,7 @@ function page_accueil($param = 'no'){
 	}
 
 	// Definition de $defaultroom
-	if (isset($_SESSION['default_room']) && ($_SESSION['default_room'] > 0)){
+	if (isset($_SESSION['default_room']) && ($_SESSION['default_room'] >= -4) && ($_SESSION['default_room'] != 0)){
 		$defaultroom = $_SESSION['default_room'];
 	}else{
 		$defaultroom = Settings::get("default_room");
@@ -6067,7 +6067,7 @@ function findFirstIdAreaInSite($idSite){
 * @return integer le premier id de salle disponible dans le domaine.
 */
 function findFirstIdRoomInArea($idArea){
-	$sql = "SELECT id FROM ".TABLE_PREFIX."_room WHERE id_area= $idArea";
+	$sql = "SELECT id FROM ".TABLE_PREFIX."_room WHERE id_area= $idArea ORDER BY order_display";
 	$res = grr_sql_query($sql);
 	if ($res && grr_sql_count($res) > 0 ){
 		$row = grr_sql_row($res,0);

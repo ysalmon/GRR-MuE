@@ -382,13 +382,18 @@ if ($_GET['type']=="ressource") {
 			}
 		}
 	}
-
 	$display_liste = '
 		        <table border="0"><tr>
 		          <td>'.get_vocab('default_room').'</td>
 		          <td> ';
 	$display_liste .= ' <select class="form-control" id="id_room" name="id_room"> ';
-	if (! $atLeastOneSelected || $default_room == -1 ){
+
+    $display_liste .= '<option value="0"';
+    if (! $atLeastOneSelected || $default_room == 0)
+        $display_liste .= ' selected="selected" ';
+    $display_liste .= ' >(Choisissez une ressource)</option>'."\n";
+
+	if ( $default_room == -1 ){
 		$display_liste .= '     <option value="-1" selected="selected">'.get_vocab('default_room_all').'</option>'."\n";
 	} else {
 		$display_liste .= '     <option value="-1">'.get_vocab('default_room_all').'</option>'."\n";
@@ -400,12 +405,8 @@ if ($_GET['type']=="ressource") {
 	              '<option value="-3"';
 	if ($default_room == -3)
 		$display_liste .= ' selected="selected" ';
-	$display_liste .= ' >'.get_vocab('default_room_month_all').'</option>'."\n".
-	              '<option value="-4"';
-	if ($default_room == -4)
-		$display_liste .= ' selected="selected" ';
-	$display_liste .= ' >'.get_vocab('default_room_month_all_bis').'</option>'."\n";
-	
+	$display_liste .= ' >'.get_vocab('default_room_month_all').'</option>'."\n";
+
 	if ($resultat){
 		for ($enr = 0; ($row = grr_sql_row($resultat, $enr)); $enr++)
 		{
