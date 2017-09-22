@@ -6048,14 +6048,10 @@ function findFirstIdSiteInEtablissement($idEtablissement){
 * @return integer le premier id de domaine disponible dans le site.
 */
 function findFirstIdAreaInSite($idSite){
-   /* $sql = "SELECT id_area FROM ".TABLE_PREFIX."_j_site_area
-	        INNER JOIN grr_area a on id_area = a.id
-	        WHERE id_site= $idSite ORDER BY a.order_display";
-*/
     $sql = "SELECT DISTINCT sa.id_area FROM grr_j_site_area sa
               INNER JOIN grr_area a on sa.id_area = a.id
               LEFT JOIN grr_j_useradmin_area au on sa.id_area = au.id_area
-              WHERE id_site= 80 and ( a.access!= 'r' or au.login='".getUserName()."')
+              WHERE id_site= $idSite and ( a.access!= 'r' or au.login='".getUserName()."')
               ORDER BY a.order_display";
 
     $res = grr_sql_query($sql);
