@@ -468,9 +468,11 @@ if (isset($_POST['ok'])) {
     $_SESSION['displ_msg'] = 'yes';
     if ($msg == '') {
         $msg = get_vocab('message_records');
+
     }
-    Header('Location: '.'admin_config.php?msg='.$msg);
-    exit();
+    affiche_pop_up($msg,"admin");
+    //Header('Location: '.'admin_config.php?msg='.$msg);
+    //exit();
 }
 if ((isset($_GET['msg'])) && isset($_SESSION['displ_msg']) && ($_SESSION['displ_msg'] == 'yes')) {
     $msg = $_GET['msg'];

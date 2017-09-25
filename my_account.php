@@ -246,7 +246,7 @@ if ($res)
 			$default_area = $row[5];
 		else
 			$default_area = Settings::get('default_area');
-		if (($row[6] != '') && ($row[6] !='0'))
+		if (($row[6] != ''))// && ($row[6] !='0'))
 			$default_room = $row[6];
 		else
 			$default_room = Settings::get('default_room');

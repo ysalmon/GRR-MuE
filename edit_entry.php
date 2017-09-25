@@ -927,13 +927,13 @@ else
 	{
         comboBoxHeureDebutFinReservation($debut_Matin,$fin_Soir,$duree_petit_bloc_area, $_GET['hour'],$_GET['minute'],false);
     }
-	if (!$twentyfourhour_format)
+	/*if (!$twentyfourhour_format)
 	{
 		$checked = ($start_hour < 12) ? 'checked="checked"' : "";
 		echo '<input name="ampm" type="radio" value="am" '.$checked.' />'.date("a",mktime(1,0,0,1,1,1970));
 		$checked = ($start_hour >= 12) ? 'checked="checked"' : "";
 		echo '<input name="ampm" type="radio" value="pm" '.$checked.' />'.date("a",mktime(13,0,0,1,1,1970));
-	}
+	}*/
 
 }
 echo '</div>'.PHP_EOL;
@@ -1030,13 +1030,13 @@ else
         {
             comboBoxHeureDebutFinReservation($debut_Matin,$fin_Soir,$duree_petit_bloc_area, $_GET['hour'],$_GET['minute'],true);
         }
-		if (!$twentyfourhour_format)
+		/*if (!$twentyfourhour_format)
 		{
 			$checked = ($end_hour < 12) ? "checked=\"checked\"" : "";
 			echo "<input name=\"ampm\" type=\"radio\" value=\"am\" $checked />".date("a",mktime(1,0,0,1,1,1970));
 			$checked = ($end_hour >= 12) ? "checked=\"checked\"" : "";
 			echo "<input name=\"ampm\" type=\"radio\" value=\"pm\" $checked />".date("a",mktime(13,0,0,1,1,1970));
-		}
+		}*/
 
 	}
 	echo '</div>'.PHP_EOL;

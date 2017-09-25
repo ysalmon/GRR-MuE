@@ -814,7 +814,7 @@ function page_accueil($param = 'no'){
 	}
 
 	// Definition de $defaultroom
-	if (isset($_SESSION['default_room']) && ($_SESSION['default_room'] > 0)){
+	if (isset($_SESSION['default_room']) && ($_SESSION['default_room'] >= -4) && ($_SESSION['default_room'] != 0)){
 		$defaultroom = $_SESSION['default_room'];
 	}else{
 		$defaultroom = Settings::get("default_room");
@@ -6048,11 +6048,13 @@ function findFirstIdSiteInEtablissement($idEtablissement){
 * @return integer le premier id de domaine disponible dans le site.
 */
 function findFirstIdAreaInSite($idSite){
-	$sql = "SELECT id_area FROM ".TABLE_PREFIX."_j_site_area 
-	        INNER JOIN grr_area a on id_area = a.id
-	        WHERE id_site= $idSite ORDER BY a.order_display";
+    $sql = "SELECT DISTINCT sa.id_area FROM grr_j_site_area sa
+              INNER JOIN grr_area a on sa.id_area = a.id
+              LEFT JOIN grr_j_useradmin_area au on sa.id_area = au.id_area
+              WHERE id_site= $idSite and ( a.access!= 'r' or au.login='".getUserName()."')
+              ORDER BY a.order_display";
 
-	$res = grr_sql_query($sql);
+    $res = grr_sql_query($sql);
 	if ($res && grr_sql_count($res) > 0 ){
 		$row = grr_sql_row($res,0);
 		return $row[0];
@@ -6067,7 +6069,7 @@ function findFirstIdAreaInSite($idSite){
 * @return integer le premier id de salle disponible dans le domaine.
 */
 function findFirstIdRoomInArea($idArea){
-	$sql = "SELECT id FROM ".TABLE_PREFIX."_room WHERE id_area= $idArea";
+	$sql = "SELECT id FROM ".TABLE_PREFIX."_room WHERE id_area= $idArea ORDER BY order_display";
 	$res = grr_sql_query($sql);
 	if ($res && grr_sql_count($res) > 0 ){
 		$row = grr_sql_row($res,0);
