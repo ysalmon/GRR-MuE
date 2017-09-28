@@ -669,14 +669,7 @@ function grr_opensession($_login, $_password, $_user_ext_authentifie = '', $tab_
 	$_SESSION['statut'] = $row[4];
 	$_SESSION['start'] = $row[5];
 	$_SESSION['maxLength'] = Settings::get("sessionMaxLength");
-	if ($row[6] > 0)
-		$_SESSION['default_area'] = $row[6];
-	else
-		$_SESSION['default_area'] = Settings::get("default_area");
-	if ($row[7] >= -4)
-		$_SESSION['default_room'] = $row[7];
-	else
-		$_SESSION['default_room'] = Settings::get("default_room");
+
 	if ($row[8] !='')
 		$_SESSION['default_style'] = $row[8];
 	else
@@ -689,10 +682,7 @@ function grr_opensession($_login, $_password, $_user_ext_authentifie = '', $tab_
 		$_SESSION['default_language'] = $row[10];
 	else
 		$_SESSION['default_language'] = Settings::get("default_language");
-	if ($row[13] > 0)
-		$_SESSION['default_site'] = $row[13];
-	else
-		$_SESSION['default_site'] = Settings::get("default_site");
+
 
 	$_SESSION['source_login'] = $row[11];
 
@@ -711,6 +701,20 @@ function grr_opensession($_login, $_password, $_user_ext_authentifie = '', $tab_
 			setEtablissementInSession();
 		}
 	}
+
+    if ($row[6] > 0)
+        $_SESSION['default_area'] = $row[6];
+    else
+        $_SESSION['default_area'] = Settings::getEtab("default_area");
+    if ($row[7] >= -4)
+        $_SESSION['default_room'] = $row[7];
+    else
+        $_SESSION['default_room'] = Settings::getEtab("default_room");
+    if ($row[13] > 0)
+        $_SESSION['default_site'] = $row[13];
+    else
+        $_SESSION['default_site'] = Settings::getEtab("default_site");
+
 
 	// GIP RECIA | DEBUT | 2012-12-05
 	if ($row[8] !='')
