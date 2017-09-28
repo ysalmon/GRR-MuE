@@ -917,10 +917,10 @@ if ($enable_periods == 'y')
 }
 else
 {
-	echo "<b>".get_vocab("time")." : </b>";
-	if (isset ($_GET['id']))
-	{
-		$duree_par_defaut_reservation_area = $duration;
+
+    echo "<b>".get_vocab("time")." : </b>";
+    if (isset ($_GET['id']))
+	{   //$duree_par_defaut_reservation_area = $duration;
         comboBoxHeureDebutFinReservation($debut_Matin,$fin_Soir,$duree_petit_bloc_area,$start_hour,$start_min,false);
 	}
 	else
@@ -1028,7 +1028,7 @@ else
         }
         else
         {
-            comboBoxHeureDebutFinReservation($debut_Matin,$fin_Soir,$duree_petit_bloc_area, $_GET['hour'],$_GET['minute'],true);
+            comboBoxHeureDebutFinReservation($debut_Matin,$fin_Soir,$duree_petit_bloc_area, $_GET['hour'],$_GET['minute'],true,$duree_par_defaut_reservation_area);
         }
 		/*if (!$twentyfourhour_format)
 		{

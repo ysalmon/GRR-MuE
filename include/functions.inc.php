@@ -5101,14 +5101,13 @@ function spinner ($duration)
  * Returns:
  *   void
  */
-function comboBoxHeureDebutFinReservation($debut_Matin,$fin_Soir,$duree_petit_bloc_area,$start_hour,$start_min,$isend){
-
+function comboBoxHeureDebutFinReservation($debut_Matin,$fin_Soir,$duree_petit_bloc_area,$start_hour,$start_min,$isend,$duree_par_defaut_reservation_area = 0){
     $name = $isend ? 'end_' : 'start_';
     echo "<div class=\"input-group col-xs-6\"><select class=\"form-control\" name=\"".$name."\"  >";
     $optionsResolution = array();
     //Recuperation des heures de debut de la journée et de fin
-    $debut_Matin=  $debut_Matin.":00";
-    $fin_Soir=  $fin_Soir.":00";
+    $debut_Matin=  $debut_Matin.":00:00";
+    $fin_Soir=  $fin_Soir.":00:00";
     //conversion en date 
     $tStart = strtotime($debut_Matin);
     $tEnd = strtotime($fin_Soir);
@@ -5124,11 +5123,30 @@ function comboBoxHeureDebutFinReservation($debut_Matin,$fin_Soir,$duree_petit_bl
         array_push($optionsResolution,date("H:i",$tNow));
     }
     $output = '';
+    $nextreserv = false;
+    $tEndd = null;
     for( $i=0; $i<count($optionsResolution); $i++ ) {
+        if(!$isend && ( $start_hour.":".$start_min) == $optionsResolution[$i]){
+            $nextreserv =true;
+
+        }
+        if($isend && ( $start_hour.":".$start_min) == $optionsResolution[$i]){
+
+            $tEndd = strtotime('+'.$duree_par_defaut_reservation_area.' seconds',strtotime($optionsResolution[$i]));
+            if( $tEndd > $tEnd+$duree_petit_bloc_area ){//la heure minimum depasse la plage, on set la derniere de la journée 
+                //echo "</select>";echo date("H:i",$tEnd+$duree_petit_bloc_area);echo" " ;echo date("H:i",$tEndd);
+                $tEndd = $tEnd+$duree_petit_bloc_area;
+            }
+        }
+        if(date("H:i",$tEndd)==$optionsResolution[$i]){
+            $nextreserv =true;
+        }
         $output .= '<option value="'.$optionsResolution[$i]. '" ';
-        $output .= (( $start_hour.":".$start_min) == $optionsResolution[$i]) ? 'selected="selected" ' : ''  ;
+        $output .= ( $nextreserv) ? 'selected="selected" ' : ''  ;
         $output .= ' >'.$optionsResolution[$i];
         $output .= '</option>';
+        $nextreserv =false;
+
     }
     echo $output;
     echo "</select>";
