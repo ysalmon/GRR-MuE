@@ -3208,9 +3208,7 @@ function send_mail($id_entry, $action, $dformat, $tab_id_moderes = array())
 
             Email::Envois($destinataire, $sujet5, $message5, $repondre5, '', '');
 		}
-		$mail->ClearAddresses();
-		$mail->ClearBCCs();
-		$mail->ClearReplyTos();
+
 	}
 	if (($action == 5) && ($beneficiaire_email != '') && ($beneficiaire_actif == 'actif'))	{
 		$sujet5 = $vocab["subject_mail1"].$room_name." - ".$date_avis;
