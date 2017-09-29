@@ -4646,9 +4646,9 @@ function traite_grr_url($grr_script_name = "", $force_use_grr_url = "n", $url_en
                 else
                         $ad_signe = "";
                 if ($url_ent == "y")
-                        return getGrrUrl().$url_grr_used;
+                        return getGrrDomain().$url_grr_used;
                 else
-                        return getGrrUrl().$url_grr_used.$ad_signe.$grr_script_name;
+                        return getGrrDomain().$url_grr_used.$ad_signe.$grr_script_name;
         }
         else
                 return getGrrUrl() . $grr_script_name;
