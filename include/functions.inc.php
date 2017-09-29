@@ -1219,7 +1219,6 @@ function print_header($dayParam = '', $monthParam = '', $yearParam = '', $type_s
 			}
 
 
-
 			if ((!isset($_GET['pview']) || ($_GET['pview'] != 1)) && (isset($affiche_pview))){
 
 				if (Settings::get("pview_new_windows") == 1){
@@ -4646,9 +4645,9 @@ function traite_grr_url($grr_script_name = "", $force_use_grr_url = "n", $url_en
                 else
                         $ad_signe = "";
                 if ($url_ent == "y")
-                        return getGrrDomain().$url_grr_used;
+                        return getServeurUrl().$url_grr_used;
                 else
-                        return getGrrDomain().$url_grr_used.$ad_signe.$grr_script_name;
+                        return getServeurUrl().$url_grr_used.$ad_signe.$grr_script_name;
         }
         else
                 return getGrrUrl() . $grr_script_name;
@@ -6301,14 +6300,11 @@ function getGrrDomain() {
 // GIP RECIA : Fonction permettant de recuperer l'URL du serveur
 function getServeurUrl() {
 
-  $server_protocol = (isset($_SERVER['HTTPS'])? $_SERVER['HTTPS'] : 'off'); // Recuperation du protocole
-  if(isset($server_protocol) and $server_protocol != "" and $server_protocol != "off") {
-    $grr_protocol = "https";
-  } else {
-    $grr_protocol = "http";
-  }
-
-  return $grr_protocol . "://" . $_SERVER['HTTP_HOST']; // Recuperation de l'URL via la requete
+    //$grr_protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+    //ON FORCE LE HTTPS
+    //Php dans un frame ne peut recuperer le protocole de la page parente vu
+    $grr_protocol = "https://";
+  return $grr_protocol  . $_SERVER['HTTP_HOST']; // Recuperation de l'URL via la requete
 }
 
 
