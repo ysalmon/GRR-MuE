@@ -214,7 +214,7 @@ function mrbsGetAreaIdFromRoomId($room_id)
  * $id_area - Id of the id_area
  *
  */
-function mrbsOverloadGetFieldslist($id_area, $room_id = 0)
+function mrbsOverloadGetFieldslist($id_area, $room_id = 0 , $etablissement =0)
 {
 	if ($room_id > 0 )
 	{
@@ -227,10 +227,22 @@ function mrbsOverloadGetFieldslist($id_area, $room_id = 0)
 		}
 	}
 	// si l'id de l'area n'est pas précisé, on cherche tous les champs additionnels
-	if ($id_area == "")
-		$sqlstring = "SELECT fieldname ,fieldtype, ".TABLE_PREFIX."_overload.id, fieldlist, ".TABLE_PREFIX."_area.area_name, affichage, overload_mail, ".TABLE_PREFIX."_overload.obligatoire, ".TABLE_PREFIX."_overload.confidentiel FROM ".TABLE_PREFIX."_overload, ".TABLE_PREFIX."_area WHERE(".TABLE_PREFIX."_overload.id_area = ".TABLE_PREFIX."_area.id) ORDER BY fieldname,fieldtype ";
-	else
-		$sqlstring = "SELECT fieldname,fieldtype, id, fieldlist, affichage, overload_mail, obligatoire, confidentiel FROM ".TABLE_PREFIX."_overload WHERE id_area='".$id_area."' ORDER BY fieldname,fieldtype";
+    if ($id_area == "" && $etablissement==0 ){
+        $sqlstring = "SELECT fieldname ,fieldtype, ".TABLE_PREFIX."_overload.id, fieldlist, ".TABLE_PREFIX."_area.area_name, affichage, overload_mail, ".TABLE_PREFIX."_overload.obligatoire, ".TABLE_PREFIX."_overload.confidentiel 
+		FROM ".TABLE_PREFIX."_overload, ".TABLE_PREFIX."_area 
+		WHERE(".TABLE_PREFIX."_overload.id_area = ".TABLE_PREFIX."_area.id) ORDER BY fieldname,fieldtype ";
+
+    }if ($id_area == "" && $etablissement !=0){
+    $sqlstring = "SELECT fieldname ,fieldtype, ".TABLE_PREFIX."_overload.id, fieldlist, ".TABLE_PREFIX."_area.area_name, affichage, overload_mail, ".TABLE_PREFIX."_overload.obligatoire, ".TABLE_PREFIX."_overload.confidentiel 
+		FROM ".TABLE_PREFIX."_overload, ".TABLE_PREFIX."_area 
+		INNER JOIN ".TABLE_PREFIX."_j_site_area on ".TABLE_PREFIX."_j_site_area.id_area = ".TABLE_PREFIX."_area.id
+  		INNER JOIN ".TABLE_PREFIX."_j_etablissement_site on ".TABLE_PREFIX."_j_site_area.id_site = ".TABLE_PREFIX."_j_etablissement_site.id_site and ".TABLE_PREFIX."_j_etablissement_site.id_etablissement = ".$etablissement."
+
+		WHERE(".TABLE_PREFIX."_overload.id_area = ".TABLE_PREFIX."_area.id) ORDER BY fieldname,fieldtype ";
+
+	}else{
+           $sqlstring = "SELECT fieldname,fieldtype, id, fieldlist, affichage, overload_mail, obligatoire, confidentiel FROM ".TABLE_PREFIX."_overload WHERE id_area='".$id_area."' ORDER BY fieldname,fieldtype";
+	}
 	$result = grr_sql_query($sqlstring);
 	$fieldslist = array();
 	if (!$result)

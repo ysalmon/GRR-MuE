@@ -493,7 +493,7 @@ if (($summarize != 4) && ($summarize != 5))
 									echo " selected=\"selected\" ";
 								echo ">".get_vocab("match_login")."</option>\n";
 								// On récupère les infos sur le champ add
-								$overload_fields = mrbsOverloadGetFieldslist("");
+								$overload_fields = mrbsOverloadGetFieldslist("",0,getIdEtablissementCourant());
 								// Boucle sur tous les champs additionnels de l'area
 								foreach ($overload_fields as $fieldname=>$fieldtype)
 								{
@@ -555,7 +555,7 @@ if (($summarize != 4) && ($summarize != 5))
 												echo " selected=\"selected\"";
 											echo ">".get_vocab("type")."</option>\n";
 											// On récupère les infos sur le champ add
-											$overload_fields = mrbsOverloadGetFieldslist("");
+											$overload_fields = mrbsOverloadGetFieldslist("",0,getIdEtablissementCourant());
 											// Boucle sur tous les champs additionnels de l'area
 											foreach ($overload_fields as $fieldname=>$fieldtype)
 											{
@@ -641,17 +641,23 @@ if (($summarize != 4) && ($summarize != 5))
         . " JOIN ".TABLE_PREFIX."_area a on r.area_id = a.id "  ;
 	
 	// Si l'utilisateur n'est pas administrateur principal, seuls l'etablissement courant est pris en compte
-    if ((authGetUserLevel(getUserName(),-1) < 7) && (Settings::get("module_multietablissement") == "Oui") ){
+    /*
+    if ((authGetUserLevel(getUserName(),-1) < 70) && (Settings::get("module_multietablissement") == "Oui") ){
            $sql .= " JOIN ".TABLE_PREFIX."_j_site_area sa ON sa.id_area = a.id "
                   ." JOIN ".TABLE_PREFIX."_j_etablissement_site es ON es.id_site=sa.id_site ";
     }
 	
 	// Si l'utilisateur n'est pas administrateur, seuls les domaines auxquels il a accès sont pris en compte
-	if ((authGetUserLevel(getUserName(),-1) < 6) && ($test_grr_j_user_area != 0)){
+	if ((authGetUserLevel(getUserName(),-1) < 60) && ($test_grr_j_user_area != 0)){
 		$sql .= ", ".TABLE_PREFIX."_j_user_area j ";
 	}
-				
-	$sql .= " WHERE e.start_time < $report_end AND e.end_time > $report_start ";
+    */
+    //On limte toujours les resultats à l'établissement courant
+    $sql .= " JOIN ".TABLE_PREFIX."_j_site_area sa ON sa.id_area = a.id "
+        ." JOIN ".TABLE_PREFIX."_j_etablissement_site es ON es.id_site=sa.id_site ";
+    $sql .= ", ".TABLE_PREFIX."_j_user_area j ";
+
+                        $sql .= " WHERE e.start_time < $report_end AND e.end_time > $report_start ";
 
 	// on ne cherche pas parmi les ressources invisibles pour l'utilisateur
 	$tab_rooms_noaccess = verif_acces_ressource(getUserName(), 'all');
@@ -660,7 +666,8 @@ if (($summarize != 4) && ($summarize != 5))
 	}
 	
 	// Si l'utilisateur n'est pas administrateur, seuls les domaines auxquels il a accès sont pris en compte
-	if (authGetUserLevel(getUserName(),-1) < 6){
+    /*
+	if (authGetUserLevel(getUserName(),-1) < 60){
 		if ($test_grr_j_user_area == 0){
 			$sql .= " and a.access='a' ";
 		} else{
@@ -668,11 +675,20 @@ if (($summarize != 4) && ($summarize != 5))
 		}
 	}
 	
-	if ((authGetUserLevel(getUserName(),-1) < 7) && (Settings::get("module_multietablissement") == "Oui") ){
+	if ((authGetUserLevel(getUserName(),-1) < 70) && (Settings::get("module_multietablissement") == "Oui") ){
         $id_etablissement = getIdEtablissementCourant();
         $sql .= " AND es.id_etablissement = $id_etablissement";
     }
-	
+	*/
+    //    //On limte toujours les resultats à l'établissement courant
+    if ($test_grr_j_user_area == 0){
+        $sql .= " and a.access='a' ";
+    } else{
+        $sql .= " and ((j.login='".getUserName()."' and j.id_area=a.id and a.access='r') or (a.access='a')) ";
+    }
+    $id_etablissement = getIdEtablissementCourant();
+    $sql .= " AND es.id_etablissement = $id_etablissement";
+
 
 	$k = 0;
 	if (isset($champ[0])){
@@ -691,12 +707,11 @@ if (($summarize != 4) && ($summarize != 5))
 				$sql .=  grr_sql_syntax_caseless_contains("e.description", $texte[$k], $type_recherche[$k]);
 			if ($champ[$k] == "login")
 				$sql .=  grr_sql_syntax_caseless_contains("e.beneficiaire", $texte[$k], $type_recherche[$k]);
-			
 			// RECIA
 			//$overload_fields = mrbsOverloadGetFieldslist("");
-			$overload_fields = mrbsOverloadGetFieldslist(-1);
-	
-			foreach ($overload_fields as $fieldname=>$fieldtype){
+			$overload_fields = mrbsOverloadGetFieldslist("",0,$id_etablissement);
+
+            foreach ($overload_fields as $fieldname=>$fieldtype){
 				
 				if ($overload_fields[$fieldname]["confidentiel"] != 'y'){
 					
@@ -712,8 +727,8 @@ if (($summarize != 4) && ($summarize != 5))
 		$sql .= ")";
 	}
 	
-	$sql .= " AND  t.type_letter = e.type ";
-	
+	 $sql .= " AND  t.type_letter = e.type ";
+                     //   echo $sql;
 	if ( $sortby == "a" ) //Trié par: Area, room, debut, date/heure.
 		$sql .= " ORDER BY 9,r.order_display,10,t.type_name,2";
 	else if ( $sortby == "r" ) //Trié par: room, area, debut, date/heure.
@@ -989,9 +1004,9 @@ if (($summarize != 4) && ($summarize != 5))
 
 if (($summarize != 4) && ($summarize != 5))
 {
-	echo "</div>";
+    echo "</div>";
+    echo "</div>";
+    echo "</div>";
 	include "include/trailer.inc.php";
 }
 ?>
-</div>
-</div>
