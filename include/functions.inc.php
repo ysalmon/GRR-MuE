@@ -1186,9 +1186,8 @@ function print_header($dayParam = '', $monthParam = '', $yearParam = '', $type_s
 				echo '	<li>
 							<a href="'.$racine.'my_account.php?day='.$day.'&amp;year='.$year.'&amp;month='.$month.'">'.get_vocab("manage_my_account").'</a>
 						</li>';
-// Mis en commentaire en attendant mieux à cause des stats qui sature le mysql : CD - 20170512
-//				if (verif_access_search(getUserName()))
-//					echo '<li><a href="'.$racine.'report.php">'.get_vocab("report").'</a></li>';
+				if (verif_access_search(getUserName()))
+					echo '<li><a href="'.$racine.'report.php">'.get_vocab("report").'</a></li>';
 
 				$disconnect_link = false;
 
