@@ -37,7 +37,7 @@ $grr_devel_url = "http://grr.devome.com/";
 $version_grr = "3.2.0";
 // Numéro de sous-version actuel (a, b, ...)
 // Utilisez cette variable pour des versions qui corrigent la la version finale sans toucher à la base.
-$sous_version_grr = "d"; // a, b, c, ...
+$sous_version_grr = "e"; // a, b, c, ...
 // Numéro de la release candidate (doit être strictement inférieure à 9). Laisser vide s'il s'agit de la version stable.
 $version_grr_RC = "";
 
