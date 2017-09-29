@@ -2975,7 +2975,7 @@ function send_mail($id_entry, $action, $dformat, $tab_id_moderes = array())
 	//Nom de l'établissement et mention "mail automatique"
 	$message = removeMailUnicode(Settings::get("company"))." - ".$vocab["title_mail"];
 	// Url de GRR
-	$message = $message.traite_grr_url("","y")."\n\n";
+	$message = $message.traite_grr_url("","y","y")."\n\n";
 	$sujet = $vocab["subject_mail1"].$room_name." - ".$date_avis;
 	if ($action == 1){
 		$sujet = $sujet.$vocab["subject_mail_creation"];
@@ -3070,10 +3070,11 @@ function send_mail($id_entry, $action, $dformat, $tab_id_moderes = array())
 		$message = $message.$vocab["reservee au nom de"];
 		$message = $message.$vocab["the_user"].affiche_nom_prenom_email($beneficiaire,$beneficiaire_ext,"formail")." \n";
 	}
-	if (($action == 5) || ($action == 7))
-		$repondre = Settings::get("webmaster_email");
+    $repondre = Settings::get("webmaster_email");
+    /*
+    if (($action == 5) || ($action == 7))
 	else
-		$repondre = $user_email;
+		$repondre = $user_email;*/
 
 	//
 	// Infos sur la réservation
@@ -3169,7 +3170,7 @@ function send_mail($id_entry, $action, $dformat, $tab_id_moderes = array())
 		$sujet7 = $vocab["subject_mail1"].$room_name." - ".$date_avis;
 		$sujet7 .= $vocab["subject_mail_retard"];
 		$message7 = removeMailUnicode(Settings::get("company"))." - ".$vocab["title_mail"];
-		$message7 .= traite_grr_url("","y")."\n\n";
+		$message7 .= traite_grr_url("","y","y")."\n\n";
 		$message7 .= $vocab["ressource empruntee non restituée"]."\n";
 		$message7 .= $room_name." (".$area_name.")";
 		$message7 .= "\n".$reservation;
@@ -3198,7 +3199,7 @@ function send_mail($id_entry, $action, $dformat, $tab_id_moderes = array())
 			$sujet5 = $vocab["subject_mail1"].$room_name." - ".$date_avis;
 			$sujet5 .= $vocab["subject_mail_moderation"];
 			$message5 = removeMailUnicode(Settings::get("company"))." - ".$vocab["title_mail"];
-			$message5 .= traite_grr_url("","y")."\n\n";
+			$message5 .= traite_grr_url("","y","y")."\n\n";
 			$message5 .= $vocab["subject_a_moderer"];
 			$message5 .= "\n".$validationLink;
 			$message5 .= "\n\n".$vocab['created_by'].affiche_nom_prenom_email($user_login,"","formail");
@@ -3214,7 +3215,7 @@ function send_mail($id_entry, $action, $dformat, $tab_id_moderes = array())
 		$sujet5 = $vocab["subject_mail1"].$room_name." - ".$date_avis;
 		$sujet5 .= $vocab["subject_mail_moderation"];
 		$message5 = removeMailUnicode(Settings::get("company"))." - ".$vocab["title_mail"];
-		$message5 .= traite_grr_url("","y")."\n\n";
+		$message5 .= traite_grr_url("","y","y")."\n\n";
 		$message5 .= $vocab["texte_en_attente_de_moderation"];
 		$message5 .= "\n".$vocab["rappel_de_la_demande"].$vocab["deux_points"];
 		$message5 .= "\n".$vocab["the_room"].$room_name." (".$area_name.")";
@@ -3230,7 +3231,7 @@ function send_mail($id_entry, $action, $dformat, $tab_id_moderes = array())
 		$sujet6 .= $vocab["subject_mail_decision_moderation"];
 		$message6 = $message;
 		$destinataire6 = $beneficiaire_email;
-		$repondre6 = $user_email;
+		$repondre6 = Settings::get("webmaster_email");;
 
         Email::Envois($destinataire6, $sujet6, $message6, $repondre6, '', '');
 	}
@@ -3241,7 +3242,7 @@ function send_mail($id_entry, $action, $dformat, $tab_id_moderes = array())
 	{
 		$sujet2 = $vocab["subject_mail1"].$room_name." - ".$date_avis;
 		$message2 = removeMailUnicode(Settings::get("company"))." - ".$vocab["title_mail"];
-		$message2 = $message2.traite_grr_url("","y")."\n\n";
+		$message2 = $message2.traite_grr_url("","y","y")."\n\n";
 		$message2 = $message2.$vocab["the_user"].affiche_nom_prenom_email($user_login,"","formail");
 		if ($action == 1){
 			$sujet2 = $sujet2.$vocab["subject_mail_creation"];
@@ -3263,7 +3264,7 @@ function send_mail($id_entry, $action, $dformat, $tab_id_moderes = array())
 		$message2 = $message2."\n".$reservation;
 		$message2 = html_entity_decode($message2);
 		$destinataire2 = $beneficiaire_email;
-		$repondre2 = $user_email;
+		$repondre2 = Settings::get("webmaster_email");;
 
         Email::Envois($destinataire2, $sujet2, $message2, $repondre2, '', '');
 	}
@@ -4640,14 +4641,14 @@ function traite_grr_url($grr_script_name = "", $force_use_grr_url = "n", $url_en
 
         if (((Settings::get("use_grr_url") == "y") && ($url_grr_used != "")) || ($force_use_grr_url == "y"))
         {
-                if (substr($grr_url_used, -1) != "/")
+                if (substr($url_grr_used, -1) != "/")
                         $ad_signe = "/";
                 else
                         $ad_signe = "";
                 if ($url_ent == "y")
-                        return getGrrDomain().$grr_url_used;
+                        return getGrrUrl().$url_grr_used;
                 else
-                        return getGrrDomain().$grr_url_used.$ad_signe.$grr_script_name;
+                        return getGrrUrl().$url_grr_used.$ad_signe.$grr_script_name;
         }
         else
                 return getGrrUrl() . $grr_script_name;
