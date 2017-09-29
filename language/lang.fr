@@ -1010,7 +1010,7 @@ $vocab['short_name_etab'] = "Nom court établissement";
 $vocab['long_name_etab'] = "Nom long établissement";
 $vocab['delete_site_share'] = "Supprimer un partage de site";
 $vocab['be_in_multi_etab'] = "Il faut être en mode multi-établissements pour pouvoir partager des sites !";
-$vocab['grr_ent_url'] = "Adresse du canal grr dans l'ENT (/p/NOM_CANAL)";
+$vocab['grr_ent_url'] = "Adresse du canal grr dans l'ENT (/portail/p/NOM_CANAL)";
 
 $vocab['mg_calendrier'] = 'CALENDRIERS';
 $vocab['mg_filtres'] = 'FILTRES';
