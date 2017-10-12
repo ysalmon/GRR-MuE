@@ -201,20 +201,20 @@ if (isset($id)){
 			$rep_num_weeks = $row[4];
 		if ($edit_type == "series")
 		{
-			$start_day   = (int)strftime('%d', $row[1]);
-			$start_month = (int)strftime('%m', $row[1]);
-			$start_year  = (int)strftime('%Y', $row[1]);
-			$start_hour  = (int)strftime('%H', $row[1]);
-			$start_min   = (int)strftime('%M', $row[1]);
+			$start_day   = strftime('%d', $row[1]);
+			$start_month = strftime('%m', $row[1]);
+			$start_year  = strftime('%Y', $row[1]);
+			$start_hour  = strftime('%H', $row[1]);
+			$start_min   = strftime('%M', $row[1]);
 			$duration    = $row[5]-$row[1];
-			$end_day   = (int)strftime('%d', $row[5]);
-			$end_month = (int)strftime('%m', $row[5]);
-			$end_year  = (int)strftime('%Y', $row[5]);
-			$end_hour  = (int)strftime('%H', $row[5]);
-			$end_min   = (int)strftime('%M', $row[5]);
-			$rep_end_day   = (int)strftime('%d', $row[2]);
-			$rep_end_month = (int)strftime('%m', $row[2]);
-			$rep_end_year  = (int)strftime('%Y', $row[2]);
+			$end_day   = strftime('%d', $row[5]);
+			$end_month = strftime('%m', $row[5]);
+			$end_year  = strftime('%Y', $row[5]);
+			$end_hour  = strftime('%H', $row[5]);
+			$end_min   = strftime('%M', $row[5]);
+			$rep_end_day   = strftime('%d', $row[2]);
+			$rep_end_month = strftime('%m', $row[2]);
+			$rep_end_year  = strftime('%Y', $row[2]);
 			$type = $row[6];
 			$breve_description = $row[7];
 			$beneficiaire = $row[8];
@@ -234,7 +234,7 @@ if (isset($id)){
 		}
 		else
 		{
-			$rep_end_date = utf8_encode(strftime($dformat,$row[2]));
+			$rep_end_date = strftime($dformat,$row[2]);
 			$rep_opt      = $row[3];
 			$start_time = $row[1];
 			$end_time = $row[5];

@@ -431,3 +431,7 @@ h1,h2,h3,h4,h5>a{font-family:"Roboto Slab" !important}
 	.containerGrr >h2{font-size:18px;}
 	.containerGrr .titre_planning .titre_planningDate .glyphicon-refresh{display:none;}
 }
+/*Ajouté CD - 20171012 - pour meilleur affichage heure début réservation */
+@media (min-width: 768px) {
+        .containerGrr .form-inline .input-group>.form-control {width:auto;}
+}
