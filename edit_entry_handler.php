@@ -494,6 +494,8 @@ if (($error_booking_in_past == 'no') && ($error_chevaussement == 'no') && ($erro
 				{
 					if (isset($_GET['del_entry_in_conflict']) && ($_GET['del_entry_in_conflict'] == 'yes'))
 						grrDelEntryInConflict($room_id, $reps[$i], $reps[$i] + $diff, $ignore_id, $repeat_id, 0);
+					if (isset($_GET['swap_entry_in_conflict']) && ($_GET['swap_entry_in_conflict'] == 'yes'))
+						grrSwapEntryInConflict($room_id, $reps[$i], $reps[$i] + $diff, $ignore_id, $repeat_id, 0);
 					if ($i == (count($reps) - 1))
 						$tmp = mrbsCheckFree($room_id, $reps[$i], $reps[$i] + $diff, $ignore_id, $repeat_id);
 					else
@@ -762,8 +764,13 @@ if (strlen($err))
 	echo $err;
 	if (!isset($hide_title))
 		echo "</UL>";
-	if (authGetUserLevel(getUserName(),$area,'area') >= 4)
-		echo "<center><table border=\"1\" cellpadding=\"10\" cellspacing=\"1\"><tr><td class='avertissement'><h3><a href='".traite_grr_url()."edit_entry_handler.php?".$_SERVER['QUERY_STRING']."&amp;del_entry_in_conflict=yes'>".get_vocab("del_entry_in_conflict")."</a></h4></td></tr></table></center><br />";
+	if (authGetUserLevel(getUserName(),$area,'area') >= 4) {
+		echo "<center><table border=\"1\" cellpadding=\"10\" cellspacing=\"1\">";
+		echo"<tr><td class='avertissement'><h3><a href='".traite_grr_url()."edit_entry_handler.php?".$_SERVER['QUERY_STRING']."&amp;del_entry_in_conflict=yes'>".get_vocab("del_entry_in_conflict")."</a></h4></td></tr>";
+		if (onEstEnTrainDeModifierUneResaExistante())		
+			echo"<tr><td class='avertissement'><h3><a href='".traite_grr_url()."edit_entry_handler.php?".$_SERVER['QUERY_STRING']."&amp;swap_entry_in_conflict=yes'>".get_vocab("swap_entry_in_conflict")."</a></h4></td></tr>";
+		echo"</table></center><br />";
+	}
 }
 echo "<a href=\"".$back."&amp;Err=yes\">".get_vocab('returnprev')."</a><p>";
 include "include/trailer.inc.php"; ?>

@@ -278,6 +278,7 @@ $vocab['deleteseries'] = "Effacer la périodicité (et toutes les réservations 
 $vocab['delete_booking'] = " a supprimé la réservation de ";
 $vocab['delete_up_to'] = "Effacer jusqu'au";
 $vocab['del_entry_in_conflict'] = "Supprimer la (les) réservation(s) ci-dessus afin de valider la nouvelle réservation.";
+$vocab['swap_entry_in_conflict'] = "Essayer d'échanger la salle des réservations ci-dessus avec l'ancienne salle de la réservation modifiée afin de valider la modification de la réservation.";
 $vocab['del_user_succeed'] = "Un utilisateur a été supprimé de la liste.";
 $vocab['description'] = "Description :";
 $vocab['description complete'] = "Description complète (visible dans la fiche de présentation)";

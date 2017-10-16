@@ -284,6 +284,7 @@ $vocab['deleteseries'] = "Delete a periodicity";
 $vocab['delete_booking'] = " has deleted the reservation of ";
 $vocab['delete_up_to'] = "Delete until";
 $vocab['del_entry_in_conflict'] = "Delete the reservation(s) above in order to confirm the new reservation.";
+$vocab['swap_entry_in_conflict'] = "Try to swap the room of the above reservation(s) with the old room of the reservation being modified to confirm the reservation change.";
 $vocab['del_user_succeed'] = "A user has been deleted from the list.";
 $vocab['description'] = "Description:";
 $vocab['description complete'] = "Full description (visible in the presentation card)";
