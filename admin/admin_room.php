@@ -147,10 +147,10 @@ if (Settings::get("module_multisite") == "Oui" || Settings::get("module_multieta
 		if ($isAdministrateurDomaine > 0)
 		$sql .=", ".TABLE_PREFIX."_j_useradmin_area UA, ".TABLE_PREFIX."_j_site_area SA";
 
-		$sql .=" WHERE ( ";
+		$sql .=" WHERE ";
 		if (Settings::get("module_multietablissement") == "Oui"){
 			$id_etablissement = getIdEtablissementCourant();
-			$sql .=" ES.id_etablissement = $id_etablissement ) AND ";
+			$sql .="( ES.id_etablissement = $id_etablissement ) AND ";
 		}
 		if ($isAdministrateurSite > 0)
 		$sql .= "(S.id=US.id_site and US.login='".getUserName()."') ";
@@ -159,7 +159,7 @@ if (Settings::get("module_multisite") == "Oui" || Settings::get("module_multieta
 		if ($isAdministrateurDomaine > 0)
 		$sql .= "(SA.id_site=S.id and SA.id_area=UA.id_area and UA.login='".getUserName()."')";
 
-		$sql .= ") ORDER BY S.sitename ASC";
+		$sql .= " ORDER BY S.sitename ASC";
 	}
 	
 	$res = grr_sql_query($sql);
