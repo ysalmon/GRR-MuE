@@ -391,19 +391,19 @@ if (isset($champ[0]))
 }
 else
 {
-	$to_time = mktime(0, 0, 0, $month, $day + Settings::get("default_report_days"), $year);
+	$to_time = mktime(0, 0, 0, $month, $day - Settings::get("default_report_days"), $year);
 	if (!isset($From_day))
-		$From_day = $day;
+		$From_day = date("d", $to_time);
 	if (!isset($From_month))
-		$From_month = $month;
+		$From_month = date("m", $to_time);
 	if (!isset($From_year))
-		$From_year = $year;
+		$From_year = date("Y", $to_time);
 	if (!isset($To_day))
-		$To_day   = date("d", $to_time);
+		$To_day   = $day;
 	if (!isset($To_month))
-		$To_month = date("m", $to_time);
+		$To_month = $month;
 	if (!isset($To_year))
-		$To_year  = date("Y", $to_time);
+		$To_year  = $year;
 }
 //$summarize:
 // 1=Rapport seulement,
