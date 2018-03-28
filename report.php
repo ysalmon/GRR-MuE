@@ -659,10 +659,10 @@ if (($summarize != 4) && ($summarize != 5))
     */
     //On limte toujours les resultats à l'établissement courant
 
-    $sql .= "WHERE 1 = 1 ";
+    $sql .= "WHERE 1=1 ";
     $id_etablissement = getIdEtablissementCourant();
     $sql .= sprintf("AND es.id_etablissement = %d ", $id_etablissement);
-    $sql .= sprintf("e.start_time < %s AND e.end_time > %s ",$report_end, $report_start);
+    $sql .= sprintf("AND e.start_time < %s AND e.end_time > %s ",$report_end, $report_start);
 
 	// on ne cherche pas parmi les ressources invisibles pour l'utilisateur
 	$tab_rooms_noaccess = verif_acces_ressource(getUserName(), 'all');
