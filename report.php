@@ -631,15 +631,20 @@ if (($summarize != 4) && ($summarize != 5))
 //  13  [12]  les champs additionnele -> e.overload_desc
 	
 	// Tableau des ressources invisibles pour l'utilisateur
-	$sql = "SELECT distinct e.id, e.start_time, e.end_time, e.name, e.description, "
+	$sql = "SELECT DISTINCT e.id, e.start_time, e.end_time, e.name, e.description, "
         . "e.type, e.beneficiaire, "
         .  grr_sql_syntax_timestamp_to_unix("e.timestamp")
-        . ", a.area_name, r.room_name, r.description, a.id, e.overload_desc "
-        . " FROM ".TABLE_PREFIX."_type_area t ,"
-        . TABLE_PREFIX."_entry e "
-        . " JOIN ".TABLE_PREFIX."_room r on e.room_id = r.id "
-        . " JOIN ".TABLE_PREFIX."_area a on r.area_id = a.id "  ;
-	
+        . ", a.area_name, r.room_name, r.description, a.id, e.overload_desc ";
+
+	$sql .= sprintf("FROM %s_entry e ", TABLE_PREFIX);
+	$sql .= sprintf("LEFT JOIN %s_type_area t ON t.type_letter = e.type ", TABLE_PREFIX);
+	$sql .= sprintf("LEFT JOIN %s_room r ON r.id = e.room_id ", TABLE_PREFIX);
+
+    $sql .= sprintf("LEFT JOIN %s_area a ON a.id = r.area_id ", TABLE_PREFIX);
+    $sql .= sprintf("LEFT JOIN %s_j_site_area sa ON sa.id_area = a.id ", TABLE_PREFIX);
+    $sql .= sprintf("LEFT JOIN %s_j_etablissement_site es ON es.id_site = sa.id_site ", TABLE_PREFIX);
+    $sql .= sprintf("LEFT JOIN %s_j_user_area j ON j.id_area = a.id ", TABLE_PREFIX);
+
 	// Si l'utilisateur n'est pas administrateur principal, seuls l'etablissement courant est pris en compte
     /*
     if ((authGetUserLevel(getUserName(),-1) < 70) && (Settings::get("module_multietablissement") == "Oui") ){
@@ -653,11 +658,11 @@ if (($summarize != 4) && ($summarize != 5))
 	}
     */
     //On limte toujours les resultats à l'établissement courant
-    $sql .= " JOIN ".TABLE_PREFIX."_j_site_area sa ON sa.id_area = a.id "
-        ." JOIN ".TABLE_PREFIX."_j_etablissement_site es ON es.id_site=sa.id_site ";
-    $sql .= ", ".TABLE_PREFIX."_j_user_area j ";
 
-                        $sql .= " WHERE e.start_time < $report_end AND e.end_time > $report_start ";
+    $sql .= "WHERE 1 = 1 ";
+    $id_etablissement = getIdEtablissementCourant();
+    $sql .= sprintf("AND es.id_etablissement = %d ", $id_etablissement);
+    $sql .= sprintf("e.start_time < %s AND e.end_time > %s ",$report_end, $report_start);
 
 	// on ne cherche pas parmi les ressources invisibles pour l'utilisateur
 	$tab_rooms_noaccess = verif_acces_ressource(getUserName(), 'all');
@@ -682,12 +687,10 @@ if (($summarize != 4) && ($summarize != 5))
 	*/
     //    //On limte toujours les resultats à l'établissement courant
     if ($test_grr_j_user_area == 0){
-        $sql .= " and a.access='a' ";
+        $sql .= " AND a.access='a' ";
     } else{
-        $sql .= " and ((j.login='".getUserName()."' and j.id_area=a.id and a.access='r') or (a.access='a')) ";
+        $sql .= " AND ((j.login='".getUserName()."' AND a.access='r') OR (a.access='a')) ";
     }
-    $id_etablissement = getIdEtablissementCourant();
-    $sql .= " AND es.id_etablissement = $id_etablissement";
 
 
 	$k = 0;
@@ -723,11 +726,9 @@ if (($summarize != 4) && ($summarize != 5))
 				$sql .= " ".$_GET["condition_et_ou"]." ";
 			$k++;
 		}
-		
-		$sql .= ")";
+
+		$sql .= ") ";
 	}
-	
-	 $sql .= " AND  t.type_letter = e.type ";
                      //   echo $sql;
 	if ( $sortby == "a" ) //Trié par: Area, room, debut, date/heure.
 		$sql .= " ORDER BY 9,r.order_display,10,t.type_name,2";
