@@ -896,7 +896,7 @@ echo '</td></tr>'.PHP_EOL;
 echo '<tr><td class="CL">'.PHP_EOL;
 
 echo '<div class="form-group">'.PHP_EOL;
-jQuery_DatePicker('start');
+jQuery_DatePicker('start', $start_day, $start_month, $start_year);
 echo '</div>'.PHP_EOL;
 echo '<div class="form-group">'.PHP_EOL;
 

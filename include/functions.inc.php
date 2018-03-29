@@ -4922,7 +4922,7 @@ function affiche_nom_prenom_email($_beneficiaire, $_beneficiaire_ext, $type = "n
  		return $_statut;
  }
 
- function jQuery_DatePicker($typeDate)
+ function jQuery_DatePicker($typeDate, $startDay = NULL, $startMonth = NULL, $startYear = NULL)
  {
 
 	 if (@file_exists('../include/connect.inc.php')){
@@ -4968,15 +4968,21 @@ function affiche_nom_prenom_email($_beneficiaire, $_beneficiaire_ext, $type = "n
  	{
  		if (isset ($_GET['day']))
  			$day = $_GET['day'];
- 		else
+ 		else if (!is_null($startDay))
+            $day = $startDay;
+        else
  			$day = date("d");
  		if (isset ($_GET['month']))
  			$month = $_GET['month'];
- 		else
+ 		else if (!is_null($startMonth))
+            $month = $startMonth;
+        else
  			$month = date("m");
  		if (isset ($_GET['year']))
  			$year = $_GET['year'];
- 		else
+ 		else if (!is_null($startYear))
+            $year = $startYear;
+        else
  			$year = date("Y");
  	}
  	genDateSelector("".$typeDate."_", "$day", "$month", "$year","");
