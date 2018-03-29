@@ -4966,23 +4966,25 @@ function affiche_nom_prenom_email($_beneficiaire, $_beneficiaire_ext, $type = "n
  	}
  	else
  	{
- 		if (isset ($_GET['day']))
- 			$day = $_GET['day'];
- 		else if (!is_null($startDay))
+ 		if (!is_null($startDay))
             $day = $startDay;
-        else
+        else if (isset ($_GET['day']))
+ 			$day = $_GET['day'];
+ 		else
  			$day = date("d");
- 		if (isset ($_GET['month']))
- 			$month = $_GET['month'];
- 		else if (!is_null($startMonth))
+
+ 		if (!is_null($startMonth))
             $month = $startMonth;
-        else
+        else if (isset ($_GET['month']))
+ 			$month = $_GET['month'];
+ 		else
  			$month = date("m");
- 		if (isset ($_GET['year']))
- 			$year = $_GET['year'];
- 		else if (!is_null($startYear))
+
+ 		if (!is_null($startYear))
             $year = $startYear;
-        else
+        else if (isset ($_GET['year']))
+ 			$year = $_GET['year'];
+ 		else
  			$year = date("Y");
  	}
  	genDateSelector("".$typeDate."_", "$day", "$month", "$year","");
